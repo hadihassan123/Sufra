@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>List your surplus — Sufra</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a href="index.html" class="brand">Sufra <small>The Spread</small></a>
+    <nav class="nav-links">
+      <a href="index.html">Browse</a>
+      <a href="vendor-login.html">Vendor login</a>
+    </nav>
+  </div>
+</header>
+
+<div class="auth-shell">
+  <div class="auth-card">
+    <p class="eyebrow">For food businesses</p>
+    <h1>List tonight's surplus</h1>
+    <p class="sub">Create a vendor account to post end-of-day items, set pickup windows, and manage reservations. Cash is collected directly from customers at pickup.</p>
+
+    <div class="form-msg error" id="formMsg"></div>
+
+    <form id="signupForm">
+      <div class="field">
+        <label for="businessName">Business name</label>
+        <input type="text" id="businessName" required placeholder="e.g. Al Zubara Bakery">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="category">Category</label>
+          <select id="category" required>
+            <option value="">Select…</option>
+            <option>Bakery</option>
+            <option>Café</option>
+            <option>Restaurant</option>
+            <option>Patisserie</option>
+            <option>Grocery</option>
+            <option>Hotel</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="area">Area</label>
+          <input type="text" id="area" required placeholder="e.g. Al Sadd">
+        </div>
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" required placeholder="you@business.qa">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" required minlength="6" placeholder="At least 6 characters">
+      </div>
+      <button type="submit" class="btn btn-teal btn-block">Create vendor account</button>
+      <p class="hint" style="margin-top:14px;">New accounts start as <strong>pending verification</strong>. Commercial Registration and food-license checks are coming soon — for now your listings are visible once approved.</p>
+    </form>
+    <p class="auth-switch">Already have an account? <a href="vendor-login.html">Log in</a></p>
+  </div>
+</div>
+
+<script src="js/store.js"></script>
+<script>
+  const form = document.getElementById('signupForm');
+  const msg = document.getElementById('formMsg');
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const businessName = document.getElementById('businessName').value.trim();
+    const category = document.getElementById('category').value;
+    const area = document.getElementById('area').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    if(Store.findVendorByEmail(email)){
+      msg.textContent = 'An account with this email already exists. Try logging in instead.';
+      msg.className = 'form-msg error show';
+      return;
+    }
+
+    const vendor = Store.createVendor({ businessName, category, area, email, password });
+    Store.setSession(vendor.id);
+    window.location.href = 'vendor-dashboard.html';
+  });
+</script>
+</body>
+</html>

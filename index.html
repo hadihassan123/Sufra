@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sufra — Doha's End-of-Day Food Marketplace</title>
+<meta name="description" content="Reserve guaranteed surplus food from Doha restaurants, bakeries, and cafés at a real discount. Pick up before closing.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a href="index.html" class="brand">Sufra <small>The Spread</small></a>
+    <nav class="nav-links">
+      <a href="#browse">Browse</a>
+      <a href="#pickups">Your pickups</a>
+      <a href="vendor-signup.html" class="nav-cta">List your surplus</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <p class="hero-eyebrow">Doha · Guaranteed items, real discounts</p>
+      <h1>What's left on the pass<br>doesn't have to go <em>to waste.</em></h1>
+      <p class="lede">Restaurants, bakeries, and cafés across Doha list their end-of-day surplus here — exact items, exact price, no surprise bags. Reserve online, pay cash at pickup.</p>
+      <div class="hero-actions">
+        <a href="#browse" class="btn btn-amber">Browse tonight's listings</a>
+        <a href="vendor-signup.html" class="btn btn-ghost" style="color:#F6F1E3; border-color:rgba(246,241,227,0.3);">I run a food business</a>
+      </div>
+    </div>
+    <div class="dial-card">
+      <div class="dial-label"><span>Doha time</span><span id="clockText">--:--</span></div>
+      <svg class="dial-svg" id="dialSvg" viewBox="0 0 240 240"></svg>
+      <p class="dial-status" id="dialStatus">Checking the pass…<span id="dialSub"></span></p>
+    </div>
+  </div>
+</section>
+
+<main>
+  <section class="section" id="browse">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>Tonight's surplus</h2>
+          <p>Every listing shows the real item and a guaranteed discount — what you see is what you collect.</p>
+        </div>
+      </div>
+      <div class="filter-bar" id="filterBar">
+        <button class="filter-chip active" data-filter="all">All</button>
+        <button class="filter-chip" data-filter="Bakery">Bakery</button>
+        <button class="filter-chip" data-filter="Café">Café</button>
+        <button class="filter-chip" data-filter="Restaurant">Restaurant</button>
+        <button class="filter-chip" data-filter="Patisserie">Patisserie</button>
+      </div>
+      <div class="listing-grid" id="listingGrid"></div>
+    </div>
+  </section>
+
+  <section class="section" id="how" style="background:#fff; border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+    <div class="wrap">
+      <div class="section-head"><div><h2>How pickup works</h2></div></div>
+      <div class="how-grid">
+        <div class="how-card">
+          <p class="how-mark">Browse &amp; reserve</p>
+          <h3>Pick a listing, reserve a slot</h3>
+          <p>Every item is exact — no surprise boxes. Enter your name and phone to hold it for the pickup window.</p>
+        </div>
+        <div class="how-card">
+          <p class="how-mark">Get your code</p>
+          <h3>Save your 6-character pickup code</h3>
+          <p>Your reservation is confirmed instantly with a code the vendor scans or checks at the counter.</p>
+        </div>
+        <div class="how-card">
+          <p class="how-mark">Collect &amp; pay</p>
+          <h3>Show up, pay cash, take your food</h3>
+          <p>Arrive during the pickup window, hand over your code, and pay the vendor directly in cash.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="pickups">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>Your pickups</h2>
+          <p>Look up reservations tied to your phone number on this device.</p>
+        </div>
+      </div>
+      <div class="pickups-panel">
+        <div class="pickup-lookup">
+          <input type="tel" id="lookupPhone" placeholder="Enter your phone number, e.g. 5512 3456">
+          <button class="btn btn-ink" id="lookupBtn">Find my pickups</button>
+        </div>
+        <div id="pickupList"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <a href="index.html" class="brand">Sufra <small>The Spread</small></a>
+    <p>Sufra facilitates reservations between customers and independent food vendors in Doha. Payment for cash orders happens directly between you and the vendor.</p>
+  </div>
+</footer>
+
+<!-- Reserve modal -->
+<div class="modal-overlay" id="reserveOverlay">
+  <div class="modal-box form-modal" id="reserveModal">
+    <button class="close-x" data-close>&times;</button>
+    <p class="hero-eyebrow" style="color:var(--teal-deep);">Reserve for pickup</p>
+    <h2 id="reserveItemName">Item name</h2>
+    <p class="ticket-desc" id="reserveItemMeta" style="margin-bottom:20px;"></p>
+    <form id="reserveForm">
+      <div class="field">
+        <label for="custName">Your name</label>
+        <input type="text" id="custName" required placeholder="Full name">
+      </div>
+      <div class="field">
+        <label for="custPhone">Phone number</label>
+        <input type="tel" id="custPhone" required placeholder="5512 3456">
+        <p class="hint">Used only to look up your pickups later and confirm at collection.</p>
+      </div>
+      <button type="submit" class="btn btn-amber btn-block">Reserve — pay cash at pickup</button>
+    </form>
+  </div>
+</div>
+
+<!-- Confirmation modal -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal-box confirm" id="confirmModal">
+    <button class="close-x" data-close>&times;</button>
+    <div class="stamp">✓</div>
+    <h2>Reserved</h2>
+    <p class="code-note">Show this code at the counter during your pickup window.</p>
+    <div class="code-display" id="confirmCode">------</div>
+    <p class="code-note" id="confirmWindow"></p>
+    <button class="btn btn-ink btn-block" data-close>Done</button>
+  </div>
+</div>
+
+<script src="js/store.js"></script>
+<script src="js/customer.js"></script>
+</body>
+</html>
