@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>List your surplus — Sufra</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a href="index.html" class="brand">Sufra <small>The Spread</small></a>
+    <nav class="nav-links">
+      <a href="index.html">Browse</a>
+      <a href="vendor-login.html">Vendor login</a>
+    </nav>
+  </div>
+</header>
+
+<div class="auth-shell">
+  <div class="auth-card">
+    <p class="eyebrow">For food businesses</p>
+    <h1>List tonight's surplus</h1>
+    <p class="sub">Create a vendor account to post end-of-day items, set pickup windows, and manage reservations. Cash is collected directly from customers at pickup.</p>
+
+    <div class="form-msg" id="formMsg"></div>
+
+    <form id="signupForm">
+      <div class="field">
+        <label for="businessName">Business name</label>
+        <input type="text" id="businessName" required placeholder="e.g. Al Zubara Bakery">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="category">Category</label>
+          <select id="category" required>
+            <option value="">Select…</option>
+            <option>Bakery</option>
+            <option>Café</option>
+            <option>Restaurant</option>
+            <option>Patisserie</option>
+            <option>Grocery</option>
+            <option>Hotel</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="area">Area</label>
+          <input type="text" id="area" required placeholder="e.g. Al Sadd">
+        </div>
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" required placeholder="you@business.qa">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" required minlength="6" placeholder="At least 6 characters">
+      </div>
+      <button type="submit" class="btn btn-teal btn-block" id="submitBtn">Create vendor account</button>
+      <p class="hint" style="margin-top:14px;">New accounts start as <strong>pending verification</strong>. Commercial Registration and food-license checks are done manually — your listings go live once approved.</p>
+    </form>
+    <p class="auth-switch">Already have an account? <a href="vendor-login.html">Log in</a></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/store.js"></script>
+<script>
+  const form = document.getElementById('signupForm');
+  const msg = document.getElementById('formMsg');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+
+    const businessName = document.getElementById('businessName').value.trim();
+    const category = document.getElementById('category').value;
+    const area = document.getElementById('area').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    try{
+      const result = await Store.signUpVendor({ email, password, businessName, category, area });
+      if(result.needsConfirmation){
+        msg.textContent = 'Check your email to confirm your account, then log in.';
+        msg.className = 'form-msg success show';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Check your email';
+      } else {
+        window.location.href = 'vendor-dashboard.html';
+      }
+    }catch(err){
+      msg.textContent = err.message || 'Something went wrong. Please try again.';
+      msg.className = 'form-msg error show';
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Sufra</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a href="index.html" class="brand">Sufra <small>Admin</small></a>
+    <nav class="nav-links">
+      <a href="index.html">View site</a>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn" style="display:none;">Log out</button>
+    </nav>
+  </div>
+</header>
+
+<!-- passcode gate -->
+<div class="auth-shell" id="gateShell">
+  <div class="auth-card">
+    <p class="eyebrow">Restricted</p>
+    <h1>Admin access</h1>
+    <p class="sub">Enter the admin passcode to review pending vendor accounts. The passcode is checked in the database itself — it's never stored in this page or in git.</p>
+    <div class="form-msg error" id="gateMsg"></div>
+    <form id="gateForm">
+      <div class="field">
+        <label for="passcode">Passcode</label>
+        <input type="password" id="passcode" required placeholder="Admin passcode">
+      </div>
+      <button type="submit" class="btn btn-ink btn-block">Enter</button>
+    </form>
+  </div>
+</div>
+
+<!-- admin dashboard -->
+<main class="wrap" id="adminMain" style="display:none; padding-top:36px; padding-bottom:60px;">
+  <div class="dash-head">
+    <div><h1 style="font-family:var(--f-display); font-size:1.6rem;">Vendor approvals</h1>
+    <p style="color:rgba(36,31,26,0.6);">Approve vendors after manually checking their Commercial Registration, MOPH food license, and Municipality trade license.</p></div>
+  </div>
+
+  <div class="section-head" style="margin-top:10px;"><h2 style="font-size:1.15rem;">Pending</h2></div>
+  <table class="data-table" style="margin-bottom:36px;">
+    <thead><tr><th>Business</th><th>Category</th><th>Area</th><th></th></tr></thead>
+    <tbody id="pendingBody"></tbody>
+  </table>
+
+  <div class="section-head"><h2 style="font-size:1.15rem;">Verified</h2></div>
+  <table class="data-table">
+    <thead><tr><th>Business</th><th>Category</th><th>Area</th><th></th></tr></thead>
+    <tbody id="verifiedBody"></tbody>
+  </table>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/store.js"></script>
+<script>
+  const gateShell = document.getElementById('gateShell');
+  const adminMain = document.getElementById('adminMain');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  function getPasscode(){ return sessionStorage.getItem('sufra_admin_passcode'); }
+
+  async function showAdmin(){
+    gateShell.style.display = 'none';
+    adminMain.style.display = 'block';
+    logoutBtn.style.display = 'inline-flex';
+    await renderTables();
+  }
+
+  if(getPasscode()) showAdmin();
+
+  document.getElementById('gateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const val = document.getElementById('passcode').value;
+    // Not validated here — the first approve/revoke action confirms it against the database.
+    sessionStorage.setItem('sufra_admin_passcode', val);
+    await showAdmin();
+  });
+
+  logoutBtn.addEventListener('click', () => {
+    sessionStorage.removeItem('sufra_admin_passcode');
+    window.location.reload();
+  });
+
+  function vendorRow(v, actionHtml){
+    return `<tr>
+      <td><strong>${v.business_name}</strong></td>
+      <td>${v.category}</td>
+      <td>${v.area}</td>
+      <td>${actionHtml}</td>
+    </tr>`;
+  }
+
+  async function renderTables(){
+    let vendors;
+    try{
+      vendors = await Store.getAllVendors();
+    }catch(err){
+      adminMain.innerHTML = `<div class="form-msg error show">Could not load vendors: ${err.message}</div>`;
+      return;
+    }
+    const pending = vendors.filter(v => v.verification_status === 'pending');
+    const verified = vendors.filter(v => v.verification_status === 'verified');
+
+    document.getElementById('pendingBody').innerHTML = pending.length
+      ? pending.map(v => vendorRow(v, `<button class="btn btn-teal btn-sm" data-approve="${v.id}">Approve</button>`)).join('')
+      : `<tr><td colspan="4">No pending vendors.</td></tr>`;
+
+    document.getElementById('verifiedBody').innerHTML = verified.length
+      ? verified.map(v => vendorRow(v, `<button class="icon-btn" data-revoke="${v.id}">Revoke</button>`)).join('')
+      : `<tr><td colspan="4">No verified vendors yet.</td></tr>`;
+  }
+
+  adminMain.addEventListener('click', async (e) => {
+    const approve = e.target.closest('[data-approve]');
+    const revoke = e.target.closest('[data-revoke]');
+    if(!approve && !revoke) return;
+
+    const passcode = getPasscode();
+    try{
+      const ok = approve
+        ? await Store.approveVendor(approve.dataset.approve, passcode)
+        : await Store.revokeVendor(revoke.dataset.revoke, passcode);
+
+      if(!ok){
+        alert('Incorrect passcode.');
+        sessionStorage.removeItem('sufra_admin_passcode');
+        window.location.reload();
+        return;
+      }
+      renderTables();
+    }catch(err){
+      alert('Action failed: ' + err.message);
+    }
+  });
+</script>
+</body>
+</html>

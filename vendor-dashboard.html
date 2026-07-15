@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vendor dashboard — Sufra</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a href="index.html" class="brand">Sufra <small>The Spread</small></a>
+    <nav class="nav-links">
+      <a href="index.html">View site</a>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn">Log out</button>
+    </nav>
+  </div>
+</header>
+
+<div class="dash-shell">
+  <aside class="dash-side">
+    <p class="vendor-name" id="sideVendorName">—</p>
+    <p class="vendor-status" id="sideVendorStatus">—</p>
+    <nav class="dash-nav">
+      <button data-view="overview" class="active">Overview</button>
+      <button data-view="listings">Listings</button>
+      <button data-view="post">Post new item</button>
+      <button data-view="pickup">Verify pickup</button>
+      <button data-view="reservations">Reservations</button>
+    </nav>
+  </aside>
+
+  <main class="dash-main">
+
+    <section class="dash-view active" id="view-overview">
+      <div class="dash-head">
+        <div><h1>Overview</h1><p>How your listings are performing today.</p></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="num" id="statActive">0</div><div class="lbl">Active listings</div></div>
+        <div class="stat-card"><div class="num" id="statReserved">0</div><div class="lbl">Reserved, awaiting pickup</div></div>
+        <div class="stat-card"><div class="num" id="statCollected">0</div><div class="lbl">Collected today</div></div>
+      </div>
+      <div id="verifyBadgeNotice"></div>
+    </section>
+
+    <section class="dash-view" id="view-listings">
+      <div class="dash-head">
+        <div><h1>Listings</h1><p>Adjust remaining stock or remove sold-out items.</p></div>
+        <button class="btn btn-teal btn-sm" data-goto="post">+ Post new item</button>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Item</th><th>Price</th><th>Stock</th><th>Pickup window</th><th></th></tr></thead>
+        <tbody id="listingsTableBody"></tbody>
+      </table>
+    </section>
+
+    <section class="dash-view" id="view-post">
+      <div class="dash-head">
+        <div><h1>Post new item</h1><p>List today's surplus with a guaranteed discount and pickup window.</p></div>
+      </div>
+      <div style="max-width:560px;">
+        <div class="form-msg success" id="postMsg"></div>
+        <form id="postForm">
+          <div class="field">
+            <label for="itemName">Item name</label>
+            <input type="text" id="itemName" required placeholder="e.g. Manakeesh Bundle (6pc)">
+          </div>
+          <div class="field">
+            <label for="description">Description</label>
+            <textarea id="description" rows="2" required placeholder="What's in it, made when"></textarea>
+          </div>
+          <div class="field">
+            <label for="postCategory">Category</label>
+            <select id="postCategory" required>
+              <option value="">Select…</option>
+              <option>Bakery</option><option>Café</option><option>Restaurant</option>
+              <option>Patisserie</option><option>Grocery</option><option>Hotel</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="originalPrice">Original price (QAR)</label>
+              <input type="number" id="originalPrice" required min="1" step="0.5">
+            </div>
+            <div class="field">
+              <label for="discountedPrice">Discounted price (QAR)</label>
+              <input type="number" id="discountedPrice" required min="1" step="0.5">
+            </div>
+          </div>
+          <div class="field">
+            <label for="quantity">Quantity available</label>
+            <input type="number" id="quantity" required min="1" step="1">
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="pickupStart">Pickup start</label>
+              <input type="time" id="pickupStart" required>
+            </div>
+            <div class="field">
+              <label for="pickupEnd">Pickup end</label>
+              <input type="time" id="pickupEnd" required>
+            </div>
+          </div>
+          <div class="field">
+            <label>Payment</label>
+            <input type="text" value="Cash at pickup" disabled>
+            <p class="hint">Online payment via SkipCash is coming soon — all listings are cash-at-pickup for now.</p>
+          </div>
+          <button type="submit" class="btn btn-amber btn-block">Post listing</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="dash-view" id="view-pickup">
+      <div class="dash-head">
+        <div><h1>Verify pickup</h1><p>Enter the customer's 6-character code to confirm and mark as collected.</p></div>
+      </div>
+      <div style="max-width:480px;">
+        <div class="verify-code-form">
+          <input type="text" id="verifyCodeInput" maxlength="6" placeholder="e.g. 7HXQ2M">
+          <button class="btn btn-ink" id="verifyBtn">Check code</button>
+        </div>
+        <div id="verifyResult"></div>
+      </div>
+    </section>
+
+    <section class="dash-view" id="view-reservations">
+      <div class="dash-head">
+        <div><h1>Reservations</h1><p>All reservations across your listings.</p></div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Code</th><th>Item</th><th>Customer</th><th>Window</th><th>Status</th></tr></thead>
+        <tbody id="reservationsTableBody"></tbody>
+      </table>
+    </section>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/store.js"></script>
+<script src="js/vendor.js"></script>
+</body>
+</html>
