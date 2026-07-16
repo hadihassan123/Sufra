@@ -1,5 +1,19 @@
 (async () => {
-  const session = await Store.getSession();
+  // Use onAuthStateChange rather than a one-off getSession() call — on a fresh
+  // full page load (this site reloads the whole page on every navigation,
+  // it's not a single-page app), getSession() can occasionally be called
+  // before the client has finished reading/validating the stored session.
+  // Listening for the initial auth event avoids that race.
+  function waitForSession(){
+    return new Promise((resolve) => {
+      const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
+        subscription.unsubscribe();
+        resolve(session);
+      });
+    });
+  }
+
+  const session = await waitForSession();
   if(!session){ window.location.href = 'vendor-login.html'; return; }
 
   const vendor = await Store.getVendorProfile(session.user.id);
