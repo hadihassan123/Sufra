@@ -11,21 +11,17 @@ const Store = (() => {
 
   // ---- auth / vendor identity ----
   async function signUpVendor({ email, password, businessName, category, area }){
-    const { data, error } = await sb.auth.signUp({ email, password });
-    if(error) throw error;
-    if(!data.session){
-      // Email confirmation is likely still enabled on this project.
-      return { needsConfirmation: true };
-    }
-    await ensureVendorProfile(data.user.id, { businessName, category, area });
-    return { needsConfirmation: false };
-  }
-
-  async function ensureVendorProfile(userId, { businessName, category, area }){
-    const { error } = await sb.from('vendors').insert({
-      id: userId, business_name: businessName, category, area
+    const { data, error } = await sb.auth.signUp({
+      email, password,
+      options: {
+        data: { business_name: businessName, category, area }
+      }
     });
-    if(error && error.code !== '23505') throw error; // 23505 = already exists, ignore
+    if(error) throw error;
+    // The vendors row is created server-side by a database trigger reading
+    // this metadata (see supabase/vendor_signup_trigger.sql) — it exists
+    // immediately, whether or not email confirmation is required.
+    return { needsConfirmation: !data.session };
   }
 
   async function signInVendor({ email, password }){
@@ -161,7 +157,7 @@ const Store = (() => {
   }
 
   return {
-    signUpVendor, ensureVendorProfile, signInVendor, signOutVendor, getSession, getVendorProfile,
+    signUpVendor, signInVendor, signOutVendor, getSession, getVendorProfile,
     getActiveListings, getListing, getListingsByVendor, createListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode, markCollected, getReservationsByVendor,
     getAllVendors, approveVendor, revokeVendor
