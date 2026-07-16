@@ -187,7 +187,7 @@
 
   const SURPLUS_WINDOWS = [
     { startHour: 15, endHour: 16.5, label: 'Lunch-service surplus' },
-    { startHour: 19, endHour: 22, label: 'Closing-time surplus' }
+    { startHour: 22, endHour: 24, label: 'Closing-time surplus' }
   ];
 
   function angleForHour(h){ return (h / 12) * 360; }
