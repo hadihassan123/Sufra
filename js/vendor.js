@@ -16,30 +16,6 @@
     return new Date(iso).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
   }
 
-  function pad(n){
-    return String(n).padStart(2, '0');
-  }
-
-  function getCurrentSurplusWindow(){
-    const now = new Date();
-    const currentHour = now.getHours();
-
-    return SURPLUS_WINDOWS.find(w =>
-      currentHour >= w.startHour &&
-      currentHour < w.endHour
-    ) || SURPLUS_WINDOWS[0];
-  }
-
-  function populatePickupWindow(){
-    const window = getCurrentSurplusWindow();
-
-    document.getElementById('pickupStart').value =
-      `${pad(window.startHour)}:00`;
-
-    document.getElementById('pickupEnd').value =
-      `${pad(window.endHour)}:00`;
-  }
-
   let cachedListings = [];
 
   // ---- sidebar identity ----
@@ -323,6 +299,5 @@
     btn.disabled = false;
   });
 
-  populatePickupWindow();
   renderOverview();
 })();
