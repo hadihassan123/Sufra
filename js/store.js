@@ -34,6 +34,18 @@ const Store = (() => {
     await sb.auth.signOut();
   }
 
+  async function requestPasswordReset(email){
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/vendor-reset-password.html'
+    });
+    if(error) throw error;
+  }
+
+  async function updatePassword(newPassword){
+    const { error } = await sb.auth.updateUser({ password: newPassword });
+    if(error) throw error;
+  }
+
   async function getSession(){
     const { data } = await sb.auth.getSession();
     return data.session;
@@ -157,7 +169,7 @@ const Store = (() => {
   }
 
   return {
-    signUpVendor, signInVendor, signOutVendor, getSession, getVendorProfile,
+    signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,
     getActiveListings, getListing, getListingsByVendor, createListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode, markCollected, getReservationsByVendor,
     getAllVendors, approveVendor, revokeVendor
