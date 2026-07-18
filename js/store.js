@@ -57,6 +57,42 @@ const Store = (() => {
     return data;
   }
 
+  // ---- vendor verification documents ----
+  const DOC_COLUMNS = {
+    cr: 'cr_document_path',
+    moph: 'moph_document_path',
+    municipality: 'municipality_document_path'
+  };
+
+  async function uploadVendorDocument(vendorId, docType, file){
+    const column = DOC_COLUMNS[docType];
+    if(!column) throw new Error('Unknown document type: ' + docType);
+
+    const ext = file.name.split('.').pop();
+    const path = `${vendorId}/${docType}-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await sb.storage
+      .from('vendor-documents')
+      .upload(path, file, { upsert: false });
+    if(uploadError) throw uploadError;
+
+    const { error: updateError } = await sb
+      .from('vendors')
+      .update({ [column]: path, documents_submitted_at: new Date().toISOString() })
+      .eq('id', vendorId);
+    if(updateError) throw updateError;
+
+    return path;
+  }
+
+  async function getVendorDocumentUrl(path){
+    const { data, error } = await sb.storage
+      .from('vendor-documents')
+      .createSignedUrl(path, 300); // 5 minutes
+    if(error) throw error;
+    return data.signedUrl;
+  }
+
   // ---- listings ----
   async function getActiveListings(){
     const { data, error } = await sb
@@ -170,6 +206,7 @@ const Store = (() => {
 
   return {
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,
+    uploadVendorDocument, getVendorDocumentUrl,
     getActiveListings, getListing, getListingsByVendor, createListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode, markCollected, getReservationsByVendor,
     getAllVendors, approveVendor, revokeVendor

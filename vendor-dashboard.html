@@ -26,6 +26,7 @@
       <button data-view="overview" class="active">Overview</button>
       <button data-view="listings">Listings</button>
       <button data-view="post">Post new item</button>
+      <button data-view="documents">Verification documents</button>
       <button data-view="pickup">Verify pickup</button>
       <button data-view="reservations">Reservations</button>
     </nav>
@@ -111,6 +112,13 @@
           <button type="submit" class="btn btn-amber btn-block">Post listing</button>
         </form>
       </div>
+    </section>
+
+    <section class="dash-view" id="view-documents">
+      <div class="dash-head">
+        <div><h1>Verification documents</h1><p>Upload these so an admin can confirm your business before your listings go live. PDF, JPG, or PNG, up to 10MB each.</p></div>
+      </div>
+      <div style="max-width:560px; display:flex; flex-direction:column; gap:16px;" id="documentsList"></div>
     </section>
 
     <section class="dash-view" id="view-pickup">
