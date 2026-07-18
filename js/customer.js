@@ -185,10 +185,7 @@
   const dialStatus = document.getElementById('dialStatus');
   const dialSub = document.getElementById('dialSub');
 
-  const SURPLUS_WINDOWS = [
-    { startHour: 15, endHour: 17, label: 'Lunch-service surplus' },
-    { startHour: 22, endHour: 24, label: 'Closing-time surplus' }
-  ];
+  const SURPLUS_WINDOWS = Store.SURPLUS_WINDOWS;
 
   function angleForHour(h){ return (h / 12) * 360; }
   function polar(cx, cy, r, angleDeg){
@@ -227,8 +224,6 @@
     const h12 = now.getHours() % 12 + now.getMinutes()/60;
     const m = now.getMinutes() + now.getSeconds()/60;
     const cx = 120, cy = 120;
-    const s = now.getSeconds();
-    const secTip = polar(cx, cy, 86, (s / 60) * 360);
 
     const hourTip = polar(cx, cy, 52, angleForHour(h12));
     const minTip = polar(cx, cy, 76, (m/60) * 360);
@@ -246,20 +241,8 @@
     minLine.setAttribute('class','hand');
     minLine.setAttribute('x1', cx); minLine.setAttribute('y1', cy);
     minLine.setAttribute('x2', minTip.x); minLine.setAttribute('y2', minTip.y);
-    minLine.setAttribute('stroke', '#F6F1E3'); minLine.setAttribute('stroke-width', '2.5'); minLine.setAttribute('stroke-linecap','round');
+    minLine.setAttribute('stroke', '#E8A33D'); minLine.setAttribute('stroke-width', '2.5'); minLine.setAttribute('stroke-linecap','round');
     dialSvg.appendChild(minLine);
-
-    const secLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    secLine.setAttribute('class', 'hand');
-    secLine.setAttribute('x1', cx);
-    secLine.setAttribute('y1', cy);
-    secLine.setAttribute('x2', secTip.x);
-    secLine.setAttribute('y2', secTip.y);
-    secLine.setAttribute('stroke', '#E8A33D');   // Yellow
-    secLine.setAttribute('stroke-width', '1.5');
-    secLine.setAttribute('stroke-linecap', 'round');
-
-    dialSvg.appendChild(secLine);
 
     clockText.textContent = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
 
@@ -279,25 +262,12 @@
   }
 
   // ---- vendor nav state ----
-  // Same page-load timing consideration as vendor-dashboard.html:
-  // wait for the auth event rather than a one-off getSession() call.
-  function waitForSession(){
-    return new Promise((resolve) => {
-      const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
-        subscription.unsubscribe();
-        resolve(session);
-      });
-    });
-  }
-
   (async () => {
-    const session = await waitForSession();
+    const session = await Store.getSession();
     if(session){
       const link = document.getElementById('vendorNavLink');
       link.href = 'vendor-dashboard.html';
       link.textContent = 'Vendor dashboard';
-      const loginLink = document.getElementById('vendorLoginNavLink');
-      if(loginLink) loginLink.style.display = 'none';
     }
   })();
 

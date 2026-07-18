@@ -2,6 +2,13 @@
    Requires js/supabase-client.js loaded first (defines `sb`). */
 
 const Store = (() => {
+  // Shared surplus windows — used by the homepage time dial (customer.js)
+  // and to auto-fill the vendor's pickup start time (vendor.js).
+  const SURPLUS_WINDOWS = [
+    { startHour: 15, endHour: 16.5, label: 'Lunch-service surplus' },
+    { startHour: 19, endHour: 22, label: 'Closing-time surplus' }
+  ];
+
   function pickupCode(){
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
     let out = '';
@@ -205,6 +212,7 @@ const Store = (() => {
   }
 
   return {
+    SURPLUS_WINDOWS,
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,
     uploadVendorDocument, getVendorDocumentUrl,
     getActiveListings, getListing, getListingsByVendor, createListing, updateListingQty, removeListing,

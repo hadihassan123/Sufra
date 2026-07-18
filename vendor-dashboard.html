@@ -26,6 +26,7 @@
       <button data-view="overview" class="active">Overview</button>
       <button data-view="listings">Listings</button>
       <button data-view="post">Post new item</button>
+      <button data-view="payment">Payment settings</button>
       <button data-view="documents">Verification documents</button>
       <button data-view="pickup">Verify pickup</button>
       <button data-view="reservations">Reservations</button>
@@ -111,6 +112,54 @@
           </div>
           <button type="submit" class="btn btn-amber btn-block">Post listing</button>
         </form>
+      </div>
+    </section>
+
+    <section class="dash-view" id="view-payment">
+      <div class="dash-head">
+        <div><h1>Payment settings</h1><p>Choose how customers pay for your listings. Cash at pickup always works with no setup — card payment is optional and uses your own SkipCash account, never Sufra's.</p></div>
+      </div>
+      <div style="max-width:560px;">
+        <div class="form-msg" id="paymentMsg"></div>
+
+        <div class="doc-card" style="margin-bottom:20px;">
+          <div class="doc-info">
+            <h3>Cash at pickup</h3>
+            <p>Always available — no setup needed.</p>
+          </div>
+          <span class="doc-status-pill doc-status-uploaded">Active</span>
+        </div>
+
+        <div class="doc-card" style="margin-bottom:20px;" id="cardStatusCard">
+          <div class="doc-info">
+            <h3>Card payment via SkipCash</h3>
+            <p id="cardStatusText">Not connected</p>
+          </div>
+          <span class="doc-status-pill doc-status-missing" id="cardStatusPill">Off</span>
+        </div>
+
+        <form id="skipcashForm">
+          <div class="field">
+            <label for="skipcashClientId">SkipCash Client ID</label>
+            <input type="text" id="skipcashClientId" placeholder="From your SkipCash merchant portal">
+          </div>
+          <div class="field">
+            <label for="skipcashKeyId">SkipCash Key ID</label>
+            <input type="text" id="skipcashKeyId" placeholder="From your SkipCash merchant portal">
+          </div>
+          <div class="field">
+            <label for="skipcashKeySecret">SkipCash Key Secret</label>
+            <input type="password" id="skipcashKeySecret" placeholder="Kept write-only — you won't be able to view this again">
+          </div>
+          <div class="field">
+            <label for="skipcashWebhookSecret">SkipCash Webhook Secret</label>
+            <input type="password" id="skipcashWebhookSecret" placeholder="From your SkipCash Sandbox/Production credentials page">
+          </div>
+          <button type="submit" class="btn btn-teal btn-block">Save and enable card payment</button>
+          <p class="hint" style="margin-top:12px;">These are stored so only Sufra's server-side payment function can read them — never visible in your dashboard again, and never sent to the browser.</p>
+        </form>
+
+        <button class="btn btn-ghost btn-block" id="disableCardBtn" style="margin-top:14px;">Turn off card payment</button>
       </div>
     </section>
 

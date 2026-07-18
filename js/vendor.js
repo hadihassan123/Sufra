@@ -45,9 +45,37 @@
     if(name === 'overview') renderOverview();
     if(name === 'reservations') renderReservationsTable();
     if(name === 'documents') renderDocuments();
+    if(name === 'post'){
+      const pickupStartInput = document.getElementById('pickupStart');
+      if(!pickupStartInput.value){
+        pickupStartInput.value = computeDefaultPickupStart();
+      }
+    }
   }
   navButtons.forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
   document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => showView(b.dataset.goto)));
+
+  // ---- auto-fill pickup start ----
+  // If a surplus window is live right now, default to the current time.
+  // Otherwise default to the start of the next upcoming window today
+  // (e.g. posting at 1pm defaults to 3pm; posting at 5pm — between the
+  // lunch and closing windows — defaults to 7pm; posting at 8pm, which
+  // is inside the closing window, defaults to the current time, 8pm).
+  function computeDefaultPickupStart(){
+    const now = new Date();
+    const hourNow = now.getHours() + now.getMinutes() / 60;
+    const windows = Store.SURPLUS_WINDOWS;
+
+    const liveWindow = windows.find(w => hourNow >= w.startHour && hourNow < w.endHour);
+    if(liveWindow){
+      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+
+    const next = windows.find(w => w.startHour > hourNow) || windows[0];
+    const h = Math.floor(next.startHour);
+    const m = Math.round((next.startHour % 1) * 60);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
 
   // ---- overview ----
   async function renderOverview(){
