@@ -185,10 +185,10 @@
   const dialStatus = document.getElementById('dialStatus');
   const dialSub = document.getElementById('dialSub');
 
- // const SURPLUS_WINDOWS = [
- //   { startHour: 15, endHour: 17, label: 'Lunch-service surplus' },
-  //  { startHour: 22, endHour: 24, label: 'Closing-time surplus' }
-  //];
+  const SURPLUS_WINDOWS = [
+    { startHour: 15, endHour: 17, label: 'Lunch-service surplus' },
+    { startHour: 22, endHour: 24, label: 'Closing-time surplus' }
+  ];
 
   function angleForHour(h){ return (h / 12) * 360; }
   function polar(cx, cy, r, angleDeg){
