@@ -6,7 +6,7 @@ const Store = (() => {
   // and to auto-fill the vendor's pickup start time (vendor.js).
   const SURPLUS_WINDOWS = [
     { startHour: 15, endHour: 16.5, label: 'Lunch-service surplus' },
-    { startHour: 19, endHour: 22, label: 'Closing-time surplus' }
+    { startHour: 22, endHour: 24, label: 'Closing-time surplus' }
   ];
 
   function pickupCode(){
