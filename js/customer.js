@@ -227,6 +227,7 @@
 
     const hourTip = polar(cx, cy, 52, angleForHour(h12));
     const minTip = polar(cx, cy, 76, (m/60) * 360);
+    const secTip = polar(cx, cy, 84, (now.getSeconds()/60) * 360);
 
     dialSvg.querySelectorAll('.hand').forEach(el => el.remove());
 
