@@ -136,7 +136,7 @@ const Store = (() => {
   async function getActiveListings(){
     const { data, error } = await sb
       .from('listings')
-      .select('*, vendors(business_name, logo_url)')
+      .select('*, vendors(business_name, logo_url, verification_status)')
       .eq('status', 'active')
       .order('pickup_start', { ascending: true });
     if(error) throw error;
@@ -145,7 +145,7 @@ const Store = (() => {
 
   async function getListing(id){
     const { data, error } = await sb
-      .from('listings').select('*, vendors(business_name, logo_url)').eq('id', id).maybeSingle();
+      .from('listings').select('*, vendors(business_name, logo_url, verification_status)').eq('id', id).maybeSingle();
     if(error) throw error;
     return data;
   }

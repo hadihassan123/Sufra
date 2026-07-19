@@ -35,6 +35,7 @@
       const soldOut = l.quantity_left <= 0;
       const vendorName = l.vendors ? l.vendors.business_name : '';
       const logoUrl = l.vendors ? l.vendors.logo_url : null;
+      const isVerified = l.vendors && l.vendors.verification_status === 'verified';
       const image = l.image_url || 'images/food-placeholder.jpg';
       return `
       <div class="ticket-card">
@@ -46,6 +47,7 @@
               <span class="ticket-vendor">
                 ${logoUrl ? `<img class="ticket-vendor-logo" src="${logoUrl}" alt="">` : ''}
                 ${vendorName}
+                ${isVerified ? `<span class="verified-badge" title="Verified vendor">✓ Verified</span>` : ''}
               </span>
               <span class="discount-badge">${pct(l.original_price, l.discounted_price)}% off</span>
             </div>
