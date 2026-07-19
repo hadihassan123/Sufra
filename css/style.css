@@ -50,7 +50,8 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .site-header .wrap{
   display:flex; align-items:center; justify-content:space-between;
-  height:72px;
+  flex-wrap:wrap; gap:8px 16px;
+  min-height:72px; padding-top:10px; padding-bottom:10px;
 }
 .brand{
   display:flex; align-items:baseline; gap:9px;
@@ -62,7 +63,7 @@ button{ font-family:inherit; cursor:pointer; }
   font-family:var(--f-mono); font-weight:400; font-size:0.62rem;
   letter-spacing:0.14em; text-transform:uppercase; color:var(--teal);
 }
-.nav-links{ display:flex; align-items:center; gap:28px; font-size:0.92rem; font-weight:500; }
+.nav-links{ display:flex; align-items:center; gap:28px; font-size:0.92rem; font-weight:500; flex-wrap:wrap; }
 .nav-links a{ text-decoration:none; color:var(--charcoal); opacity:0.75; transition:opacity .15s; }
 .nav-links a:hover{ opacity:1; }
 .nav-cta{
@@ -360,17 +361,26 @@ table.data-table tr:last-child td{ border-bottom:none; }
 @media (max-width: 860px){
   .hero .wrap{ grid-template-columns:1fr; }
   .dash-shell{ grid-template-columns:1fr; }
-  .dash-side{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; }
-  .dash-nav{ flex-direction:row; }
+  .dash-side{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; flex-wrap:wrap; gap:10px; }
+  .dash-nav{ flex-direction:row; overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; width:100%; }
+  .dash-nav button{ flex-shrink:0; white-space:nowrap; }
   .dash-main{ padding:24px 20px; }
   .how-grid{ grid-template-columns:1fr; }
   .stat-row{ grid-template-columns:1fr; }
   .field-row{ grid-template-columns:1fr; }
   .nav-links{ gap:14px; }
+  table.data-table{ display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
 }
 @media (max-width: 560px){
   .ticket{ flex-direction:column; }
   .ticket-stub{ width:auto; border-left:none; border-top:2px dashed rgba(36,31,26,0.28); flex-direction:row; justify-content:space-between; padding:14px 18px; }
   .ticket-stub::before, .ticket-stub::after{ display:none; }
   .ticket-stub .btn{ width:auto; padding:9px 18px; }
+  .wrap{ padding:0 18px; }
+  .hero{ padding:44px 0 56px; }
+  .doc-card{ flex-direction:column; align-items:flex-start; }
+  .doc-card .doc-actions{ width:100%; justify-content:space-between; }
+  .modal-box{ padding:24px 20px; }
+  .verify-code-form{ flex-wrap:wrap; }
+  .verify-code-form input{ min-width:0; flex:1 1 100%; }
 }
