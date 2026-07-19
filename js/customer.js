@@ -47,7 +47,7 @@
               <span class="ticket-vendor">
                 ${logoUrl ? `<img class="ticket-vendor-logo" src="${logoUrl}" alt="">` : ''}
                 ${vendorName}
-                ${isVerified ? `<span class="verified-badge" title="Verified vendor">✓ Verified</span>` : ''}
+                ${isVerified ? `<span class="verified-badge" title="Verified vendor">Verified</span>` : ''}
               </span>
               <span class="discount-badge">${pct(l.original_price, l.discounted_price)}% off</span>
             </div>
