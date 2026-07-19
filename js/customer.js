@@ -252,7 +252,7 @@
     secLine.setAttribute('y1', cy);
     secLine.setAttribute('x2', secTip.x);
     secLine.setAttribute('y2', secTip.y);
-    secLine.setAttribute('stroke', '#E8A33D');   // Yellow
+    secLine.setAttribute('stroke', '#ec4e33');   // Yellow
     secLine.setAttribute('stroke-width', '1.5');
     secLine.setAttribute('stroke-linecap', 'round');
 
