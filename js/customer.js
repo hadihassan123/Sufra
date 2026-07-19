@@ -276,12 +276,19 @@
   }
 
   // ---- vendor nav state ----
+  // ---- vendor nav state ----
   (async () => {
     const session = await Store.getSession();
     if(session){
       const link = document.getElementById('vendorNavLink');
       link.href = 'vendor-dashboard.html';
       link.textContent = 'Vendor dashboard';
+
+      const loginLink = document.getElementById('vendorLoginNavLink');
+      if(loginLink) loginLink.style.display = 'none';
+
+      const heroLink = document.getElementById('heroVendorLink');
+      if(heroLink) heroLink.style.display = 'none';
     }
   })();
 
