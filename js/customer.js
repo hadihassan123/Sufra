@@ -1,9 +1,12 @@
 (() => {
   let activeFilter = 'all';
+  let searchQuery = '';
   let pendingListing = null;
+  let cachedActiveListings = [];
 
   const grid = document.getElementById('listingGrid');
   const filterBar = document.getElementById('filterBar');
+  const searchInput = document.getElementById('searchInput');
 
   function money(n){ return 'QAR ' + Number(n).toFixed(0); }
   function pct(oldP, newP){ return Math.round((1 - newP/oldP) * 100); }
@@ -11,22 +14,46 @@
     return new Date(iso).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
   }
 
+  function matchesSearch(l){
+    if(!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const vendorName = l.vendors ? l.vendors.business_name : '';
+    return (
+      l.item_name.toLowerCase().includes(q) ||
+      (l.description || '').toLowerCase().includes(q) ||
+      vendorName.toLowerCase().includes(q) ||
+      l.category.toLowerCase().includes(q)
+    );
+  }
+
+  // Renders from the already-fetched cache — used for category clicks and
+  // search typing, so neither hits the database on every keystroke/click.
+  function applyFiltersAndRender(){
+    const filtered = cachedActiveListings.filter(l =>
+      (activeFilter === 'all' ? true : l.category === activeFilter) && matchesSearch(l)
+    );
+    renderListingGrid(filtered);
+  }
+
+  // Actually fetches from Supabase — used for the initial load and after a
+  // real reservation, since stock counts change server-side then.
   async function renderListings(){
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Loading…</h3></div>`;
-    let listings;
     try{
-      listings = await Store.getActiveListings();
+      cachedActiveListings = await Store.getActiveListings();
     }catch(err){
       grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Couldn't load listings</h3><p>${err.message}</p></div>`;
       return;
     }
+    applyFiltersAndRender();
+  }
 
-    const filtered = listings.filter(l => activeFilter === 'all' ? true : l.category === activeFilter);
-
+  function renderListingGrid(filtered){
     if(filtered.length === 0){
+      const noun = searchQuery ? 'matches' : 'listings';
       grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
-        <h3>Nothing here right now</h3>
-        <p>Check back later, or try a different category — vendors post new surplus throughout the day.</p>
+        <h3>No ${noun} right now</h3>
+        <p>${searchQuery ? 'Try a different search term, or clear it to see everything.' : 'Check back later, or try a different category — vendors post new surplus throughout the day.'}</p>
       </div>`;
       return;
     }
@@ -81,7 +108,12 @@
     filterBar.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     activeFilter = btn.dataset.filter;
-    renderListings();
+    applyFiltersAndRender();
+  });
+
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value.trim();
+    applyFiltersAndRender();
   });
 
   grid.addEventListener('click', (e) => {

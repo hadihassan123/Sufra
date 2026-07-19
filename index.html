@@ -16,7 +16,6 @@
       <a href="#browse">Browse</a>
       <a href="#pickups">Your pickups</a>
       <a href="vendor-signup.html" class="nav-cta" id="vendorNavLink">List your surplus</a>
-      <a href="vendor-login.html" id="vendorLoginNavLink">Vendor login</a>
     </nav>
   </div>
 </header>
@@ -26,13 +25,11 @@
     <div>
       <p class="hero-eyebrow">Doha · Guaranteed items, real discounts</p>
       <h1>What's left on the pass<br>doesn't have to go <em>to waste.</em></h1>
-      <p class="lede">Save food.<br>
-                      Save money.<br>
-                      Fresh surplus meals from cafés,<br>
-                      restaurants and bakeries near you.<br>
+      <p class="lede">Save food,Save money.
+                      Fresh surplus meals from cafés,restaurants and bakeries near you.
                       pay cash at pickup.</p>
       <div class="hero-actions">
-        <a href="#browse" class="btn btn-amber">Browse listings</a>
+        <a href="#browse" class="btn btn-amber">Browse tonight's listings</a>
         <a href="vendor-signup.html" class="btn btn-ghost" id="heroVendorLink" style="color:#F6F1E3; border-color:rgba(246,241,227,0.3);">I run a food business</a>
       </div>
     </div>
@@ -49,9 +46,12 @@
     <div class="wrap">
       <div class="section-head">
         <div>
-          <h2>surplus listings</h2>
+          <h2>Surplus Listings</h2>
           <p>Every listing shows the real item and a guaranteed discount — what you see is what you collect.</p>
         </div>
+      </div>
+      <div class="search-bar">
+        <input type="search" id="searchInput" placeholder="Search by item, vendor, or category…">
       </div>
       <div class="filter-bar" id="filterBar">
         <button class="filter-chip active" data-filter="all">All</button>
@@ -97,8 +97,12 @@
       </div>
       <div class="pickups-panel">
         <div class="pickup-lookup">
-          <input type="tel" id="lookupPhone" placeholder="Enter your phone number">
+          <input type="tel" id="lookupPhone" placeholder="Enter your phone number, e.g. 5512 3456">
           <button class="btn btn-ink" id="lookupBtn">Find my pickups</button>
+        </div>
+        <div id="liveIndicator" style="display:none; font-size:0.78rem; color:var(--teal-deep); margin-bottom:12px; align-items:center; gap:6px;">
+          <span style="width:7px; height:7px; border-radius:50%; background:var(--teal); display:inline-block; animation:pulse 1.6s infinite;"></span>
+          Live — this list updates automatically while this page is open
         </div>
         <div id="pickupList"></div>
       </div>
