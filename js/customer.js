@@ -245,6 +245,13 @@
     minLine.setAttribute('stroke', '#E8A33D'); minLine.setAttribute('stroke-width', '2.5'); minLine.setAttribute('stroke-linecap','round');
     dialSvg.appendChild(minLine);
 
+    const secLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+    secLine.setAttribute('class','hand');
+    secLine.setAttribute('x1', cx); secLine.setAttribute('y1', cy);
+    secLine.setAttribute('x2', secTip.x); secLine.setAttribute('y2', secTip.y);
+    secLine.setAttribute('stroke', '#C1543C'); secLine.setAttribute('stroke-width', '1.25'); secLine.setAttribute('stroke-linecap','round');
+    dialSvg.appendChild(secLine);
+
     clockText.textContent = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
 
     const hourNow = now.getHours() + now.getMinutes()/60;
