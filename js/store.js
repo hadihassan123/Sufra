@@ -102,6 +102,23 @@ const Store = (() => {
   }
 
   // ---- listings ----
+  async function uploadListingImage(file){
+    const ext = file.name.split('.').pop();
+    const filename = crypto.randomUUID() + '.' + ext;
+
+    const { error } = await sb.storage
+      .from('listing-images')
+      .upload(filename, file);
+
+    if(error) throw error;
+
+    const { data } = sb.storage
+      .from('listing-images')
+      .getPublicUrl(filename);
+
+    return data.publicUrl;
+  }
+
   async function getActiveListings(){
     const { data, error } = await sb
       .from('listings')
@@ -215,8 +232,8 @@ const Store = (() => {
   return {
     SURPLUS_WINDOWS,
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,
-    uploadVendorDocument, getVendorDocumentUrl,
-    getActiveListings, getListing, getListingsByVendor, createListing, updateListingQty, removeListing,
+    uploadVendorDocument, getVendorDocumentUrl,uploadListingImage,
+    getActiveListings, getListing, getListingsByVendor,createListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode, markCollected, getReservationsByVendor,
     getAllVendors, approveVendor, revokeVendor
   };

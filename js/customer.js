@@ -34,8 +34,15 @@
     grid.innerHTML = filtered.map(l => {
       const soldOut = l.quantity_left <= 0;
       const vendorName = l.vendors ? l.vendors.business_name : '';
+      const image = l.image_url || 'images/food-placeholder.jpg';
       return `
       <div class="ticket ${soldOut ? 'sold-out' : ''}">
+        <img
+            class="ticket-image"
+            src="${image}"
+            alt="${l.item_name}"
+            loading="lazy"
+        >
         <div class="ticket-main">
           <div class="ticket-top">
             <span class="ticket-vendor">${vendorName}</span>

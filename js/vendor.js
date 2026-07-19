@@ -143,26 +143,41 @@
   // ---- post form ----
   document.getElementById('postForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const originalPrice = Number(document.getElementById('originalPrice').value);
     const discountedPrice = Number(document.getElementById('discountedPrice').value);
-    if(discountedPrice >= originalPrice){
+
+    if (discountedPrice >= originalPrice) {
       alert('Discounted price must be lower than the original price.');
       return;
     }
+
     const pStart = document.getElementById('pickupStart').value;
     const pEnd = document.getElementById('pickupEnd').value;
+
     const today = new Date();
-    function toISO(hhmm){
-      const [h,m] = hhmm.split(':').map(Number);
+
+    function toISO(hhmm) {
+      const [h, m] = hhmm.split(':').map(Number);
       const d = new Date(today);
       d.setHours(h, m, 0, 0);
       return d.toISOString();
     }
+
     const quantity = Number(document.getElementById('quantity').value);
+    const imageFile = document.getElementById('listingImage').files[0];
 
     const submitBtn = e.target.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
-    try{
+
+    try {
+
+      let imageUrl = null;
+
+      if (imageFile) {
+        imageUrl = await Store.uploadListingImage(imageFile);
+      }
+
       await Store.createListing({
         vendor_id: vendor.id,
         item_name: document.getElementById('itemName').value.trim(),
@@ -175,22 +190,28 @@
         pickup_start: toISO(pStart),
         pickup_end: toISO(pEnd),
         payment_method: 'cash',
+        image_url: imageUrl,
         status: 'active'
       });
-    }catch(err){
+
+      submitBtn.disabled = false;
+
+      const msg = document.getElementById('postMsg');
+      msg.textContent = vendor.verification_status === 'verified'
+        ? "Listing posted — it's live on the site now."
+        : "Listing saved. It will go live once your account is verified.";
+
+      msg.className = 'form-msg success show';
+
+      e.target.reset();
+      document.getElementById('listingImage').value = '';
+
+      setTimeout(() => showView('listings'), 900);
+
+    } catch (err) {
       alert('Could not post listing: ' + err.message);
       submitBtn.disabled = false;
-      return;
     }
-    submitBtn.disabled = false;
-
-    const msg = document.getElementById('postMsg');
-    msg.textContent = vendor.verification_status === 'verified'
-      ? 'Listing posted — it\'s live on the site now.'
-      : 'Listing saved. It will go live once your account is verified.';
-    msg.className = 'form-msg success show';
-    e.target.reset();
-    setTimeout(() => showView('listings'), 900);
   });
 
   // ---- verify pickup ----
