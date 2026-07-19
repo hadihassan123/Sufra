@@ -41,18 +41,35 @@
     const preview = document.getElementById('logoPreview');
     const statusText = document.getElementById('logoStatusText');
     const btnText = document.getElementById('logoBtnText');
+    const removeBtn = document.getElementById('removeLogoBtn');
     if(currentVendor.logo_url){
       preview.src = currentVendor.logo_url;
       preview.style.display = 'block';
       statusText.textContent = 'Shown next to your business name on listings.';
       btnText.textContent = 'Replace';
+      removeBtn.style.display = 'inline-flex';
     } else {
       preview.style.display = 'none';
       statusText.textContent = 'Shown next to your business name on listings. Not uploaded yet.';
       btnText.textContent = 'Upload';
+      removeBtn.style.display = 'none';
     }
   }
   renderLogo();
+
+  document.getElementById('removeLogoBtn').addEventListener('click', async () => {
+    if(!confirm('Remove your store logo?')) return;
+    const removeBtn = document.getElementById('removeLogoBtn');
+    removeBtn.disabled = true;
+    try{
+      await Store.removeVendorLogo(vendor.id);
+      currentVendor = await Store.getVendorProfile(vendor.id);
+      renderLogo();
+    }catch(err){
+      alert('Could not remove logo: ' + err.message);
+    }
+    removeBtn.disabled = false;
+  });
 
   document.getElementById('logoInput').addEventListener('change', async (e) => {
     const file = e.target.files[0];
@@ -72,6 +89,26 @@
       alert('Logo upload failed: ' + err.message);
       btnText.textContent = original;
     }
+  });
+
+  // ---- item photo preview + clear ----
+  const listingImageInput = document.getElementById('listingImage');
+  const listingImagePreviewRow = document.getElementById('listingImagePreviewRow');
+  const listingImageFilename = document.getElementById('listingImageFilename');
+
+  listingImageInput.addEventListener('change', () => {
+    const file = listingImageInput.files[0];
+    if(file){
+      listingImageFilename.textContent = file.name;
+      listingImagePreviewRow.style.display = 'flex';
+    } else {
+      listingImagePreviewRow.style.display = 'none';
+    }
+  });
+
+  document.getElementById('clearListingImageBtn').addEventListener('click', () => {
+    listingImageInput.value = '';
+    listingImagePreviewRow.style.display = 'none';
   });
 
   // ---- nav ----
@@ -244,6 +281,7 @@
 
       e.target.reset();
       document.getElementById('listingImage').value = '';
+      listingImagePreviewRow.style.display = 'none';
 
       setTimeout(() => showView('listings'), 900);
 

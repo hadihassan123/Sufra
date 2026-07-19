@@ -119,6 +119,11 @@ const Store = (() => {
     return data.publicUrl;
   }
 
+  async function removeVendorLogo(vendorId){
+    const { error } = await sb.from('vendors').update({ logo_url: null }).eq('id', vendorId);
+    if(error) throw error;
+  }
+
   // ---- listings ----
   async function uploadListingImage(vendorId, file){
     const ext = file.name.split('.').pop();
@@ -246,7 +251,7 @@ const Store = (() => {
   return {
     SURPLUS_WINDOWS,
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,
-    uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo,
+    uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
     getActiveListings, getListing, getListingsByVendor, createListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode, markCollected, getReservationsByVendor,
     getAllVendors, approveVendor, revokeVendor

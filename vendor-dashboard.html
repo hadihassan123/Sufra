@@ -53,10 +53,13 @@
             <p id="logoStatusText">Shown next to your business name on listings. Not uploaded yet.</p>
           </div>
         </div>
-        <label class="btn btn-teal btn-sm" style="margin:0;">
-          <span id="logoBtnText">Upload</span>
-          <input type="file" id="logoInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
-        </label>
+        <div style="display:flex; gap:8px;">
+          <label class="btn btn-teal btn-sm" style="margin:0;">
+            <span id="logoBtnText">Upload</span>
+            <input type="file" id="logoInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+          </label>
+          <button class="btn btn-ghost btn-sm" id="removeLogoBtn" style="display:none;">Remove</button>
+        </div>
       </div>
 
       <div id="verifyBadgeNotice"></div>
@@ -113,6 +116,10 @@
           <div class="field">
             <label for="listingImage">Item photo</label>
             <input type="file" id="listingImage" accept="image/jpeg,image/png,image/webp">
+            <div id="listingImagePreviewRow" style="display:none; align-items:center; gap:10px; margin-top:8px;">
+              <span id="listingImageFilename" style="font-size:0.82rem; color:rgba(36,31,26,0.65);"></span>
+              <button type="button" class="icon-btn" id="clearListingImageBtn">✕ Remove</button>
+            </div>
             <p class="hint">Optional. Shows on the listing card. JPG, PNG or WebP, under 2MB.</p>
           </div>
           <div class="field-row">
