@@ -99,17 +99,17 @@
     }
     body.innerHTML = cachedListings.map(l => `
       <tr>
-        <td><strong>${l.item_name}</strong></td>
-        <td>${money(l.discounted_price)} <span style="opacity:.5; text-decoration:line-through;">${money(l.original_price)}</span></td>
-        <td>
+        <td data-label="Item"><strong>${l.item_name}</strong></td>
+        <td data-label="Price">${money(l.discounted_price)} <span style="opacity:.5; text-decoration:line-through;">${money(l.original_price)}</span></td>
+        <td data-label="Stock">
           <div class="qty-editor">
             <button data-qty-down="${l.id}">−</button>
             <span>${l.quantity_left}</span>
             <button data-qty-up="${l.id}">+</button>
           </div>
         </td>
-        <td>${timeFmt(l.pickup_start)}–${timeFmt(l.pickup_end)}</td>
-        <td><button class="icon-btn" data-remove="${l.id}">Remove</button></td>
+        <td data-label="Pickup">${timeFmt(l.pickup_start)}–${timeFmt(l.pickup_end)}</td>
+        <td data-label=""><button class="icon-btn" data-remove="${l.id}">Remove</button></td>
       </tr>
     `).join('');
   }
@@ -244,11 +244,11 @@
     }
     body.innerHTML = reservations.map(r => `
       <tr>
-        <td><span class="pickup-code-tag">${r.pickup_code}</span></td>
-        <td>${r.item_name}</td>
-        <td>${r.customer_name}<br><span style="opacity:.55; font-size:.8em;">${r.customer_phone}</span></td>
-        <td>${timeFmt(r.pickup_start)}–${timeFmt(r.pickup_end)}</td>
-        <td><span class="status-pill status-${r.status}">${r.status}</span></td>
+        <td data-label="Code"><span class="pickup-code-tag">${r.pickup_code}</span></td>
+        <td data-label="Item">${r.item_name}</td>
+        <td data-label="Customer">${r.customer_name}<br><span style="opacity:.55; font-size:.8em;">${r.customer_phone}</span></td>
+        <td data-label="Pickup">${timeFmt(r.pickup_start)}–${timeFmt(r.pickup_end)}</td>
+        <td data-label="Status"><span class="status-pill status-${r.status}">${r.status}</span></td>
       </tr>
     `).join('');
   }

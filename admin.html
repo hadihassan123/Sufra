@@ -44,7 +44,7 @@
 
   <div class="section-head" style="margin-top:10px;"><h2 style="font-size:1.15rem;">Pending</h2></div>
   <table class="data-table" style="margin-bottom:36px;">
-    <thead><tr><th>Business</th><th>Category</th><th>Area</th><th></th></tr></thead>
+    <thead><tr><th>Business</th><th>Category</th><th>Area</th><th>Documents</th><th></th></tr></thead>
     <tbody id="pendingBody"></tbody>
   </table>
 
@@ -87,12 +87,27 @@
     window.location.reload();
   });
 
-  function vendorRow(v, actionHtml){
+  const DOC_TYPES = [
+    { key: 'cr', label: 'CR', column: 'cr_document_path' },
+    { key: 'moph', label: 'MOPH', column: 'moph_document_path' },
+    { key: 'municipality', label: 'Municipality', column: 'municipality_document_path' }
+  ];
+
+  function documentsCell(v){
+    return DOC_TYPES.map(doc => {
+      const path = v[doc.column];
+      if(!path) return `<span style="opacity:0.4; font-size:0.78rem;">${doc.label} —</span>`;
+      return `<button class="icon-btn" style="color:var(--teal-deep);" data-view-doc="${path}">${doc.label} ↗</button>`;
+    }).join('&nbsp;&nbsp;');
+  }
+
+  function vendorRow(v, actionHtml, showDocs){
     return `<tr>
-      <td><strong>${v.business_name}</strong></td>
-      <td>${v.category}</td>
-      <td>${v.area}</td>
-      <td>${actionHtml}</td>
+      <td data-label="Business"><strong>${v.business_name}</strong></td>
+      <td data-label="Category">${v.category}</td>
+      <td data-label="Area">${v.area}</td>
+      ${showDocs ? `<td data-label="Documents">${documentsCell(v)}</td>` : ''}
+      <td data-label="">${actionHtml}</td>
     </tr>`;
   }
 
@@ -108,15 +123,28 @@
     const verified = vendors.filter(v => v.verification_status === 'verified');
 
     document.getElementById('pendingBody').innerHTML = pending.length
-      ? pending.map(v => vendorRow(v, `<button class="btn btn-teal btn-sm" data-approve="${v.id}">Approve</button>`)).join('')
-      : `<tr><td colspan="4">No pending vendors.</td></tr>`;
+      ? pending.map(v => vendorRow(v, `<button class="btn btn-teal btn-sm" data-approve="${v.id}">Approve</button>`, true)).join('')
+      : `<tr><td colspan="5">No pending vendors.</td></tr>`;
 
     document.getElementById('verifiedBody').innerHTML = verified.length
-      ? verified.map(v => vendorRow(v, `<button class="icon-btn" data-revoke="${v.id}">Revoke</button>`)).join('')
+      ? verified.map(v => vendorRow(v, `<button class="icon-btn" data-revoke="${v.id}">Revoke</button>`, false)).join('')
       : `<tr><td colspan="4">No verified vendors yet.</td></tr>`;
   }
 
   adminMain.addEventListener('click', async (e) => {
+    const viewDoc = e.target.closest('[data-view-doc]');
+    if(viewDoc){
+      viewDoc.disabled = true;
+      try{
+        const url = await Store.getVendorDocumentUrl(viewDoc.dataset.viewDoc);
+        window.open(url, '_blank');
+      }catch(err){
+        alert('Could not open document: ' + err.message);
+      }
+      viewDoc.disabled = false;
+      return;
+    }
+
     const approve = e.target.closest('[data-approve]');
     const revoke = e.target.closest('[data-revoke]');
     if(!approve && !revoke) return;

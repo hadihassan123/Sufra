@@ -362,14 +362,36 @@ table.data-table tr:last-child td{ border-bottom:none; }
   .hero .wrap{ grid-template-columns:1fr; }
   .dash-shell{ grid-template-columns:1fr; }
   .dash-side{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; flex-wrap:wrap; gap:10px; }
-  .dash-nav{ flex-direction:row; overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; width:100%; }
-  .dash-nav button{ flex-shrink:0; white-space:nowrap; }
+  .dash-nav{ flex-direction:row; flex-wrap:wrap; width:100%; gap:6px; }
+  .dash-nav button{ flex:0 0 auto; white-space:nowrap; font-size:0.82rem; padding:8px 10px; }
   .dash-main{ padding:24px 20px; }
   .how-grid{ grid-template-columns:1fr; }
   .stat-row{ grid-template-columns:1fr; }
   .field-row{ grid-template-columns:1fr; }
   .nav-links{ gap:14px; }
-  table.data-table{ display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap; }
+}
+@media (max-width: 640px){
+  /* Stacked-card table pattern: each row becomes a card, each cell
+     becomes a labeled line using its data-label attribute — no
+     horizontal scrolling needed to read a table on a phone. */
+  table.data-table thead{ display:none; }
+  table.data-table, table.data-table tbody, table.data-table tr, table.data-table td{ display:block; width:100%; }
+  table.data-table{ border:none; background:transparent; }
+  table.data-table tr{
+    background:#fff; border:1px solid var(--line); border-radius:10px;
+    margin-bottom:12px; padding:6px 14px;
+  }
+  table.data-table td{
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+    padding:10px 0; border-bottom:1px solid var(--line); text-align:right;
+  }
+  table.data-table td:last-child{ border-bottom:none; }
+  table.data-table td::before{
+    content:attr(data-label); font-family:var(--f-mono); font-size:0.68rem;
+    letter-spacing:0.06em; text-transform:uppercase; color:rgba(36,31,26,0.5);
+    text-align:left; flex-shrink:0;
+  }
+  table.data-table td:empty::before{ content:none; }
 }
 @media (max-width: 560px){
   .ticket{ flex-direction:column; }
