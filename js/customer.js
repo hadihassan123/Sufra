@@ -13,6 +13,10 @@
   function timeFmt(iso){
     return new Date(iso).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
   }
+  function categoryGlyph(category){
+    const glyphs = { Bakery: '🥖', 'Café': '☕', Restaurant: '🍽️', Patisserie: '🍰', Grocery: '🧺', Hotel: '🏨' };
+    return glyphs[category] || '🍴';
+  }
 
   function matchesSearch(l){
     if(!searchQuery) return true;
@@ -40,7 +44,7 @@
   async function renderListings(){
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Loading…</h3></div>`;
     try{
-      cachedActiveListings = await Store.getActiveListings();
+      cachedActiveListings = await Store.getListings();
     }catch(err){
       grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Couldn't load listings</h3><p>${err.message}</p></div>`;
       return;
@@ -59,24 +63,29 @@
     }
 
     grid.innerHTML = filtered.map(l => {
-      const soldOut = l.quantity_left <= 0;
+      const soldOut = l.status === 'sold_out' || l.quantity_left <= 0;
       const vendorName = l.vendors ? l.vendors.business_name : '';
       const logoUrl = l.vendors ? l.vendors.logo_url : null;
       const isVerified = l.vendors && l.vendors.verification_status === 'verified';
-      const image = l.image_url || 'images/food-placeholder.jpg';
+      const discountPct = pct(l.original_price, l.discounted_price);
       return `
       <div class="ticket-card">
-        <img class="ticket-image" src="${image}" alt="${l.item_name}" loading="lazy"
-             onerror="this.style.display='none'">
+        <div class="ticket-photo">
+          ${l.image_url
+            ? `<img class="ticket-image" src="${l.image_url}" alt="${l.item_name}" loading="lazy" onerror="this.parentElement.classList.add('no-photo'); this.remove();">`
+            : ''
+          }
+          <span class="ticket-photo-fallback" aria-hidden="true">${categoryGlyph(l.category)}</span>
+          <span class="discount-tag">${discountPct}% off</span>
+        </div>
         <div class="ticket ${soldOut ? 'sold-out' : ''}">
           <div class="ticket-main">
             <div class="ticket-top">
               <span class="ticket-vendor">
                 ${logoUrl ? `<img class="ticket-vendor-logo" src="${logoUrl}" alt="">` : ''}
-                ${vendorName}
-                ${isVerified ? `<span class="verified-badge" title="Verified vendor">Verified</span>` : ''}
+                <span class="ticket-vendor-name">${vendorName}</span>
+                ${isVerified ? `<span class="verified-check" title="Verified vendor">✓</span>` : ''}
               </span>
-              <span class="discount-badge">${pct(l.original_price, l.discounted_price)}% off</span>
             </div>
             <h3 class="ticket-item">${l.item_name}</h3>
             <p class="ticket-desc">${l.description || ''}</p>
@@ -317,8 +326,22 @@
   }
 
   // ---- vendor nav state ----
+  // Waits for the auth event rather than a one-off getSession() call — on a
+  // fresh full page load (this site reloads the whole page on every
+  // navigation, it's not a single-page app), getSession() can occasionally
+  // be called before the client has finished reading/validating the stored
+  // session, which is why the login link wasn't reliably hiding.
+  function waitForSession(){
+    return new Promise((resolve) => {
+      const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
+        subscription.unsubscribe();
+        resolve(session);
+      });
+    });
+  }
+
   (async () => {
-    const session = await Store.getSession();
+    const session = await waitForSession();
     if(session){
       const link = document.getElementById('vendorNavLink');
       link.href = 'vendor-dashboard.html';

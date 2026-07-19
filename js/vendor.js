@@ -18,7 +18,7 @@
 
   let cachedListings = [];
   let currentVendor = vendor; // refreshed after logo/document uploads so status reflects latest values
-
+  let editingListingId = null;
   // ---- sidebar identity ----
   document.getElementById('sideVendorName').textContent = vendor.business_name;
   const statusEl = document.getElementById('sideVendorStatus');
@@ -163,7 +163,43 @@
     document.getElementById('statReserved').textContent = reservations.filter(r => r.status === 'reserved').length;
     document.getElementById('statCollected').textContent = reservations.filter(r => r.status === 'collected').length;
   }
+  function loadListingIntoForm(listing){
 
+      editingListingId = listing.id;
+
+      document.getElementById('itemName').value = listing.item_name;
+
+      document.getElementById('description').value =
+          listing.description || '';
+
+      document.getElementById('postCategory').value =
+          listing.category;
+
+      document.getElementById('originalPrice').value =
+          listing.original_price;
+
+      document.getElementById('discountedPrice').value =
+          listing.discounted_price;
+
+      document.getElementById('quantity').value =
+          listing.quantity_total;
+
+      document.getElementById('pickupStart').value =
+          new Date(listing.pickup_start)
+          .toTimeString()
+          .slice(0,5);
+
+      document.getElementById('pickupEnd').value =
+          new Date(listing.pickup_end)
+          .toTimeString()
+          .slice(0,5);
+
+      document.getElementById('postListingBtn').textContent =
+          'Save changes';
+
+      showView('post');
+
+  }
   // ---- listings table ----
   async function renderListingsTable(){
     const body = document.getElementById('listingsTableBody');
@@ -185,6 +221,7 @@
           </div>
         </td>
         <td data-label="Pickup">${timeFmt(l.pickup_start)}–${timeFmt(l.pickup_end)}</td>
+        <td data-label=""><button class="icon-btn" data-edit="${l.id}">Edit</button></td>
         <td data-label=""><button class="icon-btn" data-remove="${l.id}">Remove</button></td>
       </tr>
     `).join('');
@@ -194,6 +231,16 @@
     const up = e.target.closest('[data-qty-up]');
     const down = e.target.closest('[data-qty-down]');
     const rm = e.target.closest('[data-remove]');
+    const edit = e.target.closest('[data-edit]');
+    if(edit){
+        const listing =
+            cachedListings.find(
+                x => x.id === edit.dataset.edit
+            );
+        if(!listing) return;
+        loadListingIntoForm(listing);
+        return;
+    } 
     if(up){
       const l = cachedListings.find(x => x.id === up.dataset.qtyUp);
       if(l && l.quantity_left < l.quantity_total){
@@ -254,22 +301,31 @@
         imageUrl = await Store.uploadListingImage(vendor.id, imageFile);
       }
 
-      await Store.createListing({
-        vendor_id: vendor.id,
-        item_name: document.getElementById('itemName').value.trim(),
-        description: document.getElementById('description').value.trim(),
-        category: document.getElementById('postCategory').value,
-        original_price: originalPrice,
-        discounted_price: discountedPrice,
-        quantity_total: quantity,
-        quantity_left: quantity,
-        pickup_start: toISO(pStart),
-        pickup_end: toISO(pEnd),
-        payment_method: 'cash',
-        image_url: imageUrl,
-        status: 'active'
-      });
+      const payload = {
+          vendor_id: vendor.id,
+          item_name: document.getElementById('itemName').value.trim(),
+          description: document.getElementById('description').value.trim(),
+          category: document.getElementById('postCategory').value,
+          original_price: originalPrice,
+          discounted_price: discountedPrice,
+          quantity_total: quantity,
+          quantity_left: editingListingId ? cachedListings.find(x => x.id === editingListingId).quantity_left : quantity,
+          pickup_start: toISO(pStart),
+          pickup_end: toISO(pEnd),
+          payment_method: 'cash',
+          image_url: imageUrl,
+          status: 'active'
+      };
 
+      if (editingListingId) {
+          await Store.updateListing(editingListingId, payload);
+      } else {
+          await Store.createListing(payload);
+      }
+      editingListingId = null;
+
+      document.getElementById('postListingBtn').textContent ='Post listing';
+     
       submitBtn.disabled = false;
 
       const msg = document.getElementById('postMsg');

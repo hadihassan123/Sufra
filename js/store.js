@@ -138,12 +138,13 @@ const Store = (() => {
     return data.publicUrl;
   }
 
-  async function getActiveListings(){
+  async function getListings(){
     const { data, error } = await sb
       .from('listings')
-      .select('*, vendors(business_name, logo_url, verification_status)')
-      .eq('status', 'active')
+      .select('*, vendors(business_name)')
+      .in('status', ['active', 'sold_out'])
       .order('pickup_start', { ascending: true });
+
     if(error) throw error;
     return data;
   }
@@ -169,9 +170,32 @@ const Store = (() => {
     if(error) throw error;
     return data;
   }
+  async function updateListing(id, payload){
+
+      const { data, error } = await sb
+          .from('listings')
+          .update(payload)
+          .eq('id', id)
+          .select()
+          .single();
+
+      if(error) throw error;
+
+      return data;
+
+  }
 
   async function updateListingQty(id, newQty){
-    const { error } = await sb.from('listings').update({ quantity_left: newQty }).eq('id', id);
+    const status = newQty <= 0 ? 'sold_out' : 'active';
+
+    const { error } = await sb
+      .from('listings')
+      .update({
+        quantity_left: newQty,
+        status
+      })
+      .eq('id', id);
+
     if(error) throw error;
   }
 
@@ -252,7 +276,7 @@ const Store = (() => {
     SURPLUS_WINDOWS,
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
-    getActiveListings, getListing, getListingsByVendor, createListing, updateListingQty, removeListing,
+    getListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode, markCollected, getReservationsByVendor,
     getAllVendors, approveVendor, revokeVendor
   };
