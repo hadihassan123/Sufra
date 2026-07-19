@@ -26,9 +26,6 @@ const Store = (() => {
       }
     });
     if(error) throw error;
-    // The vendors row is created server-side by a database trigger reading
-    // this metadata (see supabase/vendor_signup_trigger.sql) — it exists
-    // immediately, whether or not email confirmation is required.
     return { needsConfirmation: !data.session };
   }
 
@@ -101,28 +98,45 @@ const Store = (() => {
     return data.signedUrl;
   }
 
-  // ---- listings ----
-  async function uploadListingImage(file){
+  // ---- vendor logo ----
+  async function uploadVendorLogo(vendorId, file){
     const ext = file.name.split('.').pop();
-    const filename = crypto.randomUUID() + '.' + ext;
+    const path = `${vendorId}/logo-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await sb.storage
+      .from('listing-images')
+      .upload(path, file, { upsert: false });
+    if(uploadError) throw uploadError;
+
+    const { data } = sb.storage.from('listing-images').getPublicUrl(path);
+
+    const { error: updateError } = await sb
+      .from('vendors')
+      .update({ logo_url: data.publicUrl })
+      .eq('id', vendorId);
+    if(updateError) throw updateError;
+
+    return data.publicUrl;
+  }
+
+  // ---- listings ----
+  async function uploadListingImage(vendorId, file){
+    const ext = file.name.split('.').pop();
+    const path = `${vendorId}/${crypto.randomUUID()}.${ext}`;
 
     const { error } = await sb.storage
       .from('listing-images')
-      .upload(filename, file);
-
+      .upload(path, file);
     if(error) throw error;
 
-    const { data } = sb.storage
-      .from('listing-images')
-      .getPublicUrl(filename);
-
+    const { data } = sb.storage.from('listing-images').getPublicUrl(path);
     return data.publicUrl;
   }
 
   async function getActiveListings(){
     const { data, error } = await sb
       .from('listings')
-      .select('*, vendors(business_name)')
+      .select('*, vendors(business_name, logo_url)')
       .eq('status', 'active')
       .order('pickup_start', { ascending: true });
     if(error) throw error;
@@ -131,7 +145,7 @@ const Store = (() => {
 
   async function getListing(id){
     const { data, error } = await sb
-      .from('listings').select('*, vendors(business_name)').eq('id', id).maybeSingle();
+      .from('listings').select('*, vendors(business_name, logo_url)').eq('id', id).maybeSingle();
     if(error) throw error;
     return data;
   }
@@ -220,7 +234,7 @@ const Store = (() => {
   async function approveVendor(vendorId, passcode){
     const { data, error } = await sb.rpc('approve_vendor', { target_id: vendorId, given_passcode: passcode });
     if(error) throw error;
-    return data; // false if passcode was wrong
+    return data;
   }
 
   async function revokeVendor(vendorId, passcode){
@@ -232,8 +246,8 @@ const Store = (() => {
   return {
     SURPLUS_WINDOWS,
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,
-    uploadVendorDocument, getVendorDocumentUrl,uploadListingImage,
-    getActiveListings, getListing, getListingsByVendor,createListing, updateListingQty, removeListing,
+    uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo,
+    getActiveListings, getListing, getListingsByVendor, createListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode, markCollected, getReservationsByVendor,
     getAllVendors, approveVendor, revokeVendor
   };

@@ -34,38 +34,40 @@
     grid.innerHTML = filtered.map(l => {
       const soldOut = l.quantity_left <= 0;
       const vendorName = l.vendors ? l.vendors.business_name : '';
+      const logoUrl = l.vendors ? l.vendors.logo_url : null;
       const image = l.image_url || 'images/food-placeholder.jpg';
       return `
-      <div class="ticket ${soldOut ? 'sold-out' : ''}">
-        <img
-            class="ticket-image"
-            src="${image}"
-            alt="${l.item_name}"
-            loading="lazy"
-        >
-        <div class="ticket-main">
-          <div class="ticket-top">
-            <span class="ticket-vendor">${vendorName}</span>
-            <span class="discount-badge">${pct(l.original_price, l.discounted_price)}% off</span>
+      <div class="ticket-card">
+        <img class="ticket-image" src="${image}" alt="${l.item_name}" loading="lazy"
+             onerror="this.style.display='none'">
+        <div class="ticket ${soldOut ? 'sold-out' : ''}">
+          <div class="ticket-main">
+            <div class="ticket-top">
+              <span class="ticket-vendor">
+                ${logoUrl ? `<img class="ticket-vendor-logo" src="${logoUrl}" alt="">` : ''}
+                ${vendorName}
+              </span>
+              <span class="discount-badge">${pct(l.original_price, l.discounted_price)}% off</span>
+            </div>
+            <h3 class="ticket-item">${l.item_name}</h3>
+            <p class="ticket-desc">${l.description || ''}</p>
+            <div class="ticket-prices">
+              <span class="price-old">${money(l.original_price)}</span>
+              <span class="price-new">${money(l.discounted_price)}</span>
+            </div>
+            <div class="ticket-meta">
+              <span>📍 <strong>${l.category}</strong></span>
+              <span>🕐 Pickup <strong>${timeFmt(l.pickup_start)}–${timeFmt(l.pickup_end)}</strong></span>
+            </div>
           </div>
-          <h3 class="ticket-item">${l.item_name}</h3>
-          <p class="ticket-desc">${l.description || ''}</p>
-          <div class="ticket-prices">
-            <span class="price-old">${money(l.original_price)}</span>
-            <span class="price-new">${money(l.discounted_price)}</span>
+          <div class="ticket-stub">
+            <span class="stub-label">Left</span>
+            <span class="stub-qty">${l.quantity_left}</span>
+            <span class="stub-qty-label">of ${l.quantity_total}</span>
+            <button class="btn ${soldOut ? 'btn-ghost' : 'btn-teal'}" ${soldOut ? 'disabled' : ''} data-reserve="${l.id}">
+              ${soldOut ? 'Sold out' : 'Reserve'}
+            </button>
           </div>
-          <div class="ticket-meta">
-            <span>📍 <strong>${l.category}</strong></span>
-            <span>🕐 Pickup <strong>${timeFmt(l.pickup_start)}–${timeFmt(l.pickup_end)}</strong></span>
-          </div>
-        </div>
-        <div class="ticket-stub">
-          <span class="stub-label">Left</span>
-          <span class="stub-qty">${l.quantity_left}</span>
-          <span class="stub-qty-label">of ${l.quantity_total}</span>
-          <button class="btn ${soldOut ? 'btn-ghost' : 'btn-teal'}" ${soldOut ? 'disabled' : ''} data-reserve="${l.id}">
-            ${soldOut ? 'Sold out' : 'Reserve'}
-          </button>
         </div>
       </div>`;
     }).join('');
@@ -252,17 +254,15 @@
     minLine.setAttribute('stroke', '#E8A33D'); minLine.setAttribute('stroke-width', '2.5'); minLine.setAttribute('stroke-linecap','round');
     dialSvg.appendChild(minLine);
 
-    const secBack = polar(cx, cy, 12, (now.getSeconds()/60) * 360 + 180);
     const secLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     secLine.setAttribute('class', 'hand');
     secLine.setAttribute('x1', cx);
     secLine.setAttribute('y1', cy);
     secLine.setAttribute('x2', secTip.x);
     secLine.setAttribute('y2', secTip.y);
-    secLine.setAttribute('stroke', '#ec4e33');   // Yellow
+    secLine.setAttribute('stroke', '#ec4e33');
     secLine.setAttribute('stroke-width', '1.5');
     secLine.setAttribute('stroke-linecap', 'round');
-
     dialSvg.appendChild(secLine);
 
     clockText.textContent = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
@@ -282,7 +282,6 @@
     }
   }
 
-  // ---- vendor nav state ----
   // ---- vendor nav state ----
   (async () => {
     const session = await Store.getSession();

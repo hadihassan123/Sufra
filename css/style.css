@@ -40,6 +40,11 @@ button{ font-family:inherit; cursor:pointer; }
   *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important; }
 }
 
+@keyframes pulse{
+  0%, 100%{ opacity:1; }
+  50%{ opacity:0.35; }
+}
+
 /* ---------- layout shell ---------- */
 .wrap{ max-width:1120px; margin:0 auto; padding:0 28px; }
 
@@ -153,8 +158,12 @@ button{ font-family:inherit; cursor:pointer; }
 .listing-grid{
   display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:26px;
 }
-.ticket{
-  display:flex;
+
+/* Outer card — holds the optional food photo on top, and the existing
+   two-column (main + stub) row below it. The photo is a sibling of
+   .ticket, not a child inside its flex row, so it can't squish the
+   vendor/price/reserve layout. */
+.ticket-card{
   background:#fff;
   border:1px solid var(--line);
   border-radius:10px;
@@ -162,10 +171,23 @@ button{ font-family:inherit; cursor:pointer; }
   box-shadow:0 1px 2px rgba(23,27,51,0.04);
   transition:box-shadow .18s ease, transform .18s ease;
 }
-.ticket:hover{ box-shadow:0 10px 24px rgba(23,27,51,0.10); transform:translateY(-2px); }
+.ticket-card:hover{ box-shadow:0 10px 24px rgba(23,27,51,0.10); transform:translateY(-2px); }
+
+.ticket-image{
+  width:100%;
+  height:170px;
+  object-fit:cover;
+  display:block;
+  border-bottom:1px solid var(--line);
+}
+
+.ticket{
+  display:flex;
+}
 .ticket-main{ flex:1; padding:20px 20px 18px; min-width:0; }
 .ticket-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px; }
-.ticket-vendor{ font-family:var(--f-mono); font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--teal-deep); }
+.ticket-vendor{ display:flex; align-items:center; gap:6px; font-family:var(--f-mono); font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--teal-deep); }
+.ticket-vendor-logo{ width:18px; height:18px; border-radius:50%; object-fit:cover; }
 .discount-badge{
   background:var(--rust); color:#fff; font-family:var(--f-mono); font-weight:600;
   font-size:0.72rem; padding:3px 9px; border-radius:999px; white-space:nowrap;
@@ -371,9 +393,6 @@ table.data-table tr:last-child td{ border-bottom:none; }
   .nav-links{ gap:14px; }
 }
 @media (max-width: 640px){
-  /* Stacked-card table pattern: each row becomes a card, each cell
-     becomes a labeled line using its data-label attribute — no
-     horizontal scrolling needed to read a table on a phone. */
   table.data-table thead{ display:none; }
   table.data-table, table.data-table tbody, table.data-table tr, table.data-table td{ display:block; width:100%; }
   table.data-table{ border:none; background:transparent; }
@@ -405,12 +424,4 @@ table.data-table tr:last-child td{ border-bottom:none; }
   .modal-box{ padding:24px 20px; }
   .verify-code-form{ flex-wrap:wrap; }
   .verify-code-form input{ min-width:0; flex:1 1 100%; }
-}
-/* Listing image */
-.ticket-image{
-  width:100%;
-  height:180px;
-  object-fit:cover;
-  display:block;
-  border-bottom:1px solid var(--line);
 }

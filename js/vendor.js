@@ -17,6 +17,7 @@
   }
 
   let cachedListings = [];
+  let currentVendor = vendor; // refreshed after logo/document uploads so status reflects latest values
 
   // ---- sidebar identity ----
   document.getElementById('sideVendorName').textContent = vendor.business_name;
@@ -33,6 +34,44 @@
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await Store.signOutVendor();
     window.location.href = 'index.html';
+  });
+
+  // ---- store logo ----
+  function renderLogo(){
+    const preview = document.getElementById('logoPreview');
+    const statusText = document.getElementById('logoStatusText');
+    const btnText = document.getElementById('logoBtnText');
+    if(currentVendor.logo_url){
+      preview.src = currentVendor.logo_url;
+      preview.style.display = 'block';
+      statusText.textContent = 'Shown next to your business name on listings.';
+      btnText.textContent = 'Replace';
+    } else {
+      preview.style.display = 'none';
+      statusText.textContent = 'Shown next to your business name on listings. Not uploaded yet.';
+      btnText.textContent = 'Upload';
+    }
+  }
+  renderLogo();
+
+  document.getElementById('logoInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    if(file.size > 2 * 1024 * 1024){
+      alert('That file is over 2MB — please upload a smaller image.');
+      return;
+    }
+    const btnText = document.getElementById('logoBtnText');
+    const original = btnText.textContent;
+    btnText.textContent = 'Uploading…';
+    try{
+      await Store.uploadVendorLogo(vendor.id, file);
+      currentVendor = await Store.getVendorProfile(vendor.id);
+      renderLogo();
+    }catch(err){
+      alert('Logo upload failed: ' + err.message);
+      btnText.textContent = original;
+    }
   });
 
   // ---- nav ----
@@ -175,7 +214,7 @@
       let imageUrl = null;
 
       if (imageFile) {
-        imageUrl = await Store.uploadListingImage(imageFile);
+        imageUrl = await Store.uploadListingImage(vendor.id, imageFile);
       }
 
       await Store.createListing({
@@ -280,8 +319,6 @@
     { key: 'moph', label: 'MOPH Food License', column: 'moph_document_path' },
     { key: 'municipality', label: 'Municipality Trade License', column: 'municipality_document_path' }
   ];
-
-  let currentVendor = vendor; // refreshed after each upload so status reflects latest paths
 
   async function renderDocuments(){
     const list = document.getElementById('documentsList');

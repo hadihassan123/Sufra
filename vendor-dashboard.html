@@ -44,6 +44,21 @@
         <div class="stat-card"><div class="num" id="statReserved">0</div><div class="lbl">Reserved, awaiting pickup</div></div>
         <div class="stat-card"><div class="num" id="statCollected">0</div><div class="lbl">Collected today</div></div>
       </div>
+
+      <div class="doc-card" style="margin-bottom:24px;" id="logoCard">
+        <div class="doc-info" style="display:flex; align-items:center; gap:14px;">
+          <img id="logoPreview" src="" alt="" style="width:48px; height:48px; border-radius:50%; object-fit:cover; display:none; border:1px solid var(--line);">
+          <div>
+            <h3>Store logo</h3>
+            <p id="logoStatusText">Shown next to your business name on listings. Not uploaded yet.</p>
+          </div>
+        </div>
+        <label class="btn btn-teal btn-sm" style="margin:0;">
+          <span id="logoBtnText">Upload</span>
+          <input type="file" id="logoInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+        </label>
+      </div>
+
       <div id="verifyBadgeNotice"></div>
     </section>
 
@@ -68,11 +83,6 @@
           <div class="field">
             <label for="itemName">Item name</label>
             <input type="text" id="itemName" required placeholder="e.g. Manakeesh Bundle (6pc)">
-          </div>
-          <div class="field">
-            <label for="itemImage">Item image</label>
-            <input type="file" id="itemImage" accept="image/*">
-            <p class="hint">JPEG
           </div>
           <div class="field">
             <label for="description">Description</label>
@@ -102,14 +112,8 @@
           </div>
           <div class="field">
             <label for="listingImage">Item photo</label>
-            <input
-              type="file"
-              id="listingImage"
-              accept="image/jpeg,image/png,image/webp"
-            >
-            <p class="hint">
-              Optional. JPG, PNG or WebP (recommended under 2 MB).
-            </p>
+            <input type="file" id="listingImage" accept="image/jpeg,image/png,image/webp">
+            <p class="hint">Optional. Shows on the listing card. JPG, PNG or WebP, under 2MB.</p>
           </div>
           <div class="field-row">
             <div class="field">
