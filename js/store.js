@@ -5,8 +5,9 @@ const Store = (() => {
   // Shared surplus windows — used by the homepage time dial (customer.js)
   // and to auto-fill the vendor's pickup start time (vendor.js).
   const SURPLUS_WINDOWS = [
+    { startHour: 10, endHour: 12, label: 'Morning surplus' },
     { startHour: 15, endHour: 16.5, label: 'Lunch-service surplus' },
-    { startHour: 22, endHour: 24, label: 'Closing-time surplus' }
+    { startHour: 19, endHour: 22, label: 'Closing-time surplus' }
   ];
 
   function pickupCode(){
