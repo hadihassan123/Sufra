@@ -276,7 +276,7 @@ const Store = (() => {
     SURPLUS_WINDOWS,
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
-    getListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
+    getActiveListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode, markCollected, getReservationsByVendor,
     getAllVendors, approveVendor, revokeVendor
   };
