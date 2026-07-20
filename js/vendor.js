@@ -445,8 +445,7 @@
           try {
 
             const devices = await Html5Qrcode.getCameras();
-            console.log(devices);
-            alert("Found " + devices.length + " camera(s)");
+            
 
             qrScanner = new Html5Qrcode("qr-reader");
 
