@@ -170,12 +170,38 @@
 <div class="modal-overlay" id="confirmOverlay">
   <div class="modal-box confirm" id="confirmModal">
     <button class="close-x" data-close>&times;</button>
+
     <div class="stamp">✓</div>
-    <h2>Reserved</h2>
-    <p class="code-note">Show this code at the counter during your pickup window.</p>
-    <div class="code-display" id="confirmCode">------</div>
+
+    <h2>Reservation Confirmed</h2>
+
+    <p class="code-note">
+      Show either your <strong>QR code</strong> or your
+      <strong>pickup code</strong> when collecting your order.
+    </p>
+
+    <div id="confirmQr" class="qr-box"></div>
+
+    <div class="pickup-code-section">
+      <span class="pickup-label">Pickup Code</span>
+
+      <div class="code-display" id="confirmCode">
+        ------
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm"
+        id="copyPickupCodeBtn">
+        Copy Code
+      </button>
+    </div>
+
     <p class="code-note" id="confirmWindow"></p>
-    <button class="btn btn-ink btn-block" data-close>Done</button>
+
+    <button class="btn btn-ink btn-block" data-close>
+      Done
+    </button>
   </div>
 </div>
  
@@ -183,5 +209,6 @@
 <script src="js/supabase-client.js"></script>
 <script src="js/store.js"></script>
 <script src="js/customer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </body>
 </html>
