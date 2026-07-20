@@ -119,16 +119,45 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .hero-actions{ display:flex; gap:14px; flex-wrap:wrap; }
 
+/* Faint food/drink line-icon scatter — grounds the abstract dial in
+   "this is a food site" visually, not just through color and copy. */
+.hero-motif{ position:absolute; inset:0; pointer-events:none; color:rgba(246,241,227,0.09); }
+.motif-icon{ position:absolute; width:64px; height:64px; }
+.motif-cup{ top:10%; right:8%; width:56px; transform:rotate(-6deg); }
+.motif-bread{ bottom:8%; right:28%; width:80px; transform:rotate(4deg); }
+.motif-plate{ top:58%; right:2%; width:70px; transform:rotate(-3deg); }
+.motif-pot{ top:6%; left:42%; width:50px; transform:rotate(8deg); }
+@media (max-width: 860px){ .motif-plate, .motif-pot{ display:none; } }
+
 .dial-card{
   background:rgba(246,241,227,0.05);
   border:1px solid var(--line-light);
   border-radius:16px;
   padding:26px;
   backdrop-filter:blur(6px);
+  position:relative;
 }
 .dial-card .dial-label{
   font-family:var(--f-mono); font-size:0.68rem; letter-spacing:0.14em; text-transform:uppercase;
   color:rgba(246,241,227,0.55); display:flex; justify-content:space-between; margin-bottom:14px;
+}
+
+/* Steam — rises from the dial only while a surplus window is actually
+   live (toggled via .steam-active in customer.js). Tied to real meaning,
+   not decoration: something is genuinely "hot" right now. */
+.steam{
+  position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+  width:70px; height:34px; color:var(--amber); opacity:0; pointer-events:none;
+  transition:opacity .6s ease;
+}
+.steam.steam-active{ opacity:0.55; }
+.steam-wisp{ transform-origin:center bottom; animation:steam-rise 3.4s ease-in-out infinite; }
+.steam-wisp-2{ animation-delay:.5s; }
+.steam-wisp-3{ animation-delay:1s; }
+@keyframes steam-rise{
+  0%{ transform:translateY(4px) scaleY(0.9); opacity:0.3; }
+  50%{ transform:translateY(-3px) scaleY(1.05); opacity:0.9; }
+  100%{ transform:translateY(4px) scaleY(0.9); opacity:0.3; }
 }
 .dial-svg{ width:100%; height:auto; }
 .dial-status{
@@ -188,7 +217,7 @@ button{ font-family:inherit; cursor:pointer; }
 .ticket-photo{
   position:relative;
   height:170px;
-  background:linear-gradient(150deg, #eed085 0%, var(--paper-dim) 100%);
+  background:linear-gradient(150deg, #EFE6D0 0%, var(--paper-dim) 100%);
   border-bottom:1px solid var(--line);
   overflow:hidden;
   display:flex; align-items:center; justify-content:center;
@@ -458,17 +487,4 @@ table.data-table tr:last-child td{ border-bottom:none; }
   .modal-box{ padding:24px 20px; }
   .verify-code-form{ flex-wrap:wrap; }
   .verify-code-form input{ min-width:0; flex:1 1 100%; }
-}
-.status-badge{
-    display:inline-block;
-    padding:4px 10px;
-    border-radius:999px;
-    font-size:.72rem;
-    font-weight:700;
-    letter-spacing:.05em;
-}
-
-.status-badge.sold-out{
-    background:#c1543c;
-    color:#fff;
 }
