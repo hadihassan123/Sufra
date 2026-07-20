@@ -173,7 +173,7 @@
 
     reserveOverlay.classList.remove('show');
 
-// Pickup code
+    // Pickup code
     document.getElementById('confirmCode').textContent = reservation.pickup_code;
 
     // Generate QR
