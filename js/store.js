@@ -238,6 +238,17 @@ const Store = (() => {
     if(error) throw error;
     return data;
   }
+  async function getReservation(id){
+    const { data, error } = await sb
+        .from('reservations')
+        .select('*')
+         .eq('id', id)
+         .maybeSingle();
+
+    if(error) throw error;
+
+    return data;
+  }
 
   async function markCollected(id){
     const { error } = await sb.from('reservations').update({ status: 'collected' }).eq('id', id);
@@ -277,7 +288,7 @@ const Store = (() => {
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
     getActiveListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
-    createReservation, getReservationsByPhone, findReservationByCode, markCollected, getReservationsByVendor,
+    createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected, getReservationsByVendor,
     getAllVendors, approveVendor, revokeVendor
   };
 })();

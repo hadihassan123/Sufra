@@ -350,42 +350,130 @@
   // ---- verify pickup ----
   const verifyInput = document.getElementById('verifyCodeInput');
   const verifyResult = document.getElementById('verifyResult');
+  const scanQrBtn = document.getElementById('scanQrBtn');
+  const qrScannerOverlay = document.getElementById('qrScannerOverlay');
+  const closeQrScanner = document.getElementById('closeQrScanner');
+
+  let qrScanner = null;
 
   document.getElementById('verifyBtn').addEventListener('click', async () => {
-    const code = verifyInput.value.trim();
-    if(!code) return;
-    let reservation;
-    try{
-      reservation = await Store.findReservationByCode(code);
-    }catch(err){
-      verifyResult.innerHTML = `<div class="form-msg error show">Lookup failed: ${err.message}</div>`;
-      return;
-    }
-    if(!reservation){
-      verifyResult.innerHTML = `<div class="form-msg error show">No reservation found with that code.</div>`;
-      return;
-    }
-    if(reservation.vendor_id !== vendor.id){
-      verifyResult.innerHTML = `<div class="form-msg error show">That code belongs to a different vendor.</div>`;
-      return;
-    }
-    if(reservation.status === 'collected'){
-      verifyResult.innerHTML = `<div class="form-msg show" style="background:rgba(47,110,103,0.1); color:#204C47;">Already marked collected for <strong>${reservation.customer_name}</strong> — ${reservation.item_name}.</div>`;
-      return;
-    }
-    verifyResult.innerHTML = `
-      <div class="form-msg success show">
-        <strong>${reservation.customer_name}</strong> — ${reservation.item_name} · ${money(reservation.price)} cash due
-        <div style="margin-top:12px;"><button class="btn btn-teal btn-sm" id="markCollectedBtn">Mark as collected</button></div>
-      </div>`;
-    document.getElementById('markCollectedBtn').addEventListener('click', async () => {
-      await Store.markCollected(reservation.id);
-      verifyInput.value = '';
-      verifyResult.innerHTML = `<div class="form-msg success show">Marked collected. Enjoy the rest of service.</div>`;
-      renderOverview();
-    });
+
+      const code = verifyInput.value.trim();
+      if(!code) return;
+
+      let reservation;
+
+      try{
+          reservation = await Store.findReservationByCode(code);
+      }catch(err){
+          verifyResult.innerHTML =
+              `<div class="form-msg error show">
+                  Lookup failed: ${err.message}
+              </div>`;
+          return;
+      }
+
+      showReservation(reservation);
+
   });
+
+  async function showReservation(reservation){
+      if(!reservation){
+          verifyResult.innerHTML =
+              `<div class="form-msg error show">
+                  No reservation found.
+              </div>`;
+          return;
+      }
+      if(reservation.vendor_id !== vendor.id){
+          verifyResult.innerHTML =
+              `<div class="form-msg error show">
+                  That reservation belongs to a different vendor.
+              </div>`;
+          return;
+      }
+      if(reservation.status === 'collected'){
+          verifyResult.innerHTML =
+              `<div class="form-msg success show"
+                  style="background:rgba(47,110,103,0.1); color:#204C47;">
+                  Already marked collected for
+                  <strong>${reservation.customer_name}</strong>
+                  — ${reservation.item_name}.
+              </div>`;
+          return;
+      }
+      verifyResult.innerHTML = `
+        <div class="form-msg success show">
+          <strong>${reservation.customer_name}</strong>
+          — ${reservation.item_name}
+          · ${money(reservation.price)} cash due
+
+          <div style="margin-top:12px;">
+              <button
+                  class="btn btn-teal btn-sm"
+                  id="markCollectedBtn">
+                  Mark as collected
+              </button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('markCollectedBtn').addEventListener('click', async () => {
+
+          await Store.markCollected(reservation.id);
+
+          verifyInput.value = '';
+
+          verifyResult.innerHTML =
+              `<div class="form-msg success show">
+                  Marked collected.
+              </div>`;
+
+          renderOverview();
+
+      });
+
+  }
+  
   verifyInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') document.getElementById('verifyBtn').click(); });
+  scanQrBtn.addEventListener('click', startQrScanner);
+
+  async function startQrScanner(){
+
+        qrScannerOverlay.classList.add('show');
+
+        qrScanner = new Html5Qrcode("qr-reader");
+
+        await qrScanner.start(
+            { facingMode: "environment" },
+            {
+                fps: 10,
+                qrbox: 250
+            },
+            onQrSuccess
+        );
+
+    }
+    async function onQrSuccess(decodedText){
+
+      if(qrScanner){
+          await qrScanner.stop();
+      }
+
+      qrScannerOverlay.classList.remove("show");
+
+      let reservation;
+
+      try{
+          reservation = await Store.getReservation(decodedText.trim());
+      }catch(err){
+          alert(err.message);
+          return;
+      }
+
+      showReservation(reservation);
+
+  }
 
   // ---- reservations table ----
   async function renderReservationsTable(){
