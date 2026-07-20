@@ -488,30 +488,3 @@ table.data-table tr:last-child td{ border-bottom:none; }
   .verify-code-form{ flex-wrap:wrap; }
   .verify-code-form input{ min-width:0; flex:1 1 100%; }
 }
-.qr-box{
-    width:180px;
-    height:180px;
-    margin:20px auto;
-    padding:12px;
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:12px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-.pickup-code-section{
-    margin-top:18px;
-}
-.pickup-label{
-    display:block;
-    margin-bottom:8px;
-    font-family:var(--f-mono);
-    font-size:.75rem;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:rgba(36,31,26,.6);
-}
-#copyPickupCodeBtn{
-    margin-top:12px;
-}
