@@ -138,7 +138,7 @@ const Store = (() => {
     return data.publicUrl;
   }
 
-  async function getListings(){
+  async function getActiveListings(){
     const { data, error } = await sb
       .from('listings')
       .select('*, vendors(business_name)')
