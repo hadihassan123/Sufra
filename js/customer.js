@@ -44,7 +44,7 @@
   async function renderListings(){
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Loading…</h3></div>`;
     try{
-      cachedActiveListings = await Store.getListings();
+      cachedActiveListings = await Store.getActiveListings();
     }catch(err){
       grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Couldn't load listings</h3><p>${err.message}</p></div>`;
       return;
@@ -63,7 +63,7 @@
     }
 
     grid.innerHTML = filtered.map(l => {
-      const soldOut = l.status === 'sold_out' || l.quantity_left <= 0;
+      const soldOut = l.quantity_left <= 0;
       const vendorName = l.vendors ? l.vendors.business_name : '';
       const logoUrl = l.vendors ? l.vendors.logo_url : null;
       const isVerified = l.vendors && l.vendors.verification_status === 'verified';
@@ -172,10 +172,27 @@
     submitBtn.disabled = false;
 
     reserveOverlay.classList.remove('show');
+
+    // Pickup code
     document.getElementById('confirmCode').textContent = reservation.pickup_code;
-    const vendorName = pendingListing.vendors ? pendingListing.vendors.business_name : '';
+
+    // Generate QR
+    const qrContainer = document.getElementById('confirmQr');
+    qrContainer.innerHTML = '';
+
+    new QRCode(qrContainer, {
+      text: reservation.id,
+      width: 160,
+      height: 160
+    });
+
+    const vendorName = pendingListing.vendors
+      ? pendingListing.vendors.business_name
+      : '';
+
     document.getElementById('confirmWindow').textContent =
-      `Pickup at ${vendorName}, ${timeFmt(pendingListing.pickup_start)}–${timeFmt(pendingListing.pickup_end)}. Bring this code and pay ${money(pendingListing.discounted_price)} cash.`;
+      `Pickup at ${vendorName}, ${timeFmt(pendingListing.pickup_start)}–${timeFmt(pendingListing.pickup_end)}. Bring this QR code or your pickup code and pay ${money(pendingListing.discounted_price)} cash.`;
+
     confirmOverlay.classList.add('show');
 
     renderListings();
@@ -312,6 +329,8 @@
 
     const hourNow = now.getHours() + now.getMinutes()/60;
     const inWindow = SURPLUS_WINDOWS.find(w => hourNow >= w.startHour && hourNow < w.endHour);
+    const steamEl = document.getElementById('steamSvg');
+    if(steamEl) steamEl.classList.toggle('steam-active', !!inWindow);
     if(inWindow){
       dialStatus.firstChild.textContent = inWindow.label + ' is live';
       dialSub.textContent = 'Vendors are posting now';
