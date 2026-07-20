@@ -170,9 +170,6 @@
 <div class="modal-overlay" id="confirmOverlay">
   <div class="modal-box confirm" id="confirmModal">
     <button class="close-x" data-close>&times;</button>
-    <div class="modal-overlay" id="confirmOverlay">
-  <div class="modal-box confirm" id="confirmModal">
-    <button class="close-x" data-close>&times;</button>
     <div class="stamp">✓</div>
     <h2>Reservation Confirmed</h2>
     <p class="code-note">
@@ -185,8 +182,21 @@
       <div class="code-display" id="confirmCode">
         ------
       </div>
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm"
+        id="copyPickupCodeBtn">
+        Copy Code
+      </button>
+    </div>
+    <p class="code-note" id="confirmWindow"></p>
+    <button class="btn btn-ink btn-block" data-close>
+      Done
+    </button>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
  
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/supabase-client.js"></script>

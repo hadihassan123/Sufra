@@ -172,10 +172,27 @@
     submitBtn.disabled = false;
 
     reserveOverlay.classList.remove('show');
+
+    // Pickup code
     document.getElementById('confirmCode').textContent = reservation.pickup_code;
-    const vendorName = pendingListing.vendors ? pendingListing.vendors.business_name : '';
+
+    // Generate QR
+    const qrContainer = document.getElementById('confirmQr');
+    qrContainer.innerHTML = '';
+
+    new QRCode(qrContainer, {
+      text: reservation.id,
+      width: 160,
+      height: 160
+    });
+
+    const vendorName = pendingListing.vendors
+      ? pendingListing.vendors.business_name
+      : '';
+
     document.getElementById('confirmWindow').textContent =
-      `Pickup at ${vendorName}, ${timeFmt(pendingListing.pickup_start)}–${timeFmt(pendingListing.pickup_end)}. Bring this code and pay ${money(pendingListing.discounted_price)} cash.`;
+      `Pickup at ${vendorName}, ${timeFmt(pendingListing.pickup_start)}–${timeFmt(pendingListing.pickup_end)}. Bring this QR code or your pickup code and pay ${money(pendingListing.discounted_price)} cash.`;
+
     confirmOverlay.classList.add('show');
 
     renderListings();
