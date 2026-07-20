@@ -203,8 +203,25 @@
       </div>
       <div style="max-width:480px;">
         <div class="verify-code-form">
-          <input type="text" id="verifyCodeInput" maxlength="6" placeholder="e.g. 7HXQ2M">
-          <button class="btn btn-ink" id="verifyBtn">Check code</button>
+          <input
+            type="text"
+            id="verifyCodeInput"
+            maxlength="6"
+            placeholder="e.g. 7HXQ2M"
+          >
+
+          <button
+            type="button"
+            class="btn btn-ghost"
+            id="scanQrBtn">
+            📷 Scan QR
+          </button>
+
+          <button
+            class="btn btn-ink"
+            id="verifyBtn">
+            Check Code
+          </button>
         </div>
         <div id="verifyResult"></div>
       </div>
@@ -220,8 +237,20 @@
       </table>
     </section>
 
+    <div class="modal-overlay" id="qrScannerOverlay">
+      <div class="modal-box">
+        <button class="close-x" id="closeQrScanner">
+          &times;
+        </button>
+        <h2>Scan Pickup QR</h2>
+        <div id="qr-reader"></div>
+      </div>
+    </div>
+
   </main>
 </div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/supabase-client.js"></script>

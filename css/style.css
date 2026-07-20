@@ -574,3 +574,13 @@ table.data-table tr:last-child td{ border-bottom:none; }
 #copyPickupCodeBtn{
     margin-top:12px;
 }
+
+#qr-reader{
+    width:100%;
+    max-width:400px;
+    margin:20px auto;
+}
+
+#qrScannerOverlay .modal-box{
+    max-width:520px;
+}
