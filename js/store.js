@@ -138,75 +138,7 @@ const Store = (() => {
     return data.publicUrl;
   }
 
-  async function expireOldListings(){
-
-      const now = new Date();
-
-      const today =
-          now.toISOString().split("T")[0];
-
-      const currentTime =
-          now.toTimeString().substring(0,5);
-
-      const { error } = await sb
-          .from("listings")
-          .update({ status: "expired" })
-          .eq("status","active")
-          .lt("pickup_date", today);
-
-      if(error) throw error;
-
-      const { error: todayError } = await sb
-          .from("listings")
-          .update({ status:"expired" })
-          .eq("status","active")
-          .eq("pickup_date", today)
-          .lt("pickup_end", currentTime);
-
-      if(todayError) throw todayError;
-  }
-
-  async function expireOldListings(){
-
-      const now = new Date();
-
-      const today = now.toISOString().split("T")[0];
-      const currentTime = now.toTimeString().slice(0,5);
-
-      const { data, error } = await sb
-          .from("listings")
-          .select("id,pickup_date,pickup_end,status")
-          .eq("status","active");
-
-      if(error) throw error;
-
-      for(const listing of data){
-
-          const expired =
-              listing.pickup_date < today ||
-              (
-                  listing.pickup_date === today &&
-                  listing.pickup_end <= currentTime
-              );
-
-          if(expired){
-
-              await sb
-                  .from("listings")
-                  .update({ status:"expired" })
-                  .eq("id", listing.id);
-
-          }
-      }
-  }
-
   async function getActiveListings(){
-
-     await expireOldListings();
-
-    const { data, error } = await sb
-        .from('listings')
-
     const { data, error } = await sb
       .from('listings')
       .select('*, vendors(business_name,logo_url, verification_status)')
