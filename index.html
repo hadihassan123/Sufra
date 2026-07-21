@@ -156,6 +156,15 @@
         <label for="custName">Your name</label>
         <input type="text" id="custName" required placeholder="Full name">
       </div>
+        <div class="field">
+          <label>Quantity</label>
+          <div class="qty-editor" id="reserveQtyEditor">
+            <button type="button" id="reserveQtyDown">−</button>
+            <span id="reserveQtyValue">1</span>
+            <button type="button" id="reserveQtyUp">+</button>
+          </div>
+          <p class="hint" id="reserveQtyHint"></p>
+      </div>
       <div class="field">
         <label for="custPhone">Phone number</label>
         <input type="tel" id="custPhone" required placeholder="5512 3456">

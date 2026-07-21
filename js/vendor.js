@@ -405,7 +405,7 @@
       verifyResult.innerHTML = `
         <div class="form-msg success show">
           <strong>${reservation.customer_name}</strong>
-          — ${reservation.item_name}
+          — ${reservation.item_name}${reservation.quantity > 1 ? ` ×${reservation.quantity}` : ''}
           · ${money(reservation.price)} cash due
 
           <div style="margin-top:12px;">
@@ -496,7 +496,7 @@
     body.innerHTML = reservations.map(r => `
       <tr>
         <td data-label="Code"><span class="pickup-code-tag">${r.pickup_code}</span></td>
-        <td data-label="Item">${r.item_name}</td>
+        <td data-label="Item">${r.item_name}${r.quantity > 1 ? ` ×${r.quantity}` : ''}</td>
         <td data-label="Customer">${r.customer_name}<br><span style="opacity:.55; font-size:.8em;">${r.customer_phone}</span></td>
         <td data-label="Pickup">${timeFmt(r.pickup_start)}–${timeFmt(r.pickup_end)}</td>
         <td data-label="Status"><span class="status-pill status-${r.status}">${r.status}</span></td>

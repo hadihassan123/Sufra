@@ -136,6 +136,25 @@
   const confirmOverlay = document.getElementById('confirmOverlay');
   const reserveForm = document.getElementById('reserveForm');
 
+  const reserveQtyValue = document.getElementById('reserveQtyValue');
+  const reserveQtyHint = document.getElementById('reserveQtyHint');
+  let reserveQty = 1;
+
+  function updateReserveQtyDisplay(){
+    reserveQtyValue.textContent = reserveQty;
+    if(pendingListing){
+      const total = pendingListing.discounted_price * reserveQty;
+      reserveQtyHint.textContent = `${pendingListing.quantity_left} left · Total: ${money(total)}`;
+    }
+  }
+
+  document.getElementById('reserveQtyDown').addEventListener('click', () => {
+    if(reserveQty > 1){ reserveQty--; updateReserveQtyDisplay(); }
+  });
+  document.getElementById('reserveQtyUp').addEventListener('click', () => {
+    if(pendingListing && reserveQty < pendingListing.quantity_left){ reserveQty++; updateReserveQtyDisplay(); }
+  });
+
   async function openReserveModal(listingId){
     let listing;
     try{
@@ -143,6 +162,8 @@
     }catch(err){ alert('Could not load that listing: ' + err.message); return; }
     if(!listing) return;
     pendingListing = listing;
+    reserveQty = 1;
+    updateReserveQtyDisplay();
     const vendorName = listing.vendors ? listing.vendors.business_name : '';
     document.getElementById('reserveItemName').textContent = listing.item_name;
     document.getElementById('reserveItemMeta').textContent =
@@ -161,8 +182,9 @@
 
     let reservation;
     try{
-      reservation = await Store.createReservation(pendingListing, name, phone);
+      reservation = await Store.createReservation(pendingListing, name, phone,reserveQty);
     }catch(err){
+      alert(err.message && err.message.includes('stock') ? 'Sorry, there isn\'t enough left — try a smaller quantity.' : ('Could not reserve: ' + err.message));
       alert(err.message && err.message.includes('sold out') ? 'Sorry, this item just sold out.' : ('Could not reserve: ' + err.message));
       submitBtn.disabled = false;
       reserveOverlay.classList.remove('show');
@@ -190,8 +212,9 @@
       ? pendingListing.vendors.business_name
       : '';
 
+    const qtyNote = reservation.quantity > 1 ? `${reservation.quantity}× ` : '';
     document.getElementById('confirmWindow').textContent =
-      `Pickup at ${vendorName}, ${timeFmt(pendingListing.pickup_start)}–${timeFmt(pendingListing.pickup_end)}. Bring this QR code or your pickup code and pay ${money(pendingListing.discounted_price)} cash.`;
+      `Pickup ${qtyNote} at ${vendorName}, ${timeFmt(pendingListing.pickup_start)}–${timeFmt(pendingListing.pickup_end)}. Bring this QR code or your pickup code and pay ${money(pendingListing.discounted_price)} cash.`;
 
     confirmOverlay.classList.add('show');
 
@@ -230,7 +253,7 @@
     pickupList.innerHTML = reservations.map(r => `
       <div class="pickup-row">
         <div class="pickup-row-info">
-          <strong>${r.item_name}</strong>
+          <strong>${r.item_name}${r.quantity > 1 ? ` ×${r.quantity}` : ''}</strong>
           <span>${r.vendor_name} · ${timeFmt(r.pickup_start)}–${timeFmt(r.pickup_end)}</span>
         </div>
         <span class="pickup-code-tag">${r.pickup_code}</span>
