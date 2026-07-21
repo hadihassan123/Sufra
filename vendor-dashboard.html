@@ -39,7 +39,12 @@
       <div class="dash-head">
         <div><h1>Overview</h1><p>How your listings are performing today.</p></div>
       </div>
-      <div class="dial-label"><span>Doha time</span><span id="clockText">--:--</span></div>
+      <div class="field-row">
+        <div class="field">
+          <label for="currentTime">Current Time</label>
+          <input type="text" id="currentTime" readonly>
+        </div>
+      </div>
       <div class="stat-row">
         <div class="stat-card"><div class="num" id="statActive">0</div><div class="lbl">Active listings</div></div>
         <div class="stat-card"><div class="num" id="statReserved">0</div><div class="lbl">Reserved, awaiting pickup</div></div>
