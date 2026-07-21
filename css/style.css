@@ -584,3 +584,23 @@ table.data-table tr:last-child td{ border-bottom:none; }
 #qrScannerOverlay .modal-box{
     max-width:520px;
 }
+
+/* ---------- clock in dashboard ---------- */
+
+.dash-dial-card{
+  background:var(--ink);
+  border-radius:16px;
+  padding:22px;
+  max-width:280px;
+  margin-bottom:28px;
+}
+.dash-dial-card .dial-label{
+  font-family:var(--f-mono); font-size:0.68rem; letter-spacing:0.14em; text-transform:uppercase;
+  color:rgba(246,241,227,0.55); display:flex; justify-content:space-between; margin-bottom:14px;
+}
+.dash-dial-card .dial-svg{ width:100%; height:auto; }
+.dash-dial-card .dial-status{
+  margin-top:16px; text-align:center;
+  font-family:var(--f-display); font-style:italic; font-size:0.98rem; color:var(--amber);
+}
+.dash-dial-card .dial-status span{ display:block; font-family:var(--f-mono); font-style:normal; font-size:0.68rem; color:rgba(246,241,227,0.6); margin-top:4px; letter-spacing:0.04em; }
