@@ -141,7 +141,7 @@ const Store = (() => {
   async function getActiveListings(){
     const { data, error } = await sb
       .from('listings')
-      .select('*, vendors(business_name)')
+      .select('*, vendors(business_name,logo_url, verification_status)')
       .in('status', ['active', 'sold_out'])
       .order('pickup_start', { ascending: true });
 
