@@ -119,6 +119,9 @@
   document.getElementById('sideVendorName').textContent = vendor.business_name;
   const statusEl = document.getElementById('sideVendorStatus');
   statusEl.textContent = vendor.verification_status === 'verified' ? 'Verified vendor' : 'Pending verification';
+  // Default the pickup date to today
+  document.getElementById("pickupDate").value =
+      new Date().toISOString().split("T")[0];
 
   if(vendor.verification_status !== 'verified'){
     document.getElementById('verifyBadgeNotice').innerHTML = `
@@ -406,6 +409,7 @@
           discounted_price: discountedPrice,
           quantity_total: quantity,
           quantity_left: editingListingId ? cachedListings.find(x => x.id === editingListingId).quantity_left : quantity,
+          pickup_date: document.getElementById("pickupDate").value,
           pickup_start: toISO(pStart),
           pickup_end: toISO(pEnd),
           payment_method: 'cash',
