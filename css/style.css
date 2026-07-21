@@ -599,8 +599,5 @@ table.data-table tr:last-child td{ border-bottom:none; }
   color:rgba(246,241,227,0.55); display:flex; justify-content:space-between; margin-bottom:14px;
 }
 .dash-dial-card .dial-svg{display:none;}
-.dash-dial-card .dial-status{
-  margin-top:16px; text-align:center;
-  font-family:var(--f-display); font-style:italic; font-size:0.98rem; color:var(--amber);
-}
+.dash-dial-card .dial-status{display:none;}
 .dash-dial-card .dial-status span{ display:block; font-family:var(--f-mono); font-style:normal; font-size:0.68rem; color:rgba(246,241,227,0.6); margin-top:4px; letter-spacing:0.04em; }
