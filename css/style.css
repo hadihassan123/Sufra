@@ -591,7 +591,7 @@ table.data-table tr:last-child td{ border-bottom:none; }
   background:var(--ink);
   border-radius:12px;
   padding:14px;
-  max-width:180px;
+  max-width:250px;
   margin-bottom:15px;
 }
 .dash-dial-card .dial-label{
