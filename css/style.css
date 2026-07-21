@@ -591,8 +591,8 @@ table.data-table tr:last-child td{ border-bottom:none; }
   background:var(--ink);
   border-radius:12px;
   padding:14px;
-  max-width:280px;
-  margin-bottom:28px;
+  max-width:180px;
+  margin-bottom:15px;
 }
 .dash-dial-card .dial-label{
   font-family:var(--f-mono); font-size:0.68rem; letter-spacing:0.14em; text-transform:uppercase;
