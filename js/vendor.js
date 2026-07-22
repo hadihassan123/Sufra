@@ -256,15 +256,6 @@
         Store.getReservationsByVendor(vendor.id)
     ]);
 
-    console.log("========== NEW LISTING ==========");
-    console.log("Current time:", new Date().toString());
-    console.log("Current ISO:", new Date().toISOString());
-    console.log("today:", today);
-    console.log("pStart:", pStart);
-    console.log("pEnd:", pEnd);
-    console.log("pickup_start:", toISO(pStart));
-    console.log("pickup_end:", toISO(pEnd));
-    console.log("===============================");
     console.log(listings.map(l => ({
         item: l.item_name,
         pickup_end: l.pickup_end,
