@@ -75,6 +75,7 @@
 
     grid.innerHTML = filtered.map(l => {
       const soldOut = l.quantity_left <= 0;
+      const isExpired = new Date(l.pickup_end) < new Date();
       const vendorName = l.vendors ? l.vendors.business_name : '';
       const logoUrl = l.vendors ? l.vendors.logo_url : null;
       const isVerified = l.vendors && l.vendors.verification_status === 'verified';
@@ -89,7 +90,7 @@
           <span class="ticket-photo-fallback" aria-hidden="true">${categoryGlyph(l.category)}</span>
           <span class="discount-tag">${discountPct}% off</span>
         </div>
-        <div class="ticket ${soldOut ? 'sold-out' : ''}">
+        <div class="ticket ${isExpired ? 'expired' : (soldOut ? 'sold-out' : '')}">
           <div class="ticket-main">
             <div class="ticket-top">
               <span class="ticket-vendor">
@@ -114,8 +115,8 @@
             <span class="stub-label">Left</span>
             <span class="stub-qty">${l.quantity_left}</span>
             <span class="stub-qty-label">of ${l.quantity_total}</span>
-            <button class="btn ${soldOut ? 'btn-ghost' : 'btn-teal'}" ${soldOut ? 'disabled' : ''} data-reserve="${l.id}">
-              ${soldOut ? 'Sold out' : 'Reserve'}
+            <button class="btn ${(isExpired || soldOut) ? 'btn-ghost' : 'btn-teal'}" ${(isExpired || soldOut) ? 'disabled' : ''} data-reserve="${l.id}">
+              ${isExpired ? 'Expired' : (soldOut ? 'Sold out' : 'Reserve')}
             </button>
           </div>
         </div>
