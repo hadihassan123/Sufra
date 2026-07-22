@@ -384,7 +384,7 @@
       const [h, m] = hhmm.split(':').map(Number);
       const d = new Date(today);
       d.setHours(h, m, 0, 0);
-      return d.toISOString();
+      return d;
     }
 
     const startDate = toDate(pStart, today);
