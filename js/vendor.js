@@ -258,7 +258,8 @@
 
     console.log(listings.map(l => ({
         item: l.item_name,
-        pickup_end: l.pickup_end,
+        pickup_start: toISO(l.pickup_start),
+        pickup_end: toISO(l.pickup_end),
         quantity_left: l.quantity_left
     })));
 
