@@ -256,6 +256,12 @@
         Store.getReservationsByVendor(vendor.id)
     ]);
 
+    console.log(listings.map(l => ({
+        item: l.item_name,
+        pickup_end: l.pickup_end,
+        quantity_left: l.quantity_left
+    })));
+
     const now = new Date();
 
     const activeListings = listings.filter(
