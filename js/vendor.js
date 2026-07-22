@@ -271,9 +271,16 @@
     const expiredListings = listings.filter(
         l => new Date(l.pickup_end) < now
     );
+    const soldOutListings = listings.filter(l =>
+        new Date(l.pickup_end) >= now &&
+        l.quantity_left <= 0
+    );
 
     document.getElementById('statActive').textContent =
         activeListings.length;
+
+    document.getElementById('statSoldOut').textContent = 
+        soldOutListings.length;
 
     document.getElementById('statExpired').textContent =
         expiredListings.length;

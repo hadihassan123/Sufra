@@ -115,9 +115,9 @@
             <span class="stub-label">Left</span>
             <span class="stub-qty">${l.quantity_left}</span>
             <span class="stub-qty-label">of ${l.quantity_total}</span>
-            <button class="btn ${(isExpired || soldOut) ? 'btn-ghost' : 'btn-teal'}" ${(isExpired || soldOut) ? 'disabled' : ''} data-reserve="${l.id}">
-              ${isExpired ? 'Expired' : (soldOut ? 'Sold out' : 'Reserve')}
-            </button>
+          <button class="btn ${(isExpired || soldOut) ? 'btn-ghost' : 'btn-teal'}" ${(isExpired || soldOut) ? 'disabled' : ''} data-reserve="${l.id}">
+            ${isExpired ? 'Expired' : (soldOut ? 'Sold out' : 'Reserve')}
+          </button>
           </div>
         </div>
       </div>`;
