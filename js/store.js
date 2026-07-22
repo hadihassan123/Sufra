@@ -204,8 +204,8 @@ const Store = (() => {
     if(error) throw error;
   }
 
-  // ---- reservations ----
-  async function createReservation(listing, customerName, customerPhone,quantity){
+    // ---- reservations ----
+  async function createReservation(listing, customerName, customerPhone, quantity){
     const qty = Math.max(1, Number(quantity) || 1);
     const { data, error } = await sb.from('reservations').insert({
       listing_id: listing.id,
