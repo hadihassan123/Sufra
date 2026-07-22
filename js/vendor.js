@@ -371,9 +371,9 @@
 
     const today = new Date();
 
-    function toISO(hhmm,base=today) {
+    function toISO(hhmm,base =  today) {
       const [h, m] = hhmm.split(':').map(Number);
-      const d = new Date(today);
+      const d = new Date(base);
       d.setHours(h, m, 0, 0);
       return d.toISOString();
     }
@@ -401,6 +401,8 @@
       console.log("pickup_start:", toISO(pStart));
       console.log("pickup_end:", toISO(pEnd));
       console.log("===============================");
+      console.log({pStart,pEnd,startHour: Number(pStart.split(':')[0]),endHour: Number(pEnd.split(':')[0])
+      });
 
       const payload = {
           vendor_id: vendor.id,
@@ -411,8 +413,8 @@
           discounted_price: discountedPrice,
           quantity_total: quantity,
           quantity_left: editingListingId ? cachedListings.find(x => x.id === editingListingId).quantity_left : quantity,
-          pickup_start: toISO(pStart),
-          pickup_end: toISO(pEnd),
+          pickup_start: startDate.toISOString(),
+          pickup_end: endDate.toISOString(),
           payment_method: 'cash',
           image_url: imageUrl,
           status: 'active'
