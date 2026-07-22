@@ -286,6 +286,9 @@ button{ font-family:inherit; cursor:pointer; }
 .ticket.sold-out .ticket-main{ opacity:0.5; }
 .ticket.sold-out .ticket-stub .btn{ background:rgba(36,31,26,0.15); color:rgba(36,31,26,0.5); }
 
+.ticket.expired .ticket-main{ opacity:0.5; }
+.ticket.expired .ticket-stub .btn{ background:rgba(36,31,26,0.15); color:rgba(36,31,26,0.5); }
+
 /* ---------- empty state ---------- */
 .empty-state{
   text-align:center; padding:60px 20px; border:1.5px dashed var(--line); border-radius:12px;
