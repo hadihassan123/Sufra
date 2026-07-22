@@ -380,9 +380,9 @@
 
     const today = new Date();
 
-    function toISO(hhmm){ 
+    function toISO(hhmm,baseDate){ 
       const [h, m] = hhmm.split(':').map(Number);
-      const d = new Date(today);
+      const d = new Date(baseDate);
       d.setHours(h, m, 0, 0);
       return d;
     }
