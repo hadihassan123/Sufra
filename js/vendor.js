@@ -250,52 +250,34 @@
   }
 
   // ---- overview ----
-  async function renderOverview(){
+ async function renderOverview() {
     const [listings, reservations] = await Promise.all([
-      Store.getListingsByVendor(vendor.id),
-      Store.getReservationsByVendor(vendor.id)
+        Store.getListingsByVendor(vendor.id),
+        Store.getReservationsByVendor(vendor.id)
     ]);
-    document.getElementById('statActive').textContent = listings.length;
-    document.getElementById('statReserved').textContent = reservations.filter(r => r.status === 'reserved').length;
-    document.getElementById('statCollected').textContent = reservations.filter(r => r.status === 'collected').length;
-  }
-  function loadListingIntoForm(listing){
 
-      editingListingId = listing.id;
+    const now = new Date();
 
-      document.getElementById('itemName').value = listing.item_name;
+    const activeListings = listings.filter(
+        l => new Date(l.pickup_end) >= now
+    );
 
-      document.getElementById('description').value =
-          listing.description || '';
+    const expiredListings = listings.filter(
+        l => new Date(l.pickup_end) < now
+    );
 
-      document.getElementById('postCategory').value =
-          listing.category;
+    document.getElementById('statActive').textContent =
+        activeListings.length;
 
-      document.getElementById('originalPrice').value =
-          listing.original_price;
+    document.getElementById('statExpired').textContent =
+        expiredListings.length;
 
-      document.getElementById('discountedPrice').value =
-          listing.discounted_price;
+    document.getElementById('statReserved').textContent =
+        reservations.filter(r => r.status === 'reserved').length;
 
-      document.getElementById('quantity').value =
-          listing.quantity_total;
-
-      document.getElementById('pickupStart').value =
-          new Date(listing.pickup_start)
-          .toTimeString()
-          .slice(0,5);
-
-      document.getElementById('pickupEnd').value =
-          new Date(listing.pickup_end)
-          .toTimeString()
-          .slice(0,5);
-
-      document.getElementById('postListingBtn').textContent =
-          'Save changes';
-
-      showView('post');
-
-  }
+    document.getElementById('statCollected').textContent =
+        reservations.filter(r => r.status === 'collected').length;
+}
   // ---- listings table ----
   async function renderListingsTable(){
     const body = document.getElementById('listingsTableBody');
