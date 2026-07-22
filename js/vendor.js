@@ -371,17 +371,11 @@
 
     const today = new Date();
 
-    function toISO(hhmm){ 
+    function toISO(hhmm,base=today) {
       const [h, m] = hhmm.split(':').map(Number);
       const d = new Date(today);
       d.setHours(h, m, 0, 0);
-      return d;
-    }
-
-    const startDate = toDate(pStart, today);
-    let endDate = toDate(pEnd, today);
-    if(endDate <= startDate){
-      endDate.setDate(endDate.getDate() + 1); // pickup window crosses midnight
+      return d.toISOString();
     }
 
     const quantity = Number(document.getElementById('quantity').value);
@@ -398,7 +392,15 @@
         imageUrl = await Store.uploadListingImage(vendor.id, imageFile);
       }
 
-    
+      console.log("========== NEW LISTING ==========");
+      console.log("Current time:", new Date().toString());
+      console.log("Current ISO:", new Date().toISOString());
+      console.log("today:", today);
+      console.log("pStart:", pStart);
+      console.log("pEnd:", pEnd);
+      console.log("pickup_start:", toISO(pStart));
+      console.log("pickup_end:", toISO(pEnd));
+      console.log("===============================");
 
       const payload = {
           vendor_id: vendor.id,
