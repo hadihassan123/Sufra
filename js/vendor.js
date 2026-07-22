@@ -260,6 +260,7 @@
         item: l.item_name,
         pickup_end: l.pickup_end,
         quantity_left: l.quantity_left
+   
     })));
 
     const now = new Date();
@@ -403,6 +404,7 @@
       console.log("===============================");
       console.log({pStart,pEnd,startHour: Number(pStart.split(':')[0]),endHour: Number(pEnd.split(':')[0])
       });
+      
 
       const payload = {
           vendor_id: vendor.id,
