@@ -4,7 +4,16 @@
   let pendingListing = null;
   let cachedActiveListings = [];
 
-  
+  let map = null;
+  let markers = [];
+  const AREA_COORDS = {
+    'Lusail': [25.40, 51.50],
+    'West Bay': [25.32, 51.53],
+    'Doha Jadeed': [25.28, 51.53],
+    'Al Sadd': [25.28, 51.50],
+    'Msheireb': [25.28, 51.52],
+    'Pearl Qatar': [25.37, 51.55]
+  };
 
   const grid = document.getElementById('listingGrid');
   const filterBar = document.getElementById('filterBar');
@@ -57,8 +66,16 @@
       
       return matchesCategory && matchesSearch(l);
     });
-    
-    renderListingGrid(filtered);
+
+    if (activeFilter === 'map') {
+      grid.style.display = 'none';
+      document.getElementById('mapView').style.display = 'block';
+      renderMap(filtered);
+    } else {
+      grid.style.display = 'grid';
+      document.getElementById('mapView').style.display = 'none';
+      renderListingGrid(filtered);
+    }  
   }
 
   // Actually fetches from Supabase — used for the initial load and after a
@@ -420,6 +437,44 @@
       if(heroLink) heroLink.style.display = 'none';
     }
   })();
+
+  function renderMap(listings) {
+    if (!map) {
+      map = L.map('mapView').setView([25.30, 51.51], 12); // Center of Doha
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      } ).addTo(map);
+    }
+
+    // Clear old markers
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    listings.forEach(l => {
+      const coords = AREA_COORDS[l.vendors?.area] || [25.28, 51.53]; // Fallback to Doha center
+      const marker = L.marker(coords).addTo(map);
+      
+      const popupContent = `
+        <div style="font-family: sans-serif; min-width: 150px;">
+          <strong style="display:block; margin-bottom:4px;">${l.item_name}</strong>
+          <span style="font-size:0.85em; color:#666;">${l.vendors?.business_name}</span>  
+
+          <span style="font-weight:bold; color:#2F6E67;">${money(l.discounted_price)}</span>
+          <button class="btn btn-teal btn-sm" style="width:100%; margin-top:8px;" onclick="openReserveModal('${l.id}')">Reserve</button>
+        </div>
+      `;
+      
+      marker.bindPopup(popupContent);
+      markers.push(marker);
+    });
+
+    // Refresh map size (Leaflet fix for hidden containers)
+    setTimeout(() => map.invalidateSize(), 100);
+  }
+
+  window.openReserveModal = openReserveModal;
+
+
 
   buildDial();
   updateHands();
