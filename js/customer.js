@@ -4,6 +4,8 @@
   let pendingListing = null;
   let cachedActiveListings = [];
 
+  
+
   const grid = document.getElementById('listingGrid');
   const filterBar = document.getElementById('filterBar');
   const searchInput = document.getElementById('searchInput');

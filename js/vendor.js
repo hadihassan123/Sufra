@@ -393,6 +393,18 @@
 
       let imageUrl = null;
 
+      let finalImage = imageFile;
+      if (imageFile){
+        try {
+          const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1200, useWebWorker: true };
+          finalImage = await imageCompression(imageFile, options);
+          console.log(`Optimized: ${(imageFile.size/1024).toFixed(1)}KB -> ${(finalImage.size/1024).toFixed(1)}KB`);
+        } catch (err) {
+          console.error("Compression failed, using original", err);
+          finalImage = imageFile;
+        }
+      }
+      
       if (imageFile) {
         imageUrl = await Store.uploadListingImage(vendor.id, imageFile);
       }

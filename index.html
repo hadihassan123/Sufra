@@ -6,6 +6,12 @@
 <title>Sufra — Doha's End-of-Day Food Marketplace</title>
 <meta name="description" content="Reserve guaranteed surplus food from Doha restaurants, bakeries, and cafés at a real discount. Pick up before closing.">
 <link rel="stylesheet" href="css/style.css">
+  <!-- Add before </head> -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2F6E67">
+
 </head>
 <body>
 
@@ -86,9 +92,10 @@
         <button class="filter-chip" data-filter="Restaurant">🍽️ Restaurant</button>
         <button class="filter-chip" data-filter="Patisserie">🍰 Patisserie</button>
         <button class="filter-chip" data-filter="expired">⌛ Expired</button>
-
+        <button class="filter-chip" data-filter="map">📍 Map View</button>
       </div>
       <div class="listing-grid" id="listingGrid"></div>
+      <div id="mapView" style="display:none; height: 500px; border-radius: 12px; margin-top: 20px; border: 1px solid var(--line); z-index: 1;"></div>
     </div>
   </section>
  
