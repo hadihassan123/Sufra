@@ -403,8 +403,8 @@
       console.log("today:", today);
       console.log("pStart:", pStart);
       console.log("pEnd:", pEnd);
-      console.log("pickup_start:", toISOString(pStart));
-      console.log("pickup_end:", toISOString(pEnd));
+      console.log("pickup_start:", startDate.toISOString());
+      console.log("pickup_end:", endDate.toISOString());
       console.log("===============================");
 
       const payload = {
