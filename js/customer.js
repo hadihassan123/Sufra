@@ -12,7 +12,8 @@
     'Doha Jadeed': [25.28, 51.53],
     'Al Sadd': [25.28, 51.50],
     'Msheireb': [25.28, 51.52],
-    'Pearl Qatar': [25.37, 51.55]
+    'Pearl Qatar': [25.37, 51.55],
+    'al wakrah': [25.17, 51.60]
   };
 
   const grid = document.getElementById('listingGrid');
@@ -469,7 +470,7 @@
     });
 
     // Refresh map size (Leaflet fix for hidden containers)
-    setTimeout(() => map.invalidateSize(), 100);
+    setTimeout(() => { map.invalidateSize(true);} ,100);
   }
 
   window.openReserveModal = openReserveModal;
