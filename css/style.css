@@ -175,7 +175,7 @@ button{ font-family:inherit; cursor:pointer; }
 /* ---------- search bar ---------- */
 .search-bar{ margin-bottom:18px; }
 .search-bar input{
-  padding:13px 13px; font-size:0.98rem;
+  padding:13px 8px; font-size:0.98rem;
   background:#fff;
 }
 .search-bar input::-webkit-search-cancel-button{ cursor:pointer; }
