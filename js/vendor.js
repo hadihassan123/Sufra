@@ -398,8 +398,8 @@
       }
 
       console.log("========== NEW LISTING ==========");
-      console.log("Current time:", new Date().toString());
-      console.log("Current ISO:", new Date().toISOString());
+      console.log("Pickup Start:", startDate.toLocaleString('en-US', { timeZone: 'Asia/Qatar' }));
+      console.log("Pickup End:  ", endDate.toLocaleString('en-US', { timeZone: 'Asia/Qatar' }));
       console.log("today:", today);
       console.log("pStart:", pStart);
       console.log("pEnd:", pEnd);
