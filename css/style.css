@@ -608,3 +608,18 @@ table.data-table tr:last-child td{ border-bottom:none; }
   font-family:var(--f-display); font-style:italic; font-size:0.98rem; color:var(--amber);
 }
 .dash-dial-card .dial-status span{ display:block; font-family:var(--f-mono); font-style:normal; font-size:0.68rem; color:rgba(246,241,227,0.6); margin-top:4px; letter-spacing:0.04em; }
+
+/* map */
+#mapView {
+  height: 500px;
+  width: 100%;
+  display: none; /* Controlled by JS */
+  z-index: 1;
+  background-color: #f8f8f8; /* Helps see if the div itself is working */
+}
+
+/* Fix for Leaflet tiles sometimes disappearing in flex/grid layouts */
+.leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+}
