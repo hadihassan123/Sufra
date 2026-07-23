@@ -44,9 +44,18 @@
   // Renders from the already-fetched cache — used for category clicks and
   // search typing, so neither hits the database on every keystroke/click.
   function applyFiltersAndRender(){
-    const filtered = cachedActiveListings.filter(l =>
-      (activeFilter === 'all' ? true : l.category === activeFilter) && matchesSearch(l)
-    );
+    const now = new Date();
+    const filtered = cachedActiveListings.filter(l => {
+      const isExpired = new Date(l.pickup_end) < now;
+      const matchesCategory = (activeFilter === 'all') 
+        ? !isExpired 
+        : (activeFilter === 'expired') 
+          ? isExpired 
+          : (l.category === activeFilter && !isExpired);
+      
+      return matchesCategory && matchesSearch(l);
+    });
+    
     renderListingGrid(filtered);
   }
 
