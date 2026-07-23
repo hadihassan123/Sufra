@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vendor dashboard — Sufra</title>
 <link rel="stylesheet" href="css/style.css">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
 </head>
 <body>
 
@@ -69,6 +70,13 @@
           </label>
           <button class="btn btn-ghost btn-sm" id="removeLogoBtn" style="display:none;">Remove</button>
         </div>
+        <div class="doc-card" style="margin-bottom:24px;" id="locationCard">
+        <div class="doc-info">
+          <h3>Business location</h3>
+          <p id="locationStatusText">Not set yet — customers will see a link to your location on Google Maps.</p>
+        </div>
+        <button class="btn btn-teal btn-sm" id="useLocationBtn">📍 Use my current location</button>
+      </div>
       </div>
 
       <div id="verifyBadgeNotice"></div>

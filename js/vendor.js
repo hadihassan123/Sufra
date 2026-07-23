@@ -43,6 +43,32 @@
       dialSvg.setAttribute('viewBox', '0 0 240 240');
       dialSvg.innerHTML = svg;
     }
+    document.getElementById('useLocationBtn').addEventListener('click', () => {
+      const btn = document.getElementById('useLocationBtn');
+      if(!navigator.geolocation){
+        alert('Your browser doesn\'t support location access.');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Getting location…';
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try{
+            await Store.updateVendorLocation(vendor.id, pos.coords.latitude, pos.coords.longitude);
+            document.getElementById('locationStatusText').textContent = 'Location saved — customers can now find you on the map.';
+          }catch(err){
+            alert('Could not save location: ' + err.message);
+          }
+          btn.disabled = false;
+          btn.textContent = '📍 Use my current location';
+        },
+        (err) => {
+          alert('Could not get your location: ' + err.message);
+          btn.disabled = false;
+          btn.textContent = '📍 Use my current location';
+        }
+      );
+    });
 
     function updateHands(){
       const now = new Date();
@@ -404,7 +430,7 @@
           finalImage = imageFile;
         }
       }
-      
+
       if (imageFile) {
         imageUrl = await Store.uploadListingImage(vendor.id, imageFile);
       }

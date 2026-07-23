@@ -62,6 +62,14 @@ const Store = (() => {
     return data;
   }
 
+  async function updateVendorLocation(vendorId, latitude, longitude){
+  const { error } = await sb
+    .from('vendors')
+    .update({ latitude, longitude })
+    .eq('id', vendorId);
+  if(error) throw error;
+}
+
   // ---- vendor verification documents ----
   const DOC_COLUMNS = {
     cr: 'cr_document_path',
@@ -141,7 +149,7 @@ const Store = (() => {
   async function getActiveListings(){
     const { data, error } = await sb
       .from('listings')
-      .select('*, vendors(business_name,logo_url, verification_status)')
+      .select('*, vendors(business_name,logo_url, verification_status,latitude, longitude)')
       .in('status', ['active', 'sold_out'])
       .order('pickup_start', { ascending: true });
 
@@ -151,7 +159,7 @@ const Store = (() => {
 
   async function getListing(id){
     const { data, error } = await sb
-      .from('listings').select('*, vendors(business_name, logo_url, verification_status)').eq('id', id).maybeSingle();
+      .from('listings').select('*, vendors(business_name, logo_url, verification_status,latitude,longitude)').eq('id', id).maybeSingle();
     if(error) throw error;
     return data;
   }
@@ -287,7 +295,7 @@ const Store = (() => {
 
   return {
     SURPLUS_WINDOWS,
-    signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,
+    signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,updateVendorLocation,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
     getActiveListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected, getReservationsByVendor,

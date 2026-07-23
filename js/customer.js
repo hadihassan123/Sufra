@@ -109,6 +109,8 @@
       const logoUrl = l.vendors ? l.vendors.logo_url : null;
       const isVerified = l.vendors && l.vendors.verification_status === 'verified';
       const discountPct = pct(l.original_price, l.discounted_price);
+      const mapLink = (l.vendors && l.vendors.latitude && l.vendors.longitude)
+              ? `<a href="https://www.google.com/maps?q=${l.vendors.latitude},${l.vendors.longitude}" target="_blank" rel="noopener" style="text-decoration:underline;">📍 View on map</a>`: '';
       return `
       <div class="ticket-card">
         <div class="ticket-photo">
@@ -138,6 +140,7 @@
               <span>📍 <strong>${l.category}</strong></span>
               <span>🕐 Pickup <strong>${timeFmt(l.pickup_start)}–${timeFmt(l.pickup_end)}</strong></span>
               <span>🕓 Posted <strong>${timeAgo(l.created_at)}</strong></span>
+              ${mapLink ? `<span>${mapLink}</span>` : ''}
             </div>
           </div>
           <div class="ticket-stub">
