@@ -260,7 +260,6 @@
         item: l.item_name,
         pickup_end: l.pickup_end,
         quantity_left: l.quantity_left
-   
     })));
 
     const now = new Date();
@@ -372,11 +371,16 @@
 
     const today = new Date();
 
-    function toISO(hhmm,base =  today) {
+    function toISO(hhmm,base) {
       const [h, m] = hhmm.split(':').map(Number);
-      const d = new Date(base);
+      const d = new Date(today);
       d.setHours(h, m, 0, 0);
-      return d.toISOString();
+      return d;
+    }
+    const startDate = toDate(pStart, today);
+    let endDate = toDate(pEnd, today);
+    if(endDate <= startDate){
+      endDate.setDate(endDate.getDate() + 1); // pickup window crosses midnight
     }
 
     const quantity = Number(document.getElementById('quantity').value);
@@ -402,9 +406,6 @@
       console.log("pickup_start:", toISO(pStart));
       console.log("pickup_end:", toISO(pEnd));
       console.log("===============================");
-      console.log({pStart,pEnd,startHour: Number(pStart.split(':')[0]),endHour: Number(pEnd.split(':')[0])
-      });
-      
 
       const payload = {
           vendor_id: vendor.id,
