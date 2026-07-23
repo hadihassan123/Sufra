@@ -18,19 +18,28 @@
   </div>
 </header>
 
-<!-- passcode gate -->
+<!-- NEW SECURE LOGIN GATE -->
 <div class="auth-shell" id="gateShell">
   <div class="auth-card">
-    <p class="eyebrow">Restricted</p>
-    <h1>Admin access</h1>
-    <p class="sub">Enter the admin passcode to review pending vendor accounts. The passcode is checked in the database itself — it's never stored in this page or in git.</p>
+    <p class="eyebrow">Admin Portal</p>
+    <h1>Secure Login</h1>
+    <p class="sub">Log in with your admin account and passcode to manage vendors and view private documents.</p>
     <div class="form-msg error" id="gateMsg"></div>
     <form id="gateForm">
       <div class="field">
-        <label for="passcode">Passcode</label>
-        <input type="password" id="passcode" required placeholder="Admin passcode">
+        <label for="adminEmail">Email</label>
+        <input type="email" id="adminEmail" required placeholder="admin@sufra.com">
       </div>
-      <button type="submit" class="btn btn-ink btn-block">Enter</button>
+      <div class="field">
+        <label for="adminPassword">Password</label>
+        <input type="password" id="adminPassword" required placeholder="••••••••">
+      </div>
+      <div class="field">
+        <label for="passcode">Admin Passcode</label>
+        <input type="password" id="passcode" required placeholder="Approval passcode">
+        <p class="hint">This is the code required to Approve/Revoke vendors.</p>
+      </div>
+      <button type="submit" class="btn btn-ink btn-block">Log in to Dashboard</button>
     </form>
   </div>
 </div>
@@ -59,7 +68,7 @@
 <script src="js/supabase-client.js"></script>
 <script src="js/store.js"></script>
 <script>
-  const gateShell = document.getElementById('gateShell');
+  const gateShell = document.getElementById('gateShell' );
   const adminMain = document.getElementById('adminMain');
   const logoutBtn = document.getElementById('logoutBtn');
 
@@ -72,17 +81,46 @@
     await renderTables();
   }
 
-  if(getPasscode()) showAdmin();
+  // Check if already logged in via Supabase
+  (async () => {
+    const session = await Store.getSession();
+    if(session && getPasscode()) {
+      const profile = await Store.getVendorProfile(session.user.id);
+      if(profile && profile.role === 'admin') {
+        showAdmin();
+      }
+    }
+  })();
 
   document.getElementById('gateForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const val = document.getElementById('passcode').value;
-    // Not validated here — the first approve/revoke action confirms it against the database.
-    sessionStorage.setItem('sufra_admin_passcode', val);
-    await showAdmin();
+    const email = document.getElementById('adminEmail').value;
+    const password = document.getElementById('adminPassword').value;
+    const passcode = document.getElementById('passcode').value;
+    const msg = document.getElementById('gateMsg');
+
+    try {
+      // 1. Log in to Supabase (This gives us permission to see documents)
+      const { user } = await Store.signInVendor({ email, password });
+      
+      // 2. Check if this user is actually an admin
+      const profile = await Store.getVendorProfile(user.id);
+      if (!profile || profile.role !== 'admin') {
+        await Store.signOutVendor();
+        throw new Error("Access denied: You do not have the admin role.");
+      }
+
+      // 3. Save the passcode for the Approve/Revoke buttons
+      sessionStorage.setItem('sufra_admin_passcode', passcode);
+      showAdmin();
+    } catch (err) {
+      msg.textContent = err.message;
+      msg.classList.add('show');
+    }
   });
 
-  logoutBtn.addEventListener('click', () => {
+  logoutBtn.addEventListener('click', async () => {
+    await Store.signOutVendor();
     sessionStorage.removeItem('sufra_admin_passcode');
     window.location.reload();
   });
@@ -135,12 +173,15 @@
     const viewDoc = e.target.closest('[data-view-doc]');
     if(viewDoc){
       viewDoc.disabled = true;
+      const originalText = viewDoc.innerHTML;
+      viewDoc.innerHTML = '...';
       try{
         const url = await Store.getVendorDocumentUrl(viewDoc.dataset.viewDoc);
         window.open(url, '_blank');
       }catch(err){
         alert('Could not open document: ' + err.message);
       }
+      viewDoc.innerHTML = originalText;
       viewDoc.disabled = false;
       return;
     }
