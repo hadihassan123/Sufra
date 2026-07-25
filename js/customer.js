@@ -59,7 +59,7 @@
     const now = new Date();
     const filtered = cachedActiveListings.filter(l => {
       const isExpired = new Date(l.pickup_end) < now;
-      const matchesCategory = (activeFilter === 'all') 
+      const matchesCategory = (activeFilter === 'all'|| activeFilter === 'map') 
         ? !isExpired 
         : (activeFilter === 'expired') 
           ? isExpired 
