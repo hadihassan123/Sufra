@@ -624,3 +624,21 @@ table.data-table tr:last-child td{ border-bottom:none; }
   height: 100% !important;
   width: 100% !important;
 }
+
+
+#mapView {
+  height: 500px;
+  width: 100%;
+  display: none; /* Controlled by JS */
+  border-radius: 12px;
+  margin-top: 20px;
+  border: 1px solid var(--line);
+  position: relative; /* Keeps the map inside its box */
+  z-index: 1; /* Ensures it doesn't overlap your header */
+  overflow: hidden; /* Prevents tiles from "bleeding" out */
+}
+
+/* Ensure Leaflet doesn't break your site's layout */
+.leaflet-container {
+  font-family: inherit;
+}
