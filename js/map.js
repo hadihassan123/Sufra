@@ -12,6 +12,7 @@ const AREA_COORDS = {
 };
 
 function rendermap({ listings, reserveHandler }) {
+    console.log("Map listings:", listings);
 
     if (!map) {
         map = L.map("mapView");

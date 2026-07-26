@@ -60,6 +60,8 @@
     if (activeFilter === 'map') {
       grid.style.display = 'none';
       document.getElementById('mapView').style.display = 'block';
+      console.log(filtered);
+      console.log(filtered.length);
       mapView.render({
         listings: filtered,
         reserveHandler: openReserveModal
