@@ -11,7 +11,7 @@ const AREA_COORDS = {
     "al Wakrah": [25.17, 51.60]
 };
 
-function renderMap({ listings, reserveHandler }) {
+function rendermap({ listings, reserveHandler }) {
 
     if (!map) {
         map = L.map("mapView");
