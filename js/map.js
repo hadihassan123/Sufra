@@ -1,22 +1,23 @@
- let map = null;
-  let markers = [];
-  const AREA_COORDS = {
-    'Lusail': [25.40, 51.50],
-    'West Bay': [25.32, 51.53],
-    'Doha Jadeed': [25.28, 51.53],
-    'Al Sadd': [25.28, 51.50],
-    'Msheireb': [25.28, 51.52],
-    'Pearl Qatar': [25.37, 51.55],
-    'al Wakrah': [25.17, 51.60]
-  };
+let map = null;
+let markers = [];
 
+const AREA_COORDS = {
+    "lusail": [25.40, 51.50],
+    "west Bay": [25.32, 51.53],
+    "doha Jadeed": [25.28, 51.53],
+    "al Sadd": [25.28, 51.50],
+    "msheireb": [25.28, 51.52],
+    "pearl Qatar": [25.37, 51.55],
+    "al Wakrah": [25.17, 51.60]
+};
 
-  function renderMap(listings) {
+function renderMap({ listings, reserveHandler }) {
+
     if (!map) {
-        map = L.map('mapView');
+        map = L.map("mapView");
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "© OpenStreetMap"
         }).addTo(map);
     }
 
@@ -28,7 +29,7 @@
 
         let coords;
 
-        // 1. Use vendor GPS coordinates if available
+        // 1. Exact GPS coordinates
         if (
             l.vendors?.latitude != null &&
             l.vendors?.longitude != null
@@ -39,9 +40,11 @@
             ];
         }
 
-        // 2. Otherwise use area coordinates
+        // 2. Fallback to area coordinates
         else {
-            const area = (l.vendors?.area || '').trim();
+            const area = (l.vendors?.area || "")
+                .toLowerCase()
+                .trim();
             coords = AREA_COORDS[area] || [25.2854, 51.5310];
         }
 
@@ -52,19 +55,19 @@
                 </strong>
 
                 <span style="font-size:0.85em;color:#666;">
-                    ${l.vendors?.business_name}
+                    ${l.vendors?.business_name || ""}
                 </span>
 
                 <br>
 
                 <span style="font-weight:bold;color:#2F6E67;">
-                    ${money(l.discounted_price)}
+                    QAR ${Number(l.discounted_price).toFixed(0)}
                 </span>
 
                 <button
                     class="btn btn-teal btn-sm"
                     style="width:100%;margin-top:8px;"
-                    onclick="openReserveModal('${l.id}')">
+                    onclick="window.openReserveModal('${l.id}')">
                     Reserve
                 </button>
             </div>
@@ -77,7 +80,7 @@
         markers.push(marker);
     });
 
-    // Automatically fit all markers
+    // Zoom to all markers
     if (markers.length) {
         const group = L.featureGroup(markers);
 
@@ -86,10 +89,13 @@
         });
     }
 
-    // Fix rendering when map was initially hidden
+    // Fix hidden map rendering
     setTimeout(() => {
         map.invalidateSize();
     }, 100);
 }
-        
- 
+
+// Public API
+window.mapView = {
+    render: renderMap
+};
