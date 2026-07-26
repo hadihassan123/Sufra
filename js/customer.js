@@ -60,7 +60,7 @@
     if (activeFilter === 'map') {
       grid.style.display = 'none';
       document.getElementById('mapView').style.display = 'block';
-      console.log("customer.js",filtered);
+      console.log("customer.js(1)",filtered);
       console.log("customer.js",filtered.length);
       mapView.render({
         listings: filtered,
