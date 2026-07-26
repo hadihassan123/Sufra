@@ -3,18 +3,27 @@ let markers = [];
 
 const AREA_COORDS = {
     "lusail": [25.40, 51.50],
-    "west Bay": [25.32, 51.53],
-    "doha Jadeed": [25.28, 51.53],
-    "al Sadd": [25.28, 51.50],
+    "west bay": [25.32, 51.53],
+    "doha jadeed": [25.28, 51.53],
+    "al sadd": [25.28, 51.50],
     "msheireb": [25.28, 51.52],
-    "pearl Qatar": [25.37, 51.55],
-    "al Wakrah": [25.17, 51.60]
+    "pearl qatar": [25.37, 51.55],
+    "al wakrah": [25.17, 51.60]
 };
 
 function rendermap({ listings, reserveHandler }) {
 
     if (!map) {
         map = L.map("mapView");
+        L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+                attribution: "© OpenStreetMap"
+            }
+        ).addTo(map);
+
+        map.setView([25.2854, 51.5310], 12);
+            
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: "© OpenStreetMap"
@@ -91,8 +100,15 @@ function rendermap({ listings, reserveHandler }) {
 
     // Fix hidden map rendering
     setTimeout(() => {
-        map.invalidateSize();
-    }, 100);
+        map.invalidateSize(true);
+
+        if (markers.length) {
+            const group = L.featureGroup(markers);
+            map.fitBounds(group.getBounds(), {
+                padding: [40, 40]
+            });
+        }
+    }, 200);
 }
 
 // Public API
