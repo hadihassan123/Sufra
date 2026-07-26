@@ -97,5 +97,5 @@ function rendermap({ listings, reserveHandler }) {
 
 // Public API
 window.mapView = {
-    render: renderMap
+    render: rendermap
 };
