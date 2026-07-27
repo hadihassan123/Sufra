@@ -130,6 +130,10 @@ function rendermap({ listings, reserveHandler }) {
         }
     }, 200);
 }
+function finishRender(listings) {
+    // existing marker code here
+}
+
 
 // Public API
 window.mapView = {
