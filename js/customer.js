@@ -203,11 +203,9 @@
           <div class="ticket-stub">
             <button class="btn ${(isExpired || soldOut) ? 'btn-ghost' : 'btn-teal'}" ${(isExpired || soldOut) ? 'disabled' : ''} data-reserve="${l.id}">
               ${isExpired ? 'Expired' : (soldOut ? 'Sold out' : 'Reserve')}
+              <span class="stub-qty">${l.quantity_left} / ${l.quantity_total}</span>
+              <span class="stub-label">Left</span>
             </button>
-            <span class="stub-qty">
-              ${l.quantity_left} / ${l.quantity_total}<br>
-              <small>left</small>
-            </span>
           </div>
         </div>
       </div>`;
