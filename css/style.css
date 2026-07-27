@@ -290,8 +290,25 @@ button{ font-family:inherit; cursor:pointer; }
 .ticket-stub::before{ top:-9px; }
 .ticket-stub::after{ bottom:-9px; }
 .ticket-stub .stub-label{ font-family:var(--f-mono); font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; color:rgba(36,31,26,0.5); margin-bottom:10px; }
-.ticket-stub .stub-qty{ font-family:var(--f-display); font-weight:600; font-size:1.0rem; line-height:1; margin-bottom:2px; }
-.ticket-stub .stub-qty-label{ font-size:0.68rem; color:rgba(36,31,26,0.55); margin-bottom:14px; }
+.ticket-stub .stub-qty {
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(36,31,26,0.55);
+  line-height: 1.2;
+  margin-top: 10px;
+}
+.ticket-stub .stub-qty small {
+  display: block;
+  font-family: var(--f-mono);
+  font-size: 0.58rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(36,31,26,0.4);
+  margin-top: 3px;
+}
 .ticket-stub .btn{ width:100%; padding:9px 6px; font-size:0.78rem; }
 
 .ticket.sold-out .ticket-main{ opacity:0.5; }
