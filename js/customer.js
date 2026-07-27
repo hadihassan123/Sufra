@@ -202,7 +202,7 @@
           </div>
           <div class="ticket-stub">
             <span class="stub-label">Left</span>
-            <span class="stub-qty">${l.quantity_left} / ${l.quantity}</span>
+            <span class="stub-qty">${l.quantity_left} / ${l.quantity_total}</span>
             <button class="btn ${(isExpired || soldOut) ? 'btn-ghost' : 'btn-teal'}" ${(isExpired || soldOut) ? 'disabled' : ''} data-reserve="${l.id}">
               ${isExpired ? 'Expired' : (soldOut ? 'Sold out' : 'Reserve')}
             </button>
@@ -243,7 +243,7 @@
     reserveQtyValue.textContent = reserveQty;
     if(pendingListing){
       const total = pendingListing.discounted_price * reserveQty;
-      reserveQtyHint.textContent = `${pendingListing.quantity_left} / ${pendingListing.quantity} left · Total: ${money(total)}`;
+      reserveQtyHint.textContent = `${pendingListing.quantity_left} / ${pendingListing.quantity_total} left · Total: ${money(total)}`;
     }
   }
 
