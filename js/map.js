@@ -16,24 +16,24 @@ function rendermap({ listings, reserveHandler }) {
     console.log("Count:", listings.length);
 
     if (!map) {
-        map = L.map("mapView");
+        setTimeout(() => {
+            map = L.map("mapView");
 
-        window.map = map;
-        L.tileLayer(
-            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            {
-                attribution: "© OpenStreetMap"
-            }
-        ).addTo(map);
-        console.log("Tile layer added");
-        console.log(map._layers);
+            window.map = map;
 
-        map.setView([25.2854, 51.5310], 12);
-            
+            L.tileLayer(
+                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+                    attribution: "© OpenStreetMap"
+                }
+            ).addTo(map);
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: "© OpenStreetMap"
-        }).addTo(map);
+            map.setView([25.2854, 51.5310], 12);
+
+            finishRender(listings);
+        }, 0);
+
+        return;
     }
 
     // Remove previous markers
