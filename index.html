@@ -29,10 +29,38 @@
       <a href="#pickups">Your pickups</a>
       <a href="vendor-signup.html" class="nav-cta" id="vendorNavLink">List your surplus</a>
       <a href="vendor-login.html" id="vendorLoginNavLink">Log in</a>
+      <a href="vendor-dashboard.html" id="vendorDashboardLink" style="display:none;">Dashboard</a>
     </nav>
   </div>
 </header>
+<script>
+  // Listen for auth state changes and update the nav
+  sb.auth.onAuthStateChange((event, session) => {
+    const isLoggedIn = !!session;
+    document.getElementById('vendorNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
+    document.getElementById('vendorLoginNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
+    document.getElementById('vendorDashboardLink').style.display = isLoggedIn ? 'inline-block' : 'none';
+    const heroLink = document.getElementById('heroVendorLink');
+  if (isLoggedIn) {
+    heroLink.textContent = 'Go to dashboard';
+    heroLink.href = 'vendor-dashboard.html';
+  } else {
+    heroLink.textContent = 'I run a food business';
+    heroLink.href = 'vendor-signup.html';
+  }
+});
 
+// Also check on page load
+sb.auth.getSession().then(({ data: { session } }) => {
+  const isLoggedIn = !!session;
+  document.getElementById('vendorNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
+  document.getElementById('vendorLoginNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
+  document.getElementById('vendorDashboardLink').style.display = isLoggedIn ? 'inline-block' : 'none';
+  const heroLink = document.getElementById('heroVendorLink');
+  heroLink.textContent = isLoggedIn ? 'Go to dashboard' : 'I run a food business';
+  heroLink.href = isLoggedIn ? 'vendor-dashboard.html' : 'vendor-signup.html';
+});
+</script>
 <section class="hero">
   <div class="hero-motif" aria-hidden="true">
     <svg class="motif-icon motif-cup" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4">
