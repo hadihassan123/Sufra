@@ -610,35 +610,26 @@ table.data-table tr:last-child td{ border-bottom:none; }
 }
 .dash-dial-card .dial-status span{ display:block; font-family:var(--f-mono); font-style:normal; font-size:0.68rem; color:rgba(246,241,227,0.6); margin-top:4px; letter-spacing:0.04em; }
 
-/* map by JS */
-#mapView {
-  height: 500px;
-  width: 100%;
-  display: none; /* Controlled by JS */
-  z-index: 1;
-  background-color: #f8f8f8; /* Helps see if the div itself is working */
-}
 
-/* Fix for Leaflet tiles sometimes disappearing in flex/grid layouts */
-.leaflet-container {
-  height: 100% !important;
+
+/* CLEANED & MERGED MAP VIEW */
+#mapView {
+  height: 500px !important;
+  min-height: 500px !important;
   width: 100% !important;
-}
-
-
-#mapView {
-  height: 500px;
-  width: 100%;
   display: none; /* Controlled by JS */
   border-radius: 12px;
   margin-top: 20px;
   border: 1px solid var(--line);
-  position: relative; /* Keeps the map inside its box */
-  z-index: 1; /* Ensures it doesn't overlap your header */
-  overflow: hidden; /* Prevents tiles from "bleeding" out */
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  background-color: #f8f8f8; /* Helps verify the div is active */
 }
 
 /* Ensure Leaflet doesn't break your site's layout */
 .leaflet-container {
+  height: 100%;
+  width: 100%;
   font-family: inherit;
 }

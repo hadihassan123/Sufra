@@ -129,7 +129,9 @@
     if (activeFilter === 'map') {
       grid.style.display = 'none';
       document.getElementById('mapView').style.display = 'block';
-      renderMap(filtered);
+      setTimeout(() => {
+          renderMap(filtered);
+      },200); 
     } else {
       grid.style.display = 'grid';
       document.getElementById('mapView').style.display = 'none';
