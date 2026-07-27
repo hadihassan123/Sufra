@@ -207,6 +207,7 @@
 
             <div class="stock-info">
               <span>${l.quantity_left}/${l.quantity_total}</span>
+              <span></span>
               <small>available</small>
             </div>
           </div>
