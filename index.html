@@ -33,34 +33,8 @@
     </nav>
   </div>
 </header>
-<script>
-  // Listen for auth state changes and update the nav
-  sb.auth.onAuthStateChange((event, session) => {
-    const isLoggedIn = !!session;
-    document.getElementById('vendorNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
-    document.getElementById('vendorLoginNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
-    document.getElementById('vendorDashboardLink').style.display = isLoggedIn ? 'inline-block' : 'none';
-    const heroLink = document.getElementById('heroVendorLink');
-  if (isLoggedIn) {
-    heroLink.textContent = 'Go to dashboard';
-    heroLink.href = 'vendor-dashboard.html';
-  } else {
-    heroLink.textContent = 'I run a food business';
-    heroLink.href = 'vendor-signup.html';
-  }
-});
 
-// Also check on page load
-sb.auth.getSession().then(({ data: { session } }) => {
-  const isLoggedIn = !!session;
-  document.getElementById('vendorNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
-  document.getElementById('vendorLoginNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
-  document.getElementById('vendorDashboardLink').style.display = isLoggedIn ? 'inline-block' : 'none';
-  const heroLink = document.getElementById('heroVendorLink');
-  heroLink.textContent = isLoggedIn ? 'Go to dashboard' : 'I run a food business';
-  heroLink.href = isLoggedIn ? 'vendor-dashboard.html' : 'vendor-signup.html';
-});
-</script>
+
 <section class="hero">
   <div class="hero-motif" aria-hidden="true">
     <svg class="motif-icon motif-cup" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4">
@@ -265,5 +239,35 @@ sb.auth.getSession().then(({ data: { session } }) => {
 <script src="js/map.js"></script>
 <script src="js/customer.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<script>
+  // Listen for auth state changes and update the nav
+  sb.auth.onAuthStateChange((event, session) => {
+    const isLoggedIn = !!session;
+    document.getElementById('vendorNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
+    document.getElementById('vendorLoginNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
+    document.getElementById('vendorDashboardLink').style.display = isLoggedIn ? 'inline-block' : 'none';
+    const heroLink = document.getElementById('heroVendorLink');
+  if (isLoggedIn) {
+    heroLink.textContent = 'Go to dashboard';
+    heroLink.href = 'vendor-dashboard.html';
+  } else {
+    heroLink.textContent = 'I run a food business';
+    heroLink.href = 'vendor-signup.html';
+  }
+});
+
+// Also check on page load
+sb.auth.getSession().then(({ data: { session } }) => {
+  const isLoggedIn = !!session;
+  document.getElementById('vendorNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
+  document.getElementById('vendorLoginNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
+  document.getElementById('vendorDashboardLink').style.display = isLoggedIn ? 'inline-block' : 'none';
+  const heroLink = document.getElementById('heroVendorLink');
+  heroLink.textContent = isLoggedIn ? 'Go to dashboard' : 'I run a food business';
+  heroLink.href = isLoggedIn ? 'vendor-dashboard.html' : 'vendor-signup.html';
+});
+</script>
+
 </body>
 </html>
