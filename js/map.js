@@ -13,6 +13,7 @@ const AREA_COORDS = {
 
 function rendermap({ listings, reserveHandler }) {
     console.log("Map listings:", listings);
+    console.log("Count:", listings.length);
 
     if (!map) {
         map = L.map("mapView");
@@ -34,13 +35,20 @@ function rendermap({ listings, reserveHandler }) {
     // Remove previous markers
     markers.forEach(marker => map.removeLayer(marker));
     markers = [];
-
+    console.log("Map listings:", listings);
+    
     listings.forEach(l => {
+
+        console.log("Vendor:", l.vendors);
+        console.log("Lat:", l.vendors?.latitude);
+        console.log("Lng:", l.vendors?.longitude);
+        console.log("Area:", l.vendors?.area);
 
         let coords;
 
         // 1. Exact GPS coordinates
         if (
+            
             l.vendors?.latitude != null &&
             l.vendors?.longitude != null
         ) {
@@ -88,6 +96,7 @@ function rendermap({ listings, reserveHandler }) {
             .bindPopup(popupContent);
 
         markers.push(marker);
+        console.log("Marker added");
     });
 
     // Zoom to all markers
