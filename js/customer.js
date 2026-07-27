@@ -53,6 +53,9 @@
         : (activeFilter === 'expired') 
           ? isExpired 
           : (l.category === activeFilter && !isExpired);
+      console.log(cachedActiveListings[0].pickup_end);
+      console.log(new Date(cachedActiveListings[0].pickup_end));
+      console.log(new Date());
       
       return matchesCategory && matchesSearch(l);
     });
@@ -60,8 +63,9 @@
     if (activeFilter === 'map') {
       grid.style.display = 'none';
       document.getElementById('mapView').style.display = 'block';
-      console.log("customer.js(1)",filtered);
-      console.log("customer.js",filtered.length);
+      console.log("Active filter:", activeFilter);
+      console.log("Filtered:", filtered.length);
+      console.log(filtered);
       mapView.render({
         listings: filtered,
         reserveHandler: openReserveModal
@@ -81,7 +85,7 @@
       cachedActiveListings = await Store.getActiveListings();
 
       console.log("Cached listings:", cachedActiveListings);
-      console.log("Cached count:", cachedActiveListings);
+      console.log("Cached count:", cachedActiveListings.length);
     }catch(err){
       grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Couldn't load listings</h3><p>${err.message}</p></div>`;
       return;
