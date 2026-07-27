@@ -313,11 +313,22 @@ button{ font-family:inherit; cursor:pointer; }
   font-size:0.85rem;
   font-weight:600;
 }
-.ticket.sold-out .ticket-main{ opacity:0.5; }
-.ticket.sold-out .ticket-stub .btn{ background:rgba(36,31,26,0.15); color:rgba(36,31,26,0.5); }
 
-.ticket.expired .ticket-main{ opacity:0.5; }
-.ticket.expired .ticket-stub .btn{ background:rgba(36,31,26,0.15); color:rgba(36,31,26,0.5); }
+.ticket.sold-out .ticket-main,
+.ticket.expired .ticket-main{
+  opacity:0.5;
+}
+
+.ticket.sold-out .ticket-stub .btn,
+.ticket.expired .ticket-stub .btn{
+  background:rgba(36,31,26,0.15);
+  color:rgba(36,31,26,0.5);
+}
+
+.ticket.sold-out .ticket-stub .stub-qty,
+.ticket.expired .ticket-stub .stub-qty{
+  opacity:0.45;
+}
 
 /* ---------- empty state ---------- */
 .empty-state{
