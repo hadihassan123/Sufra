@@ -63,13 +63,13 @@
     if (activeFilter === 'map') {
       grid.style.display = 'none';
       document.getElementById('mapView').style.display = 'block';
-      console.log("Active filter:", activeFilter);
-      console.log("Filtered:", filtered.length);
-      console.log(filtered);
       mapView.render({
         listings: filtered,
         reserveHandler: openReserveModal
       });
+      console.log("Active filter:", activeFilter);
+      console.log("Filtered:", filtered.length);
+      console.log(filtered);
     } else {
       grid.style.display = 'grid';
       document.getElementById('mapView').style.display = 'none';
