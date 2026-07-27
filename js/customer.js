@@ -79,6 +79,9 @@
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Loading…</h3></div>`;
     try{
       cachedActiveListings = await Store.getActiveListings();
+
+      console.log("Cached listings:", cachedActiveListings);
+      console.log("Cached count:", cachedActiveListings);
     }catch(err){
       grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Couldn't load listings</h3><p>${err.message}</p></div>`;
       return;
