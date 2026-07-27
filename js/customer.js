@@ -65,7 +65,7 @@
     setTimeout(() => { 
         console.log("Invalidating map size for display...");
         map.invalidateSize(); 
-    }, 250);
+    }, 100);
   }
 
   window.openReserveModal = openReserveModal;
