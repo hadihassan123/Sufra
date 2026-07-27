@@ -17,6 +17,8 @@ function rendermap({ listings, reserveHandler }) {
 
     if (!map) {
         map = L.map("mapView");
+
+        window.map = map;
         L.tileLayer(
             "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             {
@@ -36,6 +38,7 @@ function rendermap({ listings, reserveHandler }) {
     markers.forEach(marker => map.removeLayer(marker));
     markers = [];
     console.log("Map listings:", listings);
+    console.log("Listings count:", listings.length);
     
     listings.forEach(l => {
 
@@ -56,6 +59,8 @@ function rendermap({ listings, reserveHandler }) {
                 Number(l.vendors.latitude),
                 Number(l.vendors.longitude)
             ];
+
+            console.log("GPS", coords);
         }
 
         // 2. Fallback to area coordinates
@@ -64,6 +69,8 @@ function rendermap({ listings, reserveHandler }) {
                 .toLowerCase()
                 .trim();
             coords = AREA_COORDS[area] || [25.2854, 51.5310];
+
+            console.log("AREA", area, coords);
         }
 
         const popupContent = `
@@ -98,6 +105,7 @@ function rendermap({ listings, reserveHandler }) {
         markers.push(marker);
         console.log("Marker added");
     });
+    console.log("Markers:", markers.length);
 
     // Zoom to all markers
     if (markers.length) {
