@@ -290,7 +290,7 @@ button{ font-family:inherit; cursor:pointer; }
 .ticket-stub::before{ top:-9px; }
 .ticket-stub::after{ bottom:-9px; }
 .ticket-stub .stub-label{ font-family:var(--f-mono); font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; color:rgba(36,31,26,0.5); margin-bottom:10px; }
-.ticket-stub .stub-qty{ font-family:var(--f-display); font-weight:600; font-size:0.68rem; line-height:1; margin-bottom:2px; }
+.ticket-stub .stub-qty{ font-family:var(--f-display); font-weight:600; font-size:1.0rem; line-height:1; margin-bottom:2px; }
 .ticket-stub .stub-qty-label{ font-size:0.68rem; color:rgba(36,31,26,0.55); margin-bottom:14px; }
 .ticket-stub .btn{ width:100%; padding:9px 6px; font-size:0.78rem; }
 
