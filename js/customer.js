@@ -29,8 +29,8 @@
     if (!map) {
       console.log("Initializing new Leaflet map...");
       map = L.map('mapView').setView([25.30, 51.51], 12);
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap'
       }).addTo(map);
     }
 
