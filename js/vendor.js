@@ -294,11 +294,11 @@
         l => new Date(l.pickup_end) >= now
     );
 
-    const expiredListings = listings.filter(
-        l => new Date(l.pickup_end) < now
+    const expiredListings = listings.filter(l =>
+        new Date(l.pickup_end) < now &&
+        l.quantity_left > 0
     );
     const soldOutListings = listings.filter(l =>
-        new Date(l.pickup_end) >= now &&
         l.quantity_left <= 0
     );
 
