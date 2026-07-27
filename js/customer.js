@@ -338,15 +338,132 @@
   });
 
   // Dial Logic
-  function buildDial(){
-    const dialSvg = document.getElementById('dialSvg');
-    if(!dialSvg) return;
-    const cx = 120, cy = 120, r = 96;
-    let svg = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(246,241,227,0.18)" stroke-width="1.5"/>`;
-    // ... (rest of dial logic) ...
-    dialSvg.innerHTML = svg;
+  function polar(cx, cy, r, angle) {
+      const rad = (angle - 90) * Math.PI / 180;
+      return {
+          x: cx + r * Math.cos(rad),
+          y: cy + r * Math.sin(rad)
+      };
   }
 
-  buildDial();
-  renderListings();
+  function arcPath(cx, cy, r, startAngle, endAngle) {
+      const start = polar(cx, cy, r, endAngle);
+      const end = polar(cx, cy, r, startAngle);
+      const largeArc = endAngle - startAngle <= 180 ? 0 : 1;
+
+      return `
+          M ${start.x} ${start.y}
+          A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y}
+      `;
+  }
+
+  function angleForHour(hour) {
+      return (hour / 24) * 360;
+  }
+
+  function buildDial() {
+      const dialSvg = document.getElementById("dialSvg");
+      if (!dialSvg) return;
+
+      const cx = 120;
+      const cy = 120;
+      const r = 96;
+
+      let svg = `
+          <circle
+              cx="${cx}"
+              cy="${cy}"
+              r="${r}"
+              fill="none"
+              stroke="rgba(246,241,227,.18)"
+              stroke-width="2"
+          />
+      `;
+
+      const windows = Store.SURPLUS_WINDOWS || [];
+      windows.forEach(w => {
+
+          const start = angleForHour(w.start);
+          const end = angleForHour(w.end);
+
+          svg += `
+              <path
+                  d="${arcPath(cx, cy, r, start, end)}"
+                  fill="none"
+                  stroke="${w.color}"
+                  stroke-width="12"
+                  stroke-linecap="round"
+              />
+          `;
+
+          const s = polar(cx, cy, r, start);
+          const e = polar(cx, cy, r, end);
+
+          svg += `
+              <circle cx="${s.x}" cy="${s.y}" r="4" fill="${w.color}"/>
+              <circle cx="${e.x}" cy="${e.y}" r="4" fill="${w.color}"/>
+          `;
+      });
+
+      svg += `
+          <circle
+              id="dialNow"
+              cx="${cx}"
+              cy="${cy-r}"
+              r="7"
+              fill="#F4B860"
+              stroke="#fff"
+              stroke-width="2"
+          />
+      `;
+
+      dialSvg.innerHTML = svg;
+  }
+
+  function updateDial() {
+
+    const now = new Date();
+
+    const doha = new Date(
+        now.toLocaleString("en-US", {
+            timeZone: "Asia/Qatar"
+        })
+    );
+
+    const hours = doha.getHours();
+    const minutes = doha.getMinutes();
+
+    const decimalHour = hours + minutes / 60;
+
+    const point = polar(
+        120,
+        120,
+        96,
+        angleForHour(decimalHour)
+    );
+
+    const dot = document.getElementById("dialNow");
+
+    if (dot) {
+        dot.setAttribute("cx", point.x);
+        dot.setAttribute("cy", point.y);
+    }
+
+    const clockText = document.getElementById("clockText");
+
+    if (clockText) {
+        clockText.textContent =
+            doha.toLocaleTimeString([], {
+                hour: "numeric",
+                minute: "2-digit"
+            });
+    }
+}
+buildDial();
+updateDial();
+
+setInterval(updateDial, 1000);
+
+renderListings();
+
 })();
