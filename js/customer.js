@@ -337,133 +337,107 @@
     if(phone) renderPickups(phone);
   });
 
-  // Dial Logic
-  function polar(cx, cy, r, angle) {
-      const rad = (angle - 90) * Math.PI / 180;
-      return {
-          x: cx + r * Math.cos(rad),
-          y: cy + r * Math.sin(rad)
-      };
+  // ---- time-of-day dial ----
+  const dialSvg = document.getElementById('dialSvg');
+  const clockText = document.getElementById('clockText');
+  const dialStatus = document.getElementById('dialStatus');
+  const dialSub = document.getElementById('dialSub');
+
+  function angleForHour(h){ return (h / 12) * 360; }
+  function polar(cx, cy, r, angleDeg){
+    const a = (angleDeg - 90) * Math.PI / 180;
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+  }
+  function arcPath(cx, cy, r, startAngle, endAngle){
+    const s = polar(cx, cy, r, startAngle);
+    const e = polar(cx, cy, r, endAngle);
+    const largeArc = (endAngle - startAngle) % 360 > 180 ? 1 : 0;
+    return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`;
   }
 
-  function arcPath(cx, cy, r, startAngle, endAngle) {
-      const start = polar(cx, cy, r, endAngle);
-      const end = polar(cx, cy, r, startAngle);
-      const largeArc = endAngle - startAngle <= 180 ? 0 : 1;
-
-      return `
-          M ${start.x} ${start.y}
-          A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y}
-      `;
+  function buildDial(){
+    if(!dialSvg) return;
+    const cx = 120, cy = 120, r = 96;
+    let svg = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(246,241,227,0.18)" stroke-width="1.5"/>`;
+    for(let i=0;i<12;i++){
+      const ang = i * 30;
+      const p1 = polar(cx, cy, r, ang);
+      const p2 = polar(cx, cy, r - (i%3===0?10:5), ang);
+      svg += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(246,241,227,0.35)" stroke-width="${i%3===0?2:1}"/>`;
+    }
+    (Store.SURPLUS_WINDOWS || []).forEach(w => {
+      const startH = w.startHour % 12;
+      const endH = w.endHour % 12;
+      svg += `<path d="${arcPath(cx, cy, r, angleForHour(startH), angleForHour(endH))}"
+        fill="none" stroke="#2F6E67" stroke-width="6" stroke-linecap="round" opacity="0.85"/>`;
+    });
+    svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#E8A33D"/>`;
+    dialSvg.setAttribute('viewBox', '0 0 240 240');
+    dialSvg.innerHTML = svg;
   }
 
-  function angleForHour(hour) {
-      return (hour / 24) * 360;
-  }
-
-  function buildDial() {
-      const dialSvg = document.getElementById("dialSvg");
-      if (!dialSvg) return;
-
-      const cx = 120;
-      const cy = 120;
-      const r = 96;
-
-      let svg = `
-          <circle
-              cx="${cx}"
-              cy="${cy}"
-              r="${r}"
-              fill="none"
-              stroke="rgba(246,241,227,.18)"
-              stroke-width="2"
-          />
-      `;
-
-      const windows = Store.SURPLUS_WINDOWS || [];
-      windows.forEach(w => {
-
-          const start = angleForHour(w.start);
-          const end = angleForHour(w.end);
-
-          svg += `
-              <path
-                  d="${arcPath(cx, cy, r, start, end)}"
-                  fill="none"
-                  stroke="${w.color}"
-                  stroke-width="12"
-                  stroke-linecap="round"
-              />
-          `;
-
-          const s = polar(cx, cy, r, start);
-          const e = polar(cx, cy, r, end);
-
-          svg += `
-              <circle cx="${s.x}" cy="${s.y}" r="4" fill="${w.color}"/>
-              <circle cx="${e.x}" cy="${e.y}" r="4" fill="${w.color}"/>
-          `;
-      });
-
-      svg += `
-          <circle
-              id="dialNow"
-              cx="${cx}"
-              cy="${cy-r}"
-              r="7"
-              fill="#F4B860"
-              stroke="#fff"
-              stroke-width="2"
-          />
-      `;
-
-      dialSvg.innerHTML = svg;
-  }
-
-  function updateDial() {
-
+  function updateHands(){
+    if(!dialSvg) return;
     const now = new Date();
+    const h12 = now.getHours() % 12 + now.getMinutes()/60;
+    const m = now.getMinutes() + now.getSeconds()/60;
+    const cx = 120, cy = 120;
 
-    const doha = new Date(
-        now.toLocaleString("en-US", {
-            timeZone: "Asia/Qatar"
-        })
-    );
+    const hourTip = polar(cx, cy, 52, angleForHour(h12));
+    const minTip = polar(cx, cy, 76, (m/60) * 360);
+    const secTip = polar(cx, cy, 84, (now.getSeconds()/60) * 360);
 
-    const hours = doha.getHours();
-    const minutes = doha.getMinutes();
+    dialSvg.querySelectorAll('.hand').forEach(el => el.remove());
 
-    const decimalHour = hours + minutes / 60;
+    const hourLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+    hourLine.setAttribute('class','hand');
+    hourLine.setAttribute('x1', cx); hourLine.setAttribute('y1', cy);
+    hourLine.setAttribute('x2', hourTip.x); hourLine.setAttribute('y2', hourTip.y);
+    hourLine.setAttribute('stroke', '#F6F1E3'); hourLine.setAttribute('stroke-width', '4'); hourLine.setAttribute('stroke-linecap','round');
+    dialSvg.appendChild(hourLine);
 
-    const point = polar(
-        120,
-        120,
-        96,
-        angleForHour(decimalHour)
-    );
+    const minLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+    minLine.setAttribute('class','hand');
+    minLine.setAttribute('x1', cx); minLine.setAttribute('y1', cy);
+    minLine.setAttribute('x2', minTip.x); minLine.setAttribute('y2', minTip.y);
+    minLine.setAttribute('stroke', '#E8A33D'); minLine.setAttribute('stroke-width', '2.5'); minLine.setAttribute('stroke-linecap','round');
+    dialSvg.appendChild(minLine);
 
-    const dot = document.getElementById("dialNow");
+    const secLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    secLine.setAttribute('class', 'hand');
+    secLine.setAttribute('x1', cx); secLine.setAttribute('y1', cy);
+    secLine.setAttribute('x2', secTip.x); secLine.setAttribute('y2', secTip.y);
+    secLine.setAttribute('stroke', '#ec4e33'); secLine.setAttribute('stroke-width', '1.5'); secLine.setAttribute('stroke-linecap', 'round');
+    dialSvg.appendChild(secLine);
 
-    if (dot) {
-        dot.setAttribute("cx", point.x);
-        dot.setAttribute("cy", point.y);
+    if(clockText) clockText.textContent = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+
+    const hourNow = now.getHours() + now.getMinutes()/60;
+    const windows = Store.SURPLUS_WINDOWS || [];
+    const inWindow = windows.find(w => {
+      if(w.endHour > 24) return hourNow >= w.startHour || hourNow < (w.endHour - 24);
+      return hourNow >= w.startHour && hourNow < w.endHour;
+    });
+    const steamEl = document.getElementById('steamSvg');
+    if(steamEl) steamEl.classList.toggle('steam-active', !!inWindow);
+    if(dialStatus){
+      if(inWindow){
+        dialStatus.firstChild.textContent = inWindow.label + ' is live';
+        if(dialSub) dialSub.textContent = 'Vendors are posting now';
+      } else {
+        const next = windows.find(w => w.startHour > hourNow) || windows[0];
+        if(next){
+          const nextH = Math.floor(next.startHour);
+          const nextM = Math.round((next.startHour % 1) * 60);
+          const label = new Date().setHours(nextH, nextM, 0, 0);
+          dialStatus.firstChild.textContent = 'Next surplus window at ' + new Date(label).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+        }
+        if(dialSub) dialSub.textContent = 'Browse today\'s listings below';
+      }
     }
-
-    const clockText = document.getElementById("clockText");
-
-    if (clockText) {
-        clockText.textContent =
-            doha.toLocaleTimeString([], {
-                hour: "numeric",
-                minute: "2-digit"
-            });
-    }
-}
-buildDial();
-updateDial();
-
-setInterval(updateDial, 1000);
-
-renderListings();
-
+  }
+  buildDial();
+  updateHands();
+  setInterval(updateHands, 1000);
+  renderListings();
 })();
