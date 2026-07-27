@@ -25,6 +25,8 @@ function rendermap({ listings, reserveHandler }) {
                 attribution: "© OpenStreetMap"
             }
         ).addTo(map);
+        console.log("Tile layer added");
+        console.log(map._layers);
 
         map.setView([25.2854, 51.5310], 12);
             

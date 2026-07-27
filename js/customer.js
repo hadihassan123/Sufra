@@ -63,10 +63,16 @@
     if (activeFilter === 'map') {
       grid.style.display = 'none';
       document.getElementById('mapView').style.display = 'block';
+      const el = document.getElementById("mapView");
+      console.log("inline height:", el.style.height);
+      console.log("computed height:", getComputedStyle(el).height);
+      console.log("offsetHeight:", el.offsetHeight);
+      console.log("clientHeight:", el.clientHeight);
       mapView.render({
         listings: filtered,
         reserveHandler: openReserveModal
       });
+      console.log(window.map.getSize());
       console.log("Active filter:", activeFilter);
       console.log("Filtered:", filtered.length);
       console.log(filtered);
