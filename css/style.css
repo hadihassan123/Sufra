@@ -307,8 +307,12 @@ button{ font-family:inherit; cursor:pointer; }
   color: rgba(36,31,26,0.38);
   margin-top: 2px;
 }
-.ticket-stub .btn{ width:100%; padding:9px 6px; font-size:0.78rem; }
-
+.ticket-stub .btn{
+  width:100%;
+  padding:12px 8px;
+  font-size:0.85rem;
+  font-weight:600;
+}
 .ticket.sold-out .ticket-main{ opacity:0.5; }
 .ticket.sold-out .ticket-stub .btn{ background:rgba(36,31,26,0.15); color:rgba(36,31,26,0.5); }
 
