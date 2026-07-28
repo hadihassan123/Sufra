@@ -1,5 +1,9 @@
 -- Sufra database schema
--- Run this once in Supabase's SQL Editor (SQL Editor → New query → paste → Run)
+-- Reconstructed from the live Supabase project (yplswfpbcssfmgeejcpy) on 2026-07-28
+-- to replace the stale supabase/schema.sql previously in the repo.
+-- Run this once in Supabase's SQL Editor on a FRESH project (SQL Editor → New query → paste → Run).
+-- On the existing project, do not re-run this file — it's already applied piece by piece.
+-- Track future changes as migrations (see note at bottom) instead of editing this by hand.
 
 -- ============================================================
 -- VENDORS
@@ -12,7 +16,16 @@ create table vendors (
   category text not null,
   area text not null,
   verification_status text not null default 'pending' check (verification_status in ('pending','verified')),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  cr_document_path text,
+  moph_document_path text,
+  municipality_document_path text,
+  documents_submitted_at timestamptz,
+  logo_url text,
+  role text default 'vendor',
+  latitude double precision,
+  longitude double precision,
+  address text
 );
 
 alter table vendors enable row level security;
@@ -23,6 +36,9 @@ create policy "vendors are publicly readable"
   using (true);
 
 -- A vendor can only insert/update their own row
+-- NOTE: in practice this insert path is rarely hit directly — see
+-- handle_new_vendor() below, which auto-creates the row via a trigger
+-- on auth.users. This policy still guards any client-side insert/update.
 create policy "vendors can insert their own profile"
   on vendors for insert
   with check (auth.uid() = id);
@@ -48,8 +64,11 @@ create table listings (
   pickup_start timestamptz not null,
   pickup_end timestamptz not null,
   payment_method text not null default 'cash',
-  status text not null default 'active' check (status in ('active','removed')),
-  created_at timestamptz not null default now()
+  status text not null default 'active' check (status in ('active','sold_out','expired','removed')),
+  created_at timestamptz not null default now(),
+  image_url text,
+  surplus_window text check (surplus_window in ('breakfast','lunch','dinner','late_night')),
+  pickup_date date default current_date
 );
 
 alter table listings enable row level security;
@@ -90,7 +109,8 @@ create table reservations (
   pickup_start timestamptz not null,
   pickup_end timestamptz not null,
   status text not null default 'reserved' check (status in ('reserved','collected','cancelled')),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  quantity int default 1
 );
 
 alter table reservations enable row level security;
@@ -114,16 +134,18 @@ create policy "vendors can update reservations on their own listings"
 
 -- ============================================================
 -- Keep quantity_left in sync automatically when a reservation is made
+-- NOTE: this now decrements by the reserved quantity (reservations.quantity),
+-- not a flat 1 — the original version in the repo was stale here too.
 -- ============================================================
 create or replace function decrement_listing_stock()
 returns trigger as $$
 begin
   update listings
-  set quantity_left = quantity_left - 1
-  where id = new.listing_id and quantity_left > 0;
+  set quantity_left = quantity_left - new.quantity
+  where id = new.listing_id and quantity_left >= new.quantity;
 
   if not found then
-    raise exception 'This item is sold out.';
+    raise exception 'Not enough stock available.';
   end if;
 
   return new;
@@ -133,3 +155,44 @@ $$ language plpgsql security definer;
 create trigger on_reservation_created
   before insert on reservations
   for each row execute function decrement_listing_stock();
+
+
+-- ============================================================
+-- Auto-create a vendor profile row when someone signs up
+-- This was NOT in the previous schema.sql at all. It's what actually
+-- populates `vendors` (including address) from the signup form's
+-- auth metadata — the "vendors can insert their own profile" RLS
+-- policy above is a fallback path, not the primary one.
+-- ============================================================
+create or replace function handle_new_vendor()
+returns trigger as $$
+begin
+  insert into public.vendors (id, business_name, category, area, address)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'business_name',
+    new.raw_user_meta_data->>'category',
+    new.raw_user_meta_data->>'area',
+    new.raw_user_meta_data->>'address'
+  );
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function handle_new_vendor();
+
+-- ============================================================
+-- admin_settings / approve_vendor / revoke_vendor already match the
+-- live DB exactly — see supabase/admin_setup.sql, run that file after
+-- this one, same as before. No changes needed there.
+-- ============================================================
+
+-- ============================================================
+-- Going forward: track schema changes as migrations instead of ad hoc
+-- Table Editor edits, so this file (and `list_migrations`) stays true.
+-- e.g. with the Supabase CLI:
+--   supabase migration new add_something
+--   (edit the generated file, then) supabase db push
+-- ============================================================

@@ -690,7 +690,11 @@ table.data-table tr:last-child td{ border-bottom:none; }
   display:flex;
   align-items:center;
   width:100%;
-  gap:20px;
+  gap:10px;
+}
+
+#useLocationBtn {
+  width:140px;
 }
 
 .location-status-row p {
