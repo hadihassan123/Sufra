@@ -153,6 +153,35 @@
       </div>`;
   }
 
+  // ---- business location: address + GPS ----
+  (function(){
+    const addressInput = document.getElementById('vendorAddressInput');
+    const statusText = document.getElementById('locationStatusText');
+    const saveBtn = document.getElementById('saveAddressBtn');
+    if(!addressInput) return;
+
+    addressInput.value = vendor.address || '';
+    if(vendor.latitude && vendor.longitude){
+      statusText.textContent = 'Location saved — customers can find you on the map.';
+    }
+
+    saveBtn.addEventListener('click', async () => {
+      const address = addressInput.value.trim();
+      if(!address){ alert('Enter an address first.'); return; }
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving…';
+      try{
+        await Store.updateVendorAddress(vendor.id, address);
+        vendor.address = address;
+        statusText.textContent = 'Address saved — shown on your listing cards.';
+      }catch(err){
+        alert('Could not save address: ' + err.message);
+      }
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save address';
+    });
+  })();
+
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await Store.signOutVendor();
     window.location.href = 'index.html';

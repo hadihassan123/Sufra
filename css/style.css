@@ -261,6 +261,12 @@ button{ font-family:inherit; cursor:pointer; }
 }
 .ticket-vendor-logo{ width:16px; height:16px; border-radius:50%; object-fit:cover; flex-shrink:0; }
 .ticket-vendor-name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ticket-vendor-address{
+  display:block; margin-top:2px;
+  font-family:var(--f-body); font-size:0.72rem; text-transform:none; letter-spacing:normal;
+  color:var(--charcoal); opacity:0.65;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
 .verified-check{
   flex-shrink:0; width:14px; height:14px; border-radius:50%;
   background:var(--teal); color:#fff; font-size:0.6rem; font-family:var(--f-body);

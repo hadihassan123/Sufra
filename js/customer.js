@@ -166,6 +166,7 @@
       const soldOut = l.quantity_left <= 0;
       const isExpired = new Date(l.pickup_end) < new Date();
       const vendorName = l.vendors ? l.vendors.business_name : '';
+      const vendorAddress = l.vendors ? l.vendors.address : '';
       const logoUrl = l.vendors ? l.vendors.logo_url : null;
       const isVerified = l.vendors && l.vendors.verification_status === 'verified';
       const discountPct = pct(l.original_price, l.discounted_price);
@@ -188,6 +189,7 @@
                 <span class="ticket-vendor-name">${vendorName}</span>
                 ${isVerified ? `<span class="verified-check">✓</span>` : ''}
               </span>
+              ${vendorAddress ? `<span class="ticket-vendor-address">📍 ${vendorAddress}</span>` : ''}
             </div>
             <h3 class="ticket-item">${l.item_name}</h3>
             <p class="ticket-desc">${l.description || ''}</p>

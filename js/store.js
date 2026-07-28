@@ -18,11 +18,11 @@ const Store = (() => {
   }
 
   // ---- auth / vendor identity ----
-  async function signUpVendor({ email, password, businessName, category, area }){
+  async function signUpVendor({ email, password, businessName, category, area, address }){
     const { data, error } = await sb.auth.signUp({
       email, password,
       options: {
-        data: { business_name: businessName, category, area }
+        data: { business_name: businessName, category, area, address }
       }
     });
     if(error) throw error;
@@ -66,6 +66,14 @@ const Store = (() => {
   const { error } = await sb
     .from('vendors')
     .update({ latitude, longitude })
+    .eq('id', vendorId);
+  if(error) throw error;
+}
+
+  async function updateVendorAddress(vendorId, address){
+  const { error } = await sb
+    .from('vendors')
+    .update({ address })
     .eq('id', vendorId);
   if(error) throw error;
 }
@@ -149,7 +157,7 @@ const Store = (() => {
   async function getActiveListings(){
     const { data, error } = await sb
       .from('listings')
-      .select('*, vendors(business_name,logo_url, verification_status,latitude, longitude, area)')
+      .select('*, vendors(business_name,logo_url, verification_status,latitude, longitude, area, address)')
       .in('status', ['active', 'sold_out'])
       .order('pickup_start', { ascending: true });
 
@@ -159,7 +167,7 @@ const Store = (() => {
 
   async function getListing(id){
     const { data, error } = await sb
-      .from('listings').select('*, vendors(business_name, logo_url, verification_status,latitude,longitude)').eq('id', id).maybeSingle();
+      .from('listings').select('*, vendors(business_name, logo_url, verification_status,latitude,longitude,address)').eq('id', id).maybeSingle();
     if(error) throw error;
     return data;
   }
@@ -295,7 +303,7 @@ const Store = (() => {
 
   return {
     SURPLUS_WINDOWS,
-    signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,updateVendorLocation,
+    signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,updateVendorLocation,updateVendorAddress,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
     getActiveListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected, getReservationsByVendor,
