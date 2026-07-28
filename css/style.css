@@ -689,12 +689,12 @@ table.data-table tr:last-child td{ border-bottom:none; }
 .location-status-row {
   display:flex;
   align-items:center;
-  justify-content:space-between;
   width:100%;
   gap:20px;
 }
 
 .location-status-row p {
+  flex:1;
   margin:0;
 }
 
