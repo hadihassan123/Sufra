@@ -70,24 +70,37 @@
           </label>
           <button class="btn btn-ghost btn-sm" id="removeLogoBtn" style="display:none;">Remove</button>
         </div>
-        <div class="doc-card" style="margin-bottom:24px; align-items:flex-start;" id="locationCard">
-        <div class="doc-info" style="flex:1 1 260px;">
-          <h3>Business location</h3>
-          <p id="locationStatusText">Not set yet — customers will see a link to your location on Google Maps.</p>
-          <div class="field" style="margin:12px 0 0; max-width:360px;">
-            <label for="vendorAddressInput">Address</label>
-            <input type="text" id="vendorAddressInput" placeholder="e.g. Building 12, Al Sadd Street, near Landmark Mall">
-            <p class="hint">Shown to customers on your listing cards.</p>
+        <div class="doc-card" style="margin-bottom:24px;" id="locationCard">
+          <div class="doc-info">
+            <h3>Business location</h3>
+            <div class="location-status-row">
+              <p id="locationStatusText">
+                Not set yet — customers will see a link to your location on Google Maps.
+              </p>
+              <button class="btn btn-teal btn-sm" id="useLocationBtn">
+                📍 Use my current location
+              </button>
+            </div>
+            <div class="field location-field">
+              <label for="vendorAddressInput">
+                Address
+              </label>
+              <div class="address-row">
+                <input 
+                  type="text" 
+                  id="vendorAddressInput"
+                  placeholder="e.g. Building 12, Al Sadd Street, near Landmark Mall"
+                >
+                <button class="btn btn-ghost btn-sm" id="saveAddressBtn">
+                  Save address
+                </button>
+              </div>
+              <p class="hint">
+                Shown to customers on your listing cards.
+              </p>
+            </div>
           </div>
         </div>
-        <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
-          <button class="btn btn-teal btn-sm" id="useLocationBtn">📍 Use my current location</button>
-          <br></br>
-          <button class="btn btn-ghost btn-sm" id="saveAddressBtn">Save address</button>
-        </div>
-      </div>
-      </div>
-
       <div id="verifyBadgeNotice"></div>
     </section>
 
