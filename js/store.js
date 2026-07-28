@@ -18,11 +18,11 @@ const Store = (() => {
   }
 
   // ---- auth / vendor identity ----
-  async function signUpVendor({ email, password, businessName, category, area, address }){
+  async function signUpVendor({ email, password, businessName, category, area, address, latitude, longitude }){
     const { data, error } = await sb.auth.signUp({
       email, password,
       options: {
-        data: { business_name: businessName, category, area, address }
+        data: { business_name: businessName, category, area, address, latitude, longitude }
       }
     });
     if(error) throw error;

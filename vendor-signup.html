@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>List your surplus — Sufra</title>
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -30,20 +32,6 @@
         <label for="businessName">Business name</label>
         <input type="text" id="businessName" required placeholder="e.g. Al Zubara Bakery">
       </div>
-      <div class="form-group">
-        <label for="businessAddress">Business Address</label>
-        <input
-          id="businessAddress"
-          type="text"
-          placeholder="Auto-filled when you choose a location"
-          autocomplete="street-address"
-        >
-        <input type="hidden" id="vendorLatitude" name="vendorLatitude">
-        <input type="hidden" id="vendorLongitude" name="vendorLongitude">
-        <small class="form-hint">
-          Customers will see this address on your listings.
-        </small>
-      </div>
       <div class="field-row">
         <div class="field">
           <label for="category">Category</label>
@@ -63,9 +51,18 @@
         </div>
       </div>
       <div class="field">
-        <label for="address">Address</label>
+        <label for="address">Business address</label>
         <input type="text" id="address" required placeholder="e.g. Building 12, Al Sadd Street, near Landmark Mall">
-        <p class="hint">Shown to customers on your listing cards, so they know where to pick up.</p>
+        <input type="hidden" id="vendorLatitude" name="vendorLatitude">
+        <input type="hidden" id="vendorLongitude" name="vendorLongitude">
+        <p class="hint">Auto-filled when you use the map below — you can still edit it before creating your account. Shown to customers on your listing cards.</p>
+      </div>
+      <div class="field">
+        <div class="location-status-row">
+          <p id="signupLocationStatus">Tap the map or use your current location to pin your business.</p>
+          <button type="button" class="btn btn-teal btn-sm" id="signupUseLocationBtn">📍 Use my current location</button>
+        </div>
+        <div id="signupMapView"></div>
       </div>
       <div class="field">
         <label for="email">Email</label>
@@ -89,6 +86,85 @@
   const form = document.getElementById('signupForm');
   const msg = document.getElementById('formMsg');
   const submitBtn = document.getElementById('submitBtn');
+  const addressInput = document.getElementById('address');
+  const latInput = document.getElementById('vendorLatitude');
+  const lngInput = document.getElementById('vendorLongitude');
+  const locationStatus = document.getElementById('signupLocationStatus');
+  const useLocationBtn = document.getElementById('signupUseLocationBtn');
+
+  // ---- Map: click or drag to set the pin, reverse geocode to fill the address ----
+  let signupMap = null;
+  let signupMarker = null;
+
+  function initSignupMap(lat, lng){
+    const startCoords = [lat ?? 25.2854, lng ?? 51.5310]; // Doha center as default
+    signupMap = L.map('signupMapView').setView(startCoords, lat ? 16 : 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(signupMap);
+
+    signupMarker = L.marker(startCoords, { draggable: true }).addTo(signupMap);
+    signupMarker.on('dragend', () => {
+      const pos = signupMarker.getLatLng();
+      setPin(pos.lat, pos.lng);
+    });
+    signupMap.on('click', (e) => {
+      signupMarker.setLatLng(e.latlng);
+      setPin(e.latlng.lat, e.latlng.lng);
+    });
+
+    if(lat && lng) setPin(lat, lng, { skipMove: true });
+  }
+
+  async function setPin(lat, lng, opts = {}){
+    latInput.value = lat;
+    lngInput.value = lng;
+    if(!opts.skipMove){
+      signupMap.panTo([lat, lng]);
+    }
+    locationStatus.textContent = 'Looking up the address…';
+    try{
+      const address = await reverseGeocode(lat, lng);
+      addressInput.value = address;
+      locationStatus.textContent = 'Location pinned — edit the address above if needed.';
+    }catch(err){
+      locationStatus.textContent = 'Pinned — enter the address manually below.';
+    }
+  }
+
+  async function reverseGeocode(lat, lng){
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    if(!res.ok) throw new Error('Reverse geocoding failed');
+    const data = await res.json();
+    if(!data.display_name) throw new Error('No address found');
+    return data.display_name;
+  }
+
+  initSignupMap();
+
+  useLocationBtn.addEventListener('click', () => {
+    if(!navigator.geolocation){
+      alert("Your browser doesn't support location access.");
+      return;
+    }
+    useLocationBtn.disabled = true;
+    useLocationBtn.textContent = 'Getting location…';
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        signupMap.setView([pos.coords.latitude, pos.coords.longitude], 16);
+        signupMarker.setLatLng([pos.coords.latitude, pos.coords.longitude]);
+        setPin(pos.coords.latitude, pos.coords.longitude);
+        useLocationBtn.disabled = false;
+        useLocationBtn.textContent = '📍 Use my current location';
+      },
+      (err) => {
+        alert('Could not get your location: ' + err.message);
+        useLocationBtn.disabled = false;
+        useLocationBtn.textContent = '📍 Use my current location';
+      }
+    );
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -97,12 +173,14 @@
     const businessName = document.getElementById('businessName').value.trim();
     const category = document.getElementById('category').value;
     const area = document.getElementById('area').value.trim();
-    const address = document.getElementById('address').value.trim();
+    const address = addressInput.value.trim();
+    const latitude = latInput.value ? parseFloat(latInput.value) : null;
+    const longitude = lngInput.value ? parseFloat(lngInput.value) : null;
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
     try{
-      const result = await Store.signUpVendor({ email, password, businessName, category, area, address });
+      const result = await Store.signUpVendor({ email, password, businessName, category, area, address, latitude, longitude });
       if(result.needsConfirmation){
         msg.textContent = 'Check your email to confirm your account, then log in.';
         msg.className = 'form-msg success show';
