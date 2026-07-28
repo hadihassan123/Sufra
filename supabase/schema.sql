@@ -167,13 +167,15 @@ create trigger on_reservation_created
 create or replace function handle_new_vendor()
 returns trigger as $$
 begin
-  insert into public.vendors (id, business_name, category, area, address)
+  insert into public.vendors (id, business_name, category, area, address, latitude, longitude)
   values (
     new.id,
     new.raw_user_meta_data->>'business_name',
     new.raw_user_meta_data->>'category',
     new.raw_user_meta_data->>'area',
-    new.raw_user_meta_data->>'address'
+    new.raw_user_meta_data->>'address',
+    (new.raw_user_meta_data->>'latitude')::double precision,
+    (new.raw_user_meta_data->>'longitude')::double precision
   );
   return new;
 end;
