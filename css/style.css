@@ -701,6 +701,7 @@ table.data-table tr:last-child td{ border-bottom:none; }
 
 .location-field {
   max-width:none !important;
+  margin-top:28px !important;
 }
 
 
