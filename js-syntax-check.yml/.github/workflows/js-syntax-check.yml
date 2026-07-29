@@ -1,0 +1,64 @@
+name: JS syntax check
+
+# Catches exactly the class of bug that broke vendor-signup.html and
+# vendor-dashboard.html today: a JS syntax/reference error that silently
+# kills an entire page because nothing checked it before it went live.
+# This does NOT catch logic bugs or runtime errors (e.g. a missing DOM
+# element) — only things that fail to parse. It's a floor, not a
+# guarantee.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  syntax-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check every standalone .js file
+        run: |
+          set -e
+          fail=0
+          for f in $(find js -name "*.js"); do
+            echo "Checking $f"
+            if ! node --check "$f"; then
+              echo "::error file=$f::Syntax error in $f"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Check every inline <script> block in .html files
+        run: |
+          set -e
+          fail=0
+          python3 - << 'PYEOF'
+          import re, subprocess, sys, glob
+
+          fail = False
+          for path in glob.glob("*.html"):
+              with open(path, encoding="utf-8") as f:
+                  content = f.read()
+              # Only bare <script> tags (no src=) — those with src= are
+              # external files, already checked above.
+              blocks = re.findall(r'<script>(.*?)</script>', content, re.DOTALL)
+              for i, block in enumerate(blocks):
+                  tmp = f"/tmp/{path.replace('/', '_')}_{i}.js"
+                  with open(tmp, "w", encoding="utf-8") as out:
+                      out.write(block)
+                  result = subprocess.run(["node", "--check", tmp], capture_output=True, text=True)
+                  if result.returncode != 0:
+                      print(f"::error file={path}::Syntax error in inline <script> block {i}: {result.stderr}")
+                      fail = True
+                  else:
+                      print(f"OK: {path} inline script block {i}")
+          sys.exit(1 if fail else 0)
+          PYEOF

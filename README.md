@@ -196,7 +196,46 @@ Security tested with
 
 ---
 
-# QR Pickup Verification
+# Content Security Policy (CSP)
+
+The live site is served with a `Content-Security-Policy` response header.
+**This header is configured directly in Render's dashboard for this
+service (Settings → Headers) — it is not defined anywhere in this repo**,
+which means it's invisible to anyone reading the code and easy to forget
+about when adding a new external script/API. If you add a call to a new
+third-party domain (a CDN, an API, a font host), it will be silently
+blocked by the browser unless that domain is also added here.
+
+Confirmed directives (found via live debugging, 2026-07-29 — see
+`sufra-architecture-and-fixes.md` §6.3/6.8 for how these were diagnosed):
+
+```
+script-src  'self' https://cdn.jsdelivr.net 'unsafe-inline'
+style-src   'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'unsafe-inline'
+connect-src 'self' https://yplswfpbcssfmgeejcpy.supabase.co https://nominatim.openstreetmap.org
+```
+
+> ⚠️ This is a **partial** record — only the directives that were
+> actually exercised (and broke something) during debugging are listed
+> above. There may be other directives (`img-src`, `font-src`,
+> `frame-src`, `default-src`, etc.) configured in Render that aren't
+> captured here. **Next time you're in the Render dashboard, copy the
+> full header value into this file** so this becomes a complete,
+> accurate record instead of a partial one.
+
+**Currently allowed external domains:** `cdn.jsdelivr.net` (Leaflet,
+Supabase JS client, image compression, QR libraries),
+`fonts.googleapis.com`, `yplswfpbcssfmgeejcpy.supabase.co` (this
+project's Supabase instance), `nominatim.openstreetmap.org` (reverse
+geocoding).
+
+**Map tiles** (`{s}.tile.openstreetmap.org`, loaded by Leaflet) render
+correctly in production, which means `img-src` is either unset
+(falling back to a permissive default) or already allows that domain —
+worth confirming and documenting explicitly rather than relying on an
+unverified fallback.
+
+
 
 Each reservation generates
 
