@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vendor dashboard — Sufra</title>
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
 </head>
 <body>
@@ -81,6 +83,7 @@
                 📍 Use my current location
               </button>
             </div>
+            <div id="dashboardMapView"></div>
             <div class="field location-field">
               <label for="vendorAddressInput">
                 Address
@@ -91,12 +94,12 @@
                   id="vendorAddressInput"
                   placeholder="e.g. Building 12, Al Sadd Street, near Landmark Mall"
                 >
-                <button class="btn btn-ghost btn-sm" id="saveAddressBtn">
-                  Save address
+                <button class="btn btn-ghost btn-sm" id="saveLocationBtn">
+                  Save location
                 </button>
               </div>
               <p class="hint">
-                Shown to customers on your listing cards.
+                Tap the map, drag the pin, or use your current location — the address fills in automatically. Edit it before saving if needed. Shown to customers on your listing cards.
               </p>
             </div>
           </div>

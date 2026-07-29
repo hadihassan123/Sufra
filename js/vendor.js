@@ -135,7 +135,7 @@
     const statusText = document.getElementById('locationStatusText');
     const saveBtn = document.getElementById('saveLocationBtn');
     const useLocationBtn = document.getElementById('useLocationBtn');
-    if(!addressInput) return;
+    if(!addressInput || !saveBtn) return;
 
     addressInput.value = vendor.address || '';
     let pendingLat = vendor.latitude ?? null;
