@@ -123,6 +123,7 @@
   let cachedListings = [];
   let currentVendor = vendor; // refreshed after logo/document uploads so status reflects latest values
   let editingListingId = null;
+  let editingListingImageUrl = null; // preserves the existing photo when editing without picking a new one
   // ---- sidebar identity ----
   try{
     document.getElementById('sideVendorName').textContent = vendor.business_name;
@@ -499,6 +500,41 @@
     console.error('[listings table] failed to wire up:', err);
   }
 
+  // ---- edit an existing listing ----
+  // Called from the listings table's "Edit" button. Was previously
+  // referenced but never defined — clicking Edit did nothing.
+  function loadListingIntoForm(listing){
+    try{
+      editingListingId = listing.id;
+      editingListingImageUrl = listing.image_url || null;
+
+      document.getElementById('itemName').value = listing.item_name || '';
+      document.getElementById('description').value = listing.description || '';
+      document.getElementById('postCategory').value = listing.category || '';
+      document.getElementById('originalPrice').value = listing.original_price;
+      document.getElementById('discountedPrice').value = listing.discounted_price;
+      document.getElementById('quantity').value = listing.quantity_total;
+
+      const start = new Date(listing.pickup_start);
+      const end = new Date(listing.pickup_end);
+      const toHHMM = (d) => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      document.getElementById('pickupStart').value = toHHMM(start);
+      document.getElementById('pickupEnd').value = toHHMM(end);
+
+      // File inputs can't be pre-filled by script — leave it empty and
+      // tell the vendor the existing photo stays unless they pick a new one.
+      document.getElementById('listingImage').value = '';
+      listingImagePreviewRow.style.display = listing.image_url ? 'flex' : 'none';
+      if(listing.image_url) listingImageFilename.textContent = 'Current photo (choose a new file to replace it)';
+
+      document.getElementById('postListingBtn').textContent = 'Update listing';
+      showView('post');
+    }catch(err){
+      console.error('[edit listing] failed to load listing into form:', err);
+      alert('Could not load this listing for editing.');
+    }
+  }
+
   // ---- post form ----
   document.getElementById('postForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -576,7 +612,7 @@
           pickup_start: startDate.toISOString(),
           pickup_end: endDate.toISOString(),
           payment_method: 'cash',
-          image_url: imageUrl,
+          image_url: imageUrl || (editingListingId ? editingListingImageUrl : null),
           status: 'active'
       };
 
@@ -586,6 +622,7 @@
           await Store.createListing(payload);
       }
       editingListingId = null;
+      editingListingImageUrl = null;
 
       document.getElementById('postListingBtn').textContent ='Post listing';
      
