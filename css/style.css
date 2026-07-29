@@ -743,3 +743,22 @@ table.data-table tr:last-child td{ border-bottom:none; }
   flex:1;
   width:100%;
 }
+
+/* Fix Leaflet map floating above page elements */
+#dashboardMapView,
+#signupMapView,
+#mapView {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* Keep Leaflet internal layers contained inside the map */
+#dashboardMapView .leaflet-pane,
+#dashboardMapView .leaflet-top,
+#dashboardMapView .leaflet-bottom,
+#signupMapView .leaflet-pane,
+#signupMapView .leaflet-top,
+#signupMapView .leaflet-bottom{
+  z-index: 1 !important;
+}
