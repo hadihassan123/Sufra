@@ -167,9 +167,17 @@
       const isExpired = new Date(l.pickup_end) < new Date();
       const vendorName = l.vendors ? l.vendors.business_name : '';
       const vendorAddress = l.vendors ? l.vendors.address : '';
+      const vendorLat = l.vendors ? l.vendors.latitude : null;
+      const vendorLng = l.vendors ? l.vendors.longitude : null;
       const logoUrl = l.vendors ? l.vendors.logo_url : null;
       const isVerified = l.vendors && l.vendors.verification_status === 'verified';
       const discountPct = pct(l.original_price, l.discounted_price);
+      // Coordinates are the source of truth for navigation, address is just
+      // the display label — if the vendor edits the text ("near Lulu"),
+      // the pin still points at the exact saved location, not the words.
+      const mapsUrl = (vendorLat && vendorLng)
+        ? `https://www.google.com/maps/search/?api=1&query=${vendorLat},${vendorLng}`
+        : (vendorAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(vendorAddress)}` : null);
       
       return `
       <div class="ticket-card">
@@ -189,7 +197,10 @@
                 <span class="ticket-vendor-name">${vendorName}</span>
                 ${isVerified ? `<span class="verified-check">✓</span>` : ''}
               </span>
-              ${vendorAddress ? `<span class="ticket-vendor-address">📍 ${vendorAddress}</span>` : ''}
+              ${vendorAddress ? (mapsUrl
+                ? `<a class="ticket-vendor-address" href="${mapsUrl}" target="_blank" rel="noopener">📍 ${vendorAddress}</a>`
+                : `<span class="ticket-vendor-address">📍 ${vendorAddress}</span>`
+              ) : ''}
             </div>
             <h3 class="ticket-item">${l.item_name}</h3>
             <p class="ticket-desc">${l.description || ''}</p>

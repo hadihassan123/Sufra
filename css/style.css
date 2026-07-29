@@ -266,6 +266,10 @@ button{ font-family:inherit; cursor:pointer; }
   font-family:var(--f-body); font-size:0.72rem; text-transform:none; letter-spacing:normal;
   color:var(--charcoal); opacity:0.65;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  text-decoration:none;
+}
+.ticket-vendor-address:hover{
+  opacity:0.9; text-decoration:underline;
 }
 .verified-check{
   flex-shrink:0; width:14px; height:14px; border-radius:50%;
