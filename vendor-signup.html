@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vendor dashboard — Sufra</title>
+<title>List your surplus — Sufra</title>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
 </head>
 <body>
 
@@ -15,288 +14,210 @@
   <div class="wrap">
     <a href="index.html" class="brand">Sufra <small>The Spread</small></a>
     <nav class="nav-links">
-      <a href="index.html">View site</a>
-      <button class="btn btn-ghost btn-sm" id="logoutBtn">Log out</button>
+      <a href="index.html">Browse</a>
     </nav>
   </div>
 </header>
 
-<div class="dash-shell">
-  <aside class="dash-side">
-    <p class="vendor-name" id="sideVendorName">—</p>
-    <p class="vendor-status" id="sideVendorStatus">—</p>
-    <nav class="dash-nav">
-      <button data-view="overview" class="active">Overview</button>
-      <button data-view="listings">Listings</button>
-      <button data-view="post">Post new item</button>
-      <button data-view="payment">Payment settings</button>
-      <button data-view="documents">Verification documents</button>
-      <button data-view="pickup">Verify pickup</button>
-      <button data-view="reservations">Reservations</button>
-    </nav>
-  </aside>
+<div class="auth-shell">
+  <div class="auth-card">
+    <p class="eyebrow">For food businesses</p>
+    <h1>List your surplus</h1>
+    <p class="sub">Create a vendor account to post end-of-day items, set pickup windows, and manage reservations. Cash is collected directly from customers at pickup.</p>
 
-  <main class="dash-main">
+    <div class="form-msg" id="formMsg"></div>
 
-    <section class="dash-view active" id="view-overview">
-      <div class="dash-head">
-        <div><h1>Overview</h1><p>How your listings are performing today.</p></div>
+    <form id="signupForm">
+      <div class="field">
+        <label for="businessName">Business name</label>
+        <input type="text" id="businessName" required placeholder="e.g. Al Zubara Bakery">
       </div>
       <div class="field-row">
-        <div class="dash-dial-card">
-      <div class="dial-label"><span>Doha time</span><span id="vendorClockText">--:--</span></div>
-      <svg class="dial-svg" id="vendorDialSvg" viewBox="0 0 240 240"></svg>
-      <p class="dial-status" id="vendorDialStatus">Checking the pass…<span id="vendorDialSub"></span></p>
-    </div>
-      </div>
-      <div class="stat-row">
-        <div class="stat-card"><div class="num" id="statActive">0</div><div class="lbl">Active listings</div></div>
-        <div class="stat-card"><div class="num" id="statReserved">0</div><div class="lbl">Reserved, awaiting pickup</div></div>
-        <div class="stat-card"><div class="num" id="statCollected">0</div><div class="lbl">Collected </div></div>
-        <div class="stat-card"><div class="num" id="statSoldOut">0</div><div class="lbl">Sold-out listings</div></div>
-        <div class="stat-card"><div class="num" id="statExpired">0</div><div class="lbl">Expired Listings</div></div>
-      </div>
-
-      <div class="doc-card" style="margin-bottom:24px;" id="logoCard">
-        <div class="doc-info" style="display:flex; align-items:center; gap:14px;">
-          <img id="logoPreview" src="" alt="" style="width:48px; height:48px; border-radius:50%; object-fit:cover; display:none; border:1px solid var(--line);">
-          <div>
-            <h3>Store logo</h3>
-            <p id="logoStatusText">Shown next to your business name on listings. Not uploaded yet.</p>
-          </div>
+        <div class="field">
+          <label for="category">Category</label>
+          <select id="category" required>
+            <option value="">Select…</option>
+            <option>Bakery</option>
+            <option>Café</option>
+            <option>Restaurant</option>
+            <option>Patisserie</option>
+            <option>Grocery</option>
+            <option>Hotel</option>
+          </select>
         </div>
-        <div style="display:flex; gap:8px;">
-          <label class="btn btn-teal btn-sm" style="margin:0;">
-            <span id="logoBtnText">Upload</span>
-            <input type="file" id="logoInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
-          </label>
-          <button class="btn btn-ghost btn-sm" id="removeLogoBtn" style="display:none;">Remove</button>
+        <div class="field">
+          <label for="area">Area</label>
+          <input type="text" id="area" required placeholder="e.g. Al Sadd">
         </div>
-        <div class="doc-card" style="margin-bottom:24px;" id="locationCard">
-          <div class="doc-info">
-            <h3>Business location</h3>
-            <div class="location-status-row">
-              <p id="locationStatusText">
-                Not set yet — customers will see a link to your location on Google Maps.
-              </p>
-              <button class="btn btn-teal btn-sm" id="useLocationBtn">
-                📍 Use my current location
-              </button>
-            </div>
-            <div id="dashboardMapView"></div>
-            <div class="field location-field">
-              <label for="vendorAddressInput">
-                Address
-              </label>
-              <div class="address-row">
-                <input 
-                  type="text" 
-                  id="vendorAddressInput"
-                  placeholder="e.g. Building 12, Al Sadd Street, near Landmark Mall"
-                >
-                <button class="btn btn-ghost btn-sm" id="saveLocationBtn">
-                  Save location
-                </button>
-              </div>
-              <p class="hint">
-                Tap the map, drag the pin, or use your current location — the address fills in automatically. Edit it before saving if needed. Shown to customers on your listing cards.
-              </p>
-            </div>
-          </div>
+      </div>
+      <div class="field">
+        <label for="address">Business address</label>
+        <input type="text" id="address" required placeholder="e.g. Building 12, Al Sadd Street, near Landmark Mall">
+        <input type="hidden" id="vendorLatitude" name="vendorLatitude">
+        <input type="hidden" id="vendorLongitude" name="vendorLongitude">
+        <p class="hint">Auto-filled when you use the map below — you can still edit it before creating your account. Shown to customers on your listing cards.</p>
+      </div>
+      <div class="field">
+        <div class="location-status-row">
+          <p id="signupLocationStatus">Tap the map or use your current location to pin your business.</p>
+          <button type="button" class="btn btn-teal btn-sm" id="signupUseLocationBtn">📍 Use my current location</button>
         </div>
-      <div id="verifyBadgeNotice"></div>
-    </section>
-
-    <section class="dash-view" id="view-listings">
-      <div class="dash-head">
-        <div><h1>Listings</h1><p>Adjust remaining stock or remove sold-out items.</p></div>
-        <button class="btn btn-teal btn-sm" data-goto="post">+ Post new item</button>
+        <div id="signupMapView"></div>
       </div>
-      <table class="data-table">
-        <thead><tr><th>Item</th><th>Price</th><th>Stock</th><th>Pickup window</th><th></th><th></th></tr></thead>
-        <tbody id="listingsTableBody"></tbody>
-      </table>
-    </section>
-
-    <section class="dash-view" id="view-post">
-      <div class="dash-head">
-        <div><h1>Post new item</h1><p>List today's surplus with a guaranteed discount and pickup window.</p></div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" required placeholder="you@business.qa">
       </div>
-      <div style="max-width:560px;">
-        <div class="form-msg success" id="postMsg"></div>
-        <form id="postForm">
-          <div class="field">
-            <label for="itemName">Item name</label>
-            <input type="text" id="itemName" required placeholder="e.g. Manakeesh Bundle (6pc)">
-          </div>
-          <div class="field">
-            <label for="description">Description</label>
-            <textarea id="description" rows="2" required placeholder="What's in it, made when"></textarea>
-          </div>
-          <div class="field">
-            <label for="postCategory">Category</label>
-            <select id="postCategory" required>
-              <option value="">Select…</option>
-              <option>Bakery</option><option>Café</option><option>Restaurant</option>
-              <option>Patisserie</option><option>Grocery</option>
-            </select>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label for="originalPrice">Original price (QAR)</label>
-              <input type="number" id="originalPrice" required min="1" step="0.5">
-            </div>
-            <div class="field">
-              <label for="discountedPrice">Discounted price (QAR)</label>
-              <input type="number" id="discountedPrice" required min="1" step="0.5">
-            </div>
-          </div>
-          <div class="field">
-            <label for="quantity">Quantity available</label>
-            <input type="number" id="quantity" required min="1" step="1">
-          </div>
-          <div class="field">
-            <label for="listingImage">Item photo</label>
-            <input type="file" id="listingImage" accept="image/jpeg,image/png,image/webp">
-            <div id="listingImagePreviewRow" style="display:none; align-items:center; gap:10px; margin-top:8px;">
-              <span id="listingImageFilename" style="font-size:0.82rem; color:rgba(36,31,26,0.65);"></span>
-              <button type="button" class="icon-btn" id="clearListingImageBtn">✕ Remove</button>
-            </div>
-            <p class="hint">Optional. Shows on the listing card. JPG, PNG or WebP, under 2MB.</p>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label for="pickupStart">Pickup start</label>
-              <input type="time" id="pickupStart" required style="max-width:150px;">
-            </div>
-            <div class="field">
-              <label for="pickupEnd">Pickup end</label>
-              <input type="time" id="pickupEnd" required style="max-width:150px;">
-            </div>
-          </div>
-          <div class="field">
-            <label>Payment</label>
-            <input type="text" value="Cash at pickup" disabled>
-            <p class="hint">Online payment via SkipCash is coming soon — all listings are cash-at-pickup for now.</p>
-          </div>
-          <button type="submit" id="postListingBtn" class="btn btn-amber btn-block">Post listing</button>
-        </form>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" required minlength="6" placeholder="At least 6 characters">
       </div>
-    </section>
-
-    <section class="dash-view" id="view-payment">
-      <div class="dash-head">
-        <div><h1>Payment settings</h1><p>Choose how customers pay for your listings. Cash at pickup always works with no setup — card payment is optional and uses your own SkipCash account, never Sufra's.</p></div>
-      </div>
-      <div style="max-width:560px;">
-        <div class="form-msg" id="paymentMsg"></div>
-
-        <div class="doc-card" style="margin-bottom:20px;">
-          <div class="doc-info">
-            <h3>Cash at pickup</h3>
-            <p>Always available — no setup needed.</p>
-          </div>
-          <span class="doc-status-pill doc-status-uploaded">Active</span>
-        </div>
-
-        <div class="doc-card" style="margin-bottom:20px;" id="cardStatusCard">
-          <div class="doc-info">
-            <h3>Card payment via SkipCash</h3>
-            <p id="cardStatusText">Not connected</p>
-          </div>
-          <span class="doc-status-pill doc-status-missing" id="cardStatusPill">Off</span>
-        </div>
-
-        <form id="skipcashForm">
-          <div class="field">
-            <label for="skipcashClientId">SkipCash Client ID</label>
-            <input type="text" id="skipcashClientId" placeholder="From your SkipCash merchant portal">
-          </div>
-          <div class="field">
-            <label for="skipcashKeyId">SkipCash Key ID</label>
-            <input type="text" id="skipcashKeyId" placeholder="From your SkipCash merchant portal">
-          </div>
-          <div class="field">
-            <label for="skipcashKeySecret">SkipCash Key Secret</label>
-            <input type="password" id="skipcashKeySecret" placeholder="Kept write-only — you won't be able to view this again">
-          </div>
-          <div class="field">
-            <label for="skipcashWebhookSecret">SkipCash Webhook Secret</label>
-            <input type="password" id="skipcashWebhookSecret" placeholder="From your SkipCash Sandbox/Production credentials page">
-          </div>
-          <button type="submit" class="btn btn-teal btn-block">Save and enable card payment</button>
-          <p class="hint" style="margin-top:12px;">These are stored so only Sufra's server-side payment function can read them — never visible in your dashboard again, and never sent to the browser.</p>
-        </form>
-
-        <button class="btn btn-ghost btn-block" id="disableCardBtn" style="margin-top:14px;">Turn off card payment</button>
-      </div>
-    </section>
-
-    <section class="dash-view" id="view-documents">
-      <div class="dash-head">
-        <div><h1>Verification documents</h1><p>Upload these so an admin can confirm your business before your listings go live. PDF, JPG, or PNG, up to 10MB each.</p></div>
-      </div>
-      <div style="max-width:560px; display:flex; flex-direction:column; gap:16px;" id="documentsList"></div>
-    </section>
-
-    <section class="dash-view" id="view-pickup">
-      <div class="dash-head">
-        <div><h1>Verify pickup</h1><p>Enter the customer's 6-character code to confirm and mark as collected.</p></div>
-      </div>
-      <div style="max-width:480px;">
-        <div class="verify-code-form">
-          <input
-            type="text"
-            id="verifyCodeInput"
-            maxlength="6"
-            placeholder="e.g. 7HXQ2M"
-          >
-
-          <button
-            type="button"
-            class="btn btn-ghost"
-            id="scanQrBtn">
-            📷 Scan QR
-          </button>
-
-          <button
-            class="btn btn-ink"
-            id="verifyBtn">
-            Check Code
-          </button>
-        </div>
-        <div id="verifyResult"></div>
-      </div>
-    </section>
-
-    <section class="dash-view" id="view-reservations">
-      <div class="dash-head">
-        <div><h1>Reservations</h1><p>All reservations across your listings.</p></div>
-      </div>
-      <table class="data-table">
-        <thead><tr><th>Code</th><th>Item</th><th>Customer</th><th>Window</th><th>Status</th></tr></thead>
-        <tbody id="reservationsTableBody"></tbody>
-      </table>
-    </section>
-
-    <div class="modal-overlay" id="qrScannerOverlay">
-      <div class="modal-box">
-        <button class="close-x" id="closeQrScanner">
-          &times;
-        </button>
-        <h2>Scan Pickup QR</h2>
-        <div id="qr-reader"></div>
-      </div>
-    </div>
-
-  </main>
+      <button type="submit" class="btn btn-teal btn-block" id="submitBtn">Create vendor account</button>
+      <p class="hint" style="margin-top:14px;">New accounts start as <strong>pending verification</strong>. Commercial Registration and food-license checks are done manually — your listings go live once approved.</p>
+    </form>
+    <p class="auth-switch">Already have an account? <a href="vendor-login.html">Log in</a></p>
+  </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/store.js"></script>
-<script src="js/vendor.js"></script>
+<script>
+  const form = document.getElementById('signupForm');
+  const msg = document.getElementById('formMsg');
+  const submitBtn = document.getElementById('submitBtn');
+  const addressInput = document.getElementById('address');
+  const latInput = document.getElementById('vendorLatitude');
+  const lngInput = document.getElementById('vendorLongitude');
+  const locationStatus = document.getElementById('signupLocationStatus');
+  const useLocationBtn = document.getElementById('signupUseLocationBtn');
+
+  // Register the form submit handler FIRST, unconditionally — account
+  // creation must never depend on the map working. If Leaflet fails to
+  // load or the map throws for any reason, signup still has to work.
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+
+    const businessName = document.getElementById('businessName').value.trim();
+    const category = document.getElementById('category').value;
+    const area = document.getElementById('area').value.trim();
+    const address = addressInput.value.trim();
+    const latitude = latInput.value ? parseFloat(latInput.value) : null;
+    const longitude = lngInput.value ? parseFloat(lngInput.value) : null;
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    try{
+      const result = await Store.signUpVendor({ email, password, businessName, category, area, address, latitude, longitude });
+      if(result.needsConfirmation){
+        msg.textContent = 'Check your email to confirm your account, then log in.';
+        msg.className = 'form-msg success show';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Check your email';
+      } else {
+        window.location.href = 'vendor-dashboard.html';
+      }
+    }catch(err){
+      msg.textContent = err.message || 'Something went wrong. Please try again.';
+      msg.className = 'form-msg error show';
+      submitBtn.disabled = false;
+    }
+  });
+
+  // ---- Map: click or drag to set the pin, reverse geocode to fill the address ----
+  // Everything below is a progressive enhancement. If it fails, the address
+  // field above still works as a plain manual text input and signup is fine.
+  let signupMap = null;
+  let signupMarker = null;
+
+  function initSignupMap(lat, lng){
+    const startCoords = [lat ?? 25.2854, lng ?? 51.5310]; // Doha center as default
+    signupMap = L.map('signupMapView').setView(startCoords, lat ? 16 : 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(signupMap);
+
+    signupMarker = L.marker(startCoords, { draggable: true }).addTo(signupMap);
+    signupMarker.on('dragend', () => {
+      const pos = signupMarker.getLatLng();
+      setPin(pos.lat, pos.lng);
+    });
+    signupMap.on('click', (e) => {
+      signupMarker.setLatLng(e.latlng);
+      setPin(e.latlng.lat, e.latlng.lng);
+    });
+
+    if(lat && lng) setPin(lat, lng, { skipMove: true });
+  }
+
+  async function setPin(lat, lng, opts = {}){
+    latInput.value = lat;
+    lngInput.value = lng;
+    if(!opts.skipMove){
+      signupMap.panTo([lat, lng]);
+    }
+    locationStatus.textContent = 'Looking up the address…';
+    try{
+      const address = await reverseGeocode(lat, lng);
+      addressInput.value = address;
+      locationStatus.textContent = 'Location pinned — edit the address above if needed.';
+    }catch(err){
+      locationStatus.textContent = 'Pinned — enter the address manually below.';
+    }
+  }
+
+  async function reverseGeocode(lat, lng){
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    if(!res.ok) throw new Error('Reverse geocoding failed');
+    const data = await res.json();
+    if(!data.display_name) throw new Error('No address found');
+
+    // Prefer a short, human-friendly address built from structured
+    // components over Nominatim's full display_name, which can be a long
+    // administrative chain (or, for sparsely-mapped points, just "Doha, Qatar").
+    const a = data.address || {};
+    const parts = [
+      a.building, a.house_number, a.road, a.neighbourhood || a.suburb, a.city || a.town
+    ].filter(Boolean);
+    return parts.length ? parts.join(', ') : data.display_name;
+  }
+
+  try{
+    initSignupMap();
+  }catch(err){
+    console.error('Signup map failed to initialize — falling back to manual address entry.', err);
+    locationStatus.textContent = 'Map unavailable right now — enter your address manually below.';
+    useLocationBtn.style.display = 'none';
+  }
+
+  useLocationBtn.addEventListener('click', () => {
+    if(!navigator.geolocation){
+      alert("Your browser doesn't support location access.");
+      return;
+    }
+    if(!signupMap){
+      alert('Map is unavailable right now — please enter your address manually.');
+      return;
+    }
+    useLocationBtn.disabled = true;
+    useLocationBtn.textContent = 'Getting location…';
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        signupMap.setView([pos.coords.latitude, pos.coords.longitude], 16);
+        signupMarker.setLatLng([pos.coords.latitude, pos.coords.longitude]);
+        setPin(pos.coords.latitude, pos.coords.longitude);
+        useLocationBtn.disabled = false;
+        useLocationBtn.textContent = '📍 Use my current location';
+      },
+      (err) => {
+        alert('Could not get your location: ' + err.message);
+        useLocationBtn.disabled = false;
+        useLocationBtn.textContent = '📍 Use my current location';
+      }
+    );
+  });
+</script>
 </body>
 </html>
