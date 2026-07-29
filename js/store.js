@@ -62,21 +62,15 @@ const Store = (() => {
     return data;
   }
 
-  async function updateVendorLocation(vendorId, latitude, longitude){
-  const { error } = await sb
-    .from('vendors')
-    .update({ latitude, longitude })
-    .eq('id', vendorId);
-  if(error) throw error;
-}
-
-  async function updateVendorAddress(vendorId, address){
-  const { error } = await sb
-    .from('vendors')
-    .update({ address })
-    .eq('id', vendorId);
-  if(error) throw error;
-}
+  // Saves address + coordinates together, always as one write — a vendor's
+  // pin and its address text should never be able to drift out of sync.
+  async function updateVendorPin(vendorId, { address, latitude, longitude }){
+    const { error } = await sb
+      .from('vendors')
+      .update({ address, latitude, longitude })
+      .eq('id', vendorId);
+    if(error) throw error;
+  }
 
   // ---- vendor verification documents ----
   const DOC_COLUMNS = {
@@ -303,7 +297,7 @@ const Store = (() => {
 
   return {
     SURPLUS_WINDOWS,
-    signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,updateVendorLocation,updateVendorAddress,
+    signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,updateVendorPin,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
     getActiveListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected, getReservationsByVendor,

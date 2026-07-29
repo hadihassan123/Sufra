@@ -43,33 +43,6 @@
       dialSvg.setAttribute('viewBox', '0 0 240 240');
       dialSvg.innerHTML = svg;
     }
-    document.getElementById('useLocationBtn').addEventListener('click', () => {
-      const btn = document.getElementById('useLocationBtn');
-      if(!navigator.geolocation){
-        alert('Your browser doesn\'t support location access.');
-        return;
-      }
-      btn.disabled = true;
-      btn.textContent = 'Getting location…';
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          try{
-            await Store.updateVendorLocation(vendor.id, pos.coords.latitude, pos.coords.longitude);
-            document.getElementById('locationStatusText').textContent = 'Location saved — customers can now find you on the map.';
-          }catch(err){
-            alert('Could not save location: ' + err.message);
-          }
-          btn.disabled = false;
-          btn.textContent = '📍 Use my current location';
-        },
-        (err) => {
-          alert('Could not get your location: ' + err.message);
-          btn.disabled = false;
-          btn.textContent = '📍 Use my current location';
-        }
-      );
-    });
-
     function updateHands(){
       const now = new Date();
       const h12 = now.getHours() % 12 + now.getMinutes()/60;
@@ -153,16 +126,99 @@
       </div>`;
   }
 
-  // ---- business location: address + GPS ----
+  // ---- business location: map + reverse geocoding + one save action ----
+  // Mirrors vendor-signup.html's flow. Progressive enhancement: if the map
+  // fails to load for any reason, the address field still works manually
+  // and saving still works — it just won't have new coordinates attached.
   (function(){
     const addressInput = document.getElementById('vendorAddressInput');
     const statusText = document.getElementById('locationStatusText');
-    const saveBtn = document.getElementById('saveAddressBtn');
+    const saveBtn = document.getElementById('saveLocationBtn');
+    const useLocationBtn = document.getElementById('useLocationBtn');
     if(!addressInput) return;
 
     addressInput.value = vendor.address || '';
-    if(vendor.latitude && vendor.longitude){
+    let pendingLat = vendor.latitude ?? null;
+    let pendingLng = vendor.longitude ?? null;
+    if(pendingLat && pendingLng){
       statusText.textContent = 'Location saved — customers can find you on the map.';
+    }
+
+    let map = null;
+    let marker = null;
+
+    async function reverseGeocode(lat, lng){
+      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+      const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+      if(!res.ok) throw new Error('Reverse geocoding failed');
+      const data = await res.json();
+      if(!data.display_name) throw new Error('No address found');
+      const a = data.address || {};
+      const parts = [a.building, a.house_number, a.road, a.neighbourhood || a.suburb, a.city || a.town].filter(Boolean);
+      return parts.length ? parts.join(', ') : data.display_name;
+    }
+
+    async function setPin(lat, lng, opts = {}){
+      pendingLat = lat;
+      pendingLng = lng;
+      if(!opts.skipMove && map) map.panTo([lat, lng]);
+      statusText.textContent = 'Looking up the address…';
+      try{
+        addressInput.value = await reverseGeocode(lat, lng);
+        statusText.textContent = 'Pin updated — edit the address if needed, then save.';
+      }catch(err){
+        statusText.textContent = 'Pin updated — enter the address manually, then save.';
+      }
+    }
+
+    try{
+      const startCoords = [pendingLat ?? 25.2854, pendingLng ?? 51.5310];
+      map = L.map('dashboardMapView').setView(startCoords, pendingLat ? 16 : 11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+      marker = L.marker(startCoords, { draggable: true }).addTo(map);
+      marker.on('dragend', () => {
+        const pos = marker.getLatLng();
+        setPin(pos.lat, pos.lng);
+      });
+      map.on('click', (e) => {
+        marker.setLatLng(e.latlng);
+        setPin(e.latlng.lat, e.latlng.lng);
+      });
+    }catch(err){
+      console.error('Dashboard map failed to initialize — falling back to manual address entry.', err);
+      statusText.textContent = 'Map unavailable right now — enter your address manually below.';
+      if(useLocationBtn) useLocationBtn.style.display = 'none';
+    }
+
+    if(useLocationBtn){
+      useLocationBtn.addEventListener('click', () => {
+        if(!navigator.geolocation){
+          alert('Your browser doesn\'t support location access.');
+          return;
+        }
+        if(!map){
+          alert('Map is unavailable right now — please enter your address manually.');
+          return;
+        }
+        useLocationBtn.disabled = true;
+        useLocationBtn.textContent = 'Getting location…';
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+            marker.setLatLng([pos.coords.latitude, pos.coords.longitude]);
+            setPin(pos.coords.latitude, pos.coords.longitude);
+            useLocationBtn.disabled = false;
+            useLocationBtn.textContent = '📍 Use my current location';
+          },
+          (err) => {
+            alert('Could not get your location: ' + err.message);
+            useLocationBtn.disabled = false;
+            useLocationBtn.textContent = '📍 Use my current location';
+          }
+        );
+      });
     }
 
     saveBtn.addEventListener('click', async () => {
@@ -171,14 +227,16 @@
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving…';
       try{
-        await Store.updateVendorAddress(vendor.id, address);
+        await Store.updateVendorPin(vendor.id, { address, latitude: pendingLat, longitude: pendingLng });
         vendor.address = address;
-        statusText.textContent = 'Address saved — shown on your listing cards.';
+        vendor.latitude = pendingLat;
+        vendor.longitude = pendingLng;
+        statusText.textContent = 'Location saved — customers can find you on the map.';
       }catch(err){
-        alert('Could not save address: ' + err.message);
+        alert('Could not save location: ' + err.message);
       }
       saveBtn.disabled = false;
-      saveBtn.textContent = 'Save address';
+      saveBtn.textContent = 'Save location';
     });
   })();
 

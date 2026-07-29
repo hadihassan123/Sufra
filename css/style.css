@@ -658,6 +658,15 @@ table.data-table tr:last-child td{ border-bottom:none; }
 
 
 
+#dashboardMapView {
+  height: 320px;
+  width: 100%;
+  border-radius: 12px;
+  margin: 12px 0;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
 #signupMapView {
   height: 320px;
   width: 100%;
