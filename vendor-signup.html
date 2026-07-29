@@ -168,12 +168,20 @@
   }
 
   async function reverseGeocode(lat, lng){
-    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
     const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
     if(!res.ok) throw new Error('Reverse geocoding failed');
     const data = await res.json();
     if(!data.display_name) throw new Error('No address found');
-    return data.display_name;
+
+    // Prefer a short, human-friendly address built from structured
+    // components over Nominatim's full display_name, which can be a long
+    // administrative chain (or, for sparsely-mapped points, just "Doha, Qatar").
+    const a = data.address || {};
+    const parts = [
+      a.building, a.house_number, a.road, a.neighbourhood || a.suburb, a.city || a.town
+    ].filter(Boolean);
+    return parts.length ? parts.join(', ') : data.display_name;
   }
 
   try{
