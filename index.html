@@ -30,7 +30,8 @@
       <a href="#pickups">Your pickups</a>
       <a href="vendor-signup.html" class="nav-cta" id="vendorNavLink">List your surplus</a>
       <a href="vendor-login.html" id="vendorLoginNavLink">Log in</a>
-      
+      <a href="#" id="vendorLogoutNavLink" style="display:none;">Log out</a>
+      <a href="admin.html" id="adminLogoutNavLink" style="display:none;">Log out (admin)</a>
     </nav>
   </div>
 </header>
@@ -242,32 +243,48 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 <script>
-  // Listen for auth state changes and update the nav
-  sb.auth.onAuthStateChange((event, session) => {
-    const isLoggedIn = !!session;
+  function updateNav(isLoggedIn){
     document.getElementById('vendorNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
     document.getElementById('vendorLoginNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
+    document.getElementById('vendorLogoutNavLink').style.display = isLoggedIn ? 'inline-block' : 'none';
     document.getElementById('vendorDashboardLink').style.display = isLoggedIn ? 'inline-block' : 'none';
     const heroLink = document.getElementById('heroVendorLink');
-  if (isLoggedIn) {
-    heroLink.textContent = 'Go to dashboard';
-    heroLink.href = 'vendor-dashboard.html';
-  } else {
-    heroLink.textContent = 'I run a food business';
-    heroLink.href = 'vendor-signup.html';
+    if(isLoggedIn){
+      heroLink.textContent = 'Go to dashboard';
+      heroLink.href = 'vendor-dashboard.html';
+    } else {
+      heroLink.textContent = 'I run a food business';
+      heroLink.href = 'vendor-signup.html';
+    }
   }
-});
 
-// Also check on page load
-sb.auth.getSession().then(({ data: { session } }) => {
-  const isLoggedIn = !!session;
-  document.getElementById('vendorNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
-  document.getElementById('vendorLoginNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
-  document.getElementById('vendorDashboardLink').style.display = isLoggedIn ? 'inline-block' : 'none';
-  const heroLink = document.getElementById('heroVendorLink');
-  heroLink.textContent = isLoggedIn ? 'Go to dashboard' : 'I run a food business';
-  heroLink.href = isLoggedIn ? 'vendor-dashboard.html' : 'vendor-signup.html';
-});
+  function updateAdminNav(){
+    const isAdmin = !!sessionStorage.getItem('sufra_admin_passcode');
+    document.getElementById('adminLogoutNavLink').style.display = isAdmin ? 'inline-block' : 'none';
+  }
+
+  document.getElementById('vendorLogoutNavLink').addEventListener('click', async (e) => {
+    e.preventDefault();
+    await Store.signOutVendor();
+    updateNav(false);
+  });
+
+  document.getElementById('adminLogoutNavLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    sessionStorage.removeItem('sufra_admin_passcode');
+    updateAdminNav();
+  });
+
+  // Listen for auth state changes and update the nav
+  sb.auth.onAuthStateChange((event, session) => {
+    updateNav(!!session);
+  });
+
+  // Also check on page load
+  sb.auth.getSession().then(({ data: { session } }) => {
+    updateNav(!!session);
+  });
+  updateAdminNav();
 </script>
 
 </body>

@@ -124,15 +124,19 @@
   let currentVendor = vendor; // refreshed after logo/document uploads so status reflects latest values
   let editingListingId = null;
   // ---- sidebar identity ----
-  document.getElementById('sideVendorName').textContent = vendor.business_name;
-  const statusEl = document.getElementById('sideVendorStatus');
-  statusEl.textContent = vendor.verification_status === 'verified' ? 'Verified vendor' : 'Pending verification';
+  try{
+    document.getElementById('sideVendorName').textContent = vendor.business_name;
+    const statusEl = document.getElementById('sideVendorStatus');
+    statusEl.textContent = vendor.verification_status === 'verified' ? 'Verified vendor' : 'Pending verification';
 
-  if(vendor.verification_status !== 'verified'){
-    document.getElementById('verifyBadgeNotice').innerHTML = `
-      <div class="form-msg show" style="background:rgba(232,163,61,0.12); color:#C97F1E; border:1px solid rgba(232,163,61,0.3);">
-        <strong>Your account is pending verification.</strong> Listings you post won't appear on the public site until an admin confirms your Commercial Registration and food license.
-      </div>`;
+    if(vendor.verification_status !== 'verified'){
+      document.getElementById('verifyBadgeNotice').innerHTML = `
+        <div class="form-msg show" style="background:rgba(232,163,61,0.12); color:#C97F1E; border:1px solid rgba(232,163,61,0.3);">
+          <strong>Your account is pending verification.</strong> Listings you post won't appear on the public site until an admin confirms your Commercial Registration and food license.
+        </div>`;
+    }
+  }catch(err){
+    console.error('[sidebar identity] failed to render:', err);
   }
 
   // ---- business location: map + reverse geocoding + one save action ----
@@ -249,10 +253,14 @@
     });
   })();
 
-  document.getElementById('logoutBtn').addEventListener('click', async () => {
-    await Store.signOutVendor();
-    window.location.href = 'index.html';
-  });
+  try{
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await Store.signOutVendor();
+      window.location.href = 'index.html';
+    });
+  }catch(err){
+    console.error('[logout button] failed to wire up:', err);
+  }
 
   // ---- store logo ----
   function renderLogo(){
@@ -273,61 +281,68 @@
       removeBtn.style.display = 'none';
     }
   }
-  renderLogo();
+  try{
+    renderLogo();
 
-  document.getElementById('removeLogoBtn').addEventListener('click', async () => {
-    if(!confirm('Remove your store logo?')) return;
-    const removeBtn = document.getElementById('removeLogoBtn');
-    removeBtn.disabled = true;
-    try{
-      await Store.removeVendorLogo(vendor.id);
-      currentVendor = await Store.getVendorProfile(vendor.id);
-      renderLogo();
-    }catch(err){
-      alert('Could not remove logo: ' + err.message);
-    }
-    removeBtn.disabled = false;
-  });
+    document.getElementById('removeLogoBtn').addEventListener('click', async () => {
+      if(!confirm('Remove your store logo?')) return;
+      const removeBtn = document.getElementById('removeLogoBtn');
+      removeBtn.disabled = true;
+      try{
+        await Store.removeVendorLogo(vendor.id);
+        currentVendor = await Store.getVendorProfile(vendor.id);
+        renderLogo();
+      }catch(err){
+        alert('Could not remove logo: ' + err.message);
+      }
+      removeBtn.disabled = false;
+    });
 
-  document.getElementById('logoInput').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    if(file.size > 2 * 1024 * 1024){
-      alert('That file is over 2MB — please upload a smaller image.');
-      return;
-    }
-    const btnText = document.getElementById('logoBtnText');
-    const original = btnText.textContent;
-    btnText.textContent = 'Uploading…';
-    try{
-      await Store.uploadVendorLogo(vendor.id, file);
-      currentVendor = await Store.getVendorProfile(vendor.id);
-      renderLogo();
-    }catch(err){
-      alert('Logo upload failed: ' + err.message);
-      btnText.textContent = original;
-    }
-  });
+    document.getElementById('logoInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      if(file.size > 2 * 1024 * 1024){
+        alert('That file is over 2MB — please upload a smaller image.');
+        return;
+      }
+      const btnText = document.getElementById('logoBtnText');
+      const original = btnText.textContent;
+      btnText.textContent = 'Uploading…';
+      try{
+        await Store.uploadVendorLogo(vendor.id, file);
+        currentVendor = await Store.getVendorProfile(vendor.id);
+        renderLogo();
+      }catch(err){
+        alert('Logo upload failed: ' + err.message);
+        btnText.textContent = original;
+      }
+    });
+  }catch(err){
+    console.error('[store logo] failed to wire up:', err);
+  }
 
   // ---- item photo preview + clear ----
   const listingImageInput = document.getElementById('listingImage');
   const listingImagePreviewRow = document.getElementById('listingImagePreviewRow');
   const listingImageFilename = document.getElementById('listingImageFilename');
+  try{
+    listingImageInput.addEventListener('change', () => {
+      const file = listingImageInput.files[0];
+      if(file){
+        listingImageFilename.textContent = file.name;
+        listingImagePreviewRow.style.display = 'flex';
+      } else {
+        listingImagePreviewRow.style.display = 'none';
+      }
+    });
 
-  listingImageInput.addEventListener('change', () => {
-    const file = listingImageInput.files[0];
-    if(file){
-      listingImageFilename.textContent = file.name;
-      listingImagePreviewRow.style.display = 'flex';
-    } else {
+    document.getElementById('clearListingImageBtn').addEventListener('click', () => {
+      listingImageInput.value = '';
       listingImagePreviewRow.style.display = 'none';
-    }
-  });
-
-  document.getElementById('clearListingImageBtn').addEventListener('click', () => {
-    listingImageInput.value = '';
-    listingImagePreviewRow.style.display = 'none';
-  });
+    });
+  }catch(err){
+    console.error('[item photo preview] failed to wire up:', err);
+  }
 
   // ---- nav ----
   const navButtons = document.querySelectorAll('.dash-nav button');
@@ -346,8 +361,12 @@
       }
     }
   }
-  navButtons.forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
-  document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => showView(b.dataset.goto)));
+  try{
+    navButtons.forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
+    document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => showView(b.dataset.goto)));
+  }catch(err){
+    console.error('[nav wiring] failed to wire up:', err);
+  }
 
   // ---- auto-fill pickup start ----
   // If a surplus window is live right now, default to the current time.
@@ -440,41 +459,45 @@
     `).join('');
   }
 
-  document.getElementById('listingsTableBody').addEventListener('click', async (e) => {
-    const up = e.target.closest('[data-qty-up]');
-    const down = e.target.closest('[data-qty-down]');
-    const rm = e.target.closest('[data-remove]');
-    const edit = e.target.closest('[data-edit]');
-    if(edit){
-        const listing =
-            cachedListings.find(
-                x => x.id === edit.dataset.edit
-            );
-        if(!listing) return;
-        loadListingIntoForm(listing);
-        return;
-    } 
-    if(up){
-      const l = cachedListings.find(x => x.id === up.dataset.qtyUp);
-      if(l && l.quantity_left < l.quantity_total){
-        await Store.updateListingQty(l.id, l.quantity_left + 1);
-        renderListingsTable();
+  try{
+    document.getElementById('listingsTableBody').addEventListener('click', async (e) => {
+      const up = e.target.closest('[data-qty-up]');
+      const down = e.target.closest('[data-qty-down]');
+      const rm = e.target.closest('[data-remove]');
+      const edit = e.target.closest('[data-edit]');
+      if(edit){
+          const listing =
+              cachedListings.find(
+                  x => x.id === edit.dataset.edit
+              );
+          if(!listing) return;
+          loadListingIntoForm(listing);
+          return;
+      } 
+      if(up){
+        const l = cachedListings.find(x => x.id === up.dataset.qtyUp);
+        if(l && l.quantity_left < l.quantity_total){
+          await Store.updateListingQty(l.id, l.quantity_left + 1);
+          renderListingsTable();
+        }
       }
-    }
-    if(down){
-      const l = cachedListings.find(x => x.id === down.dataset.qtyDown);
-      if(l && l.quantity_left > 0){
-        await Store.updateListingQty(l.id, l.quantity_left - 1);
-        renderListingsTable();
+      if(down){
+        const l = cachedListings.find(x => x.id === down.dataset.qtyDown);
+        if(l && l.quantity_left > 0){
+          await Store.updateListingQty(l.id, l.quantity_left - 1);
+          renderListingsTable();
+        }
       }
-    }
-    if(rm){
-      if(confirm('Remove this listing?')){
-        await Store.removeListing(rm.dataset.remove);
-        renderListingsTable();
+      if(rm){
+        if(confirm('Remove this listing?')){
+          await Store.removeListing(rm.dataset.remove);
+          renderListingsTable();
+        }
       }
-    }
-  });
+    });
+  }catch(err){
+    console.error('[listings table] failed to wire up:', err);
+  }
 
   // ---- post form ----
   document.getElementById('postForm').addEventListener('submit', async (e) => {
@@ -596,26 +619,30 @@
 
   let qrScanner = null;
 
-  document.getElementById('verifyBtn').addEventListener('click', async () => {
+  try{
+    document.getElementById('verifyBtn').addEventListener('click', async () => {
 
-      const code = verifyInput.value.trim();
-      if(!code) return;
+        const code = verifyInput.value.trim();
+        if(!code) return;
 
-      let reservation;
+        let reservation;
 
-      try{
-          reservation = await Store.findReservationByCode(code);
-      }catch(err){
-          verifyResult.innerHTML =
-              `<div class="form-msg error show">
-                  Lookup failed: ${err.message}
-              </div>`;
-          return;
-      }
+        try{
+            reservation = await Store.findReservationByCode(code);
+        }catch(err){
+            verifyResult.innerHTML =
+                `<div class="form-msg error show">
+                    Lookup failed: ${err.message}
+                </div>`;
+            return;
+        }
 
-      showReservation(reservation);
+        showReservation(reservation);
 
-  });
+    });
+  }catch(err){
+    console.error('[verify button] failed to wire up:', err);
+  }
 
   async function showReservation(reservation){
       if(!reservation){
@@ -675,8 +702,12 @@
 
   }
   
-  verifyInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') document.getElementById('verifyBtn').click(); });
-  scanQrBtn.addEventListener('click', startQrScanner);
+  try{
+    verifyInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') document.getElementById('verifyBtn').click(); });
+    scanQrBtn.addEventListener('click', startQrScanner);
+  }catch(err){
+    console.error('[verify input / QR scan button] failed to wire up:', err);
+  }
 
   async function startQrScanner(){
 
@@ -774,47 +805,55 @@
     }).join('');
   }
 
-  document.getElementById('documentsList').addEventListener('change', async (e) => {
-    const input = e.target.closest('[data-upload-doc]');
-    if(!input || !input.files[0]) return;
-    const docType = input.dataset.uploadDoc;
-    const file = input.files[0];
+  try{
+    document.getElementById('documentsList').addEventListener('change', async (e) => {
+      const input = e.target.closest('[data-upload-doc]');
+      if(!input || !input.files[0]) return;
+      const docType = input.dataset.uploadDoc;
+      const file = input.files[0];
 
-    if(file.size > 10 * 1024 * 1024){
-      alert('That file is over 10MB — please upload a smaller file.');
-      return;
-    }
+      if(file.size > 10 * 1024 * 1024){
+        alert('That file is over 10MB — please upload a smaller file.');
+        return;
+      }
 
-    const card = input.closest('.doc-card');
-    const label = card.querySelector('label.btn');
-    const originalText = label.firstChild.textContent;
-    label.firstChild.textContent = 'Uploading…';
+      const card = input.closest('.doc-card');
+      const label = card.querySelector('label.btn');
+      const originalText = label.firstChild.textContent;
+      label.firstChild.textContent = 'Uploading…';
 
-    try{
-      await Store.uploadVendorDocument(vendor.id, docType, file);
-      currentVendor = await Store.getVendorProfile(vendor.id);
-      renderDocuments();
-    }catch(err){
-      alert('Upload failed: ' + err.message);
-      label.firstChild.textContent = originalText;
-    }
-  });
+      try{
+        await Store.uploadVendorDocument(vendor.id, docType, file);
+        currentVendor = await Store.getVendorProfile(vendor.id);
+        renderDocuments();
+      }catch(err){
+        alert('Upload failed: ' + err.message);
+        label.firstChild.textContent = originalText;
+      }
+    });
 
-  document.getElementById('documentsList').addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-view-doc]');
-    if(!btn) return;
-    const doc = DOC_TYPES.find(d => d.key === btn.dataset.viewDoc);
-    const path = currentVendor[doc.column];
-    if(!path) return;
-    btn.disabled = true;
-    try{
-      const url = await Store.getVendorDocumentUrl(path);
-      window.open(url, '_blank');
-    }catch(err){
-      alert('Could not open document: ' + err.message);
-    }
-    btn.disabled = false;
-  });
+    document.getElementById('documentsList').addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-view-doc]');
+      if(!btn) return;
+      const doc = DOC_TYPES.find(d => d.key === btn.dataset.viewDoc);
+      const path = currentVendor[doc.column];
+      if(!path) return;
+      btn.disabled = true;
+      try{
+        const url = await Store.getVendorDocumentUrl(path);
+        window.open(url, '_blank');
+      }catch(err){
+        alert('Could not open document: ' + err.message);
+      }
+      btn.disabled = false;
+    });
+  }catch(err){
+    console.error('[verification documents] failed to wire up:', err);
+  }
 
-  renderOverview();
+  try{
+    renderOverview();
+  }catch(err){
+    console.error('[overview] failed to render:', err);
+  }
 })();
