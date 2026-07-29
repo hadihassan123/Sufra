@@ -97,9 +97,18 @@
     updateHands();
     setInterval(updateHands, 1000);
   })();
-  const vendor = await Store.getVendorProfile(session.user.id);
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  let vendor = await Store.getVendorProfile(session.user.id);
+  // A profile can be momentarily unavailable right after a fresh signup
+  // (especially with instant sign-in / no email confirmation) since the
+  // dashboard loads immediately after signUp() resolves. Retry briefly
+  // before treating it as a real "no profile" case.
+  for(let attempt = 0; !vendor && attempt < 3; attempt++){
+    await sleep(700);
+    vendor = await Store.getVendorProfile(session.user.id);
+  }
   if(!vendor){
-    // Signed in but no vendor profile row yet (rare — see README on email confirmation).
+    // Signed in but no vendor profile row after retrying — genuinely missing.
     alert('Your account is signed in but has no business profile yet. Please contact support.');
     await Store.signOutVendor();
     window.location.href = 'vendor-login.html';
