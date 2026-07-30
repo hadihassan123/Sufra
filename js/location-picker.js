@@ -1,0 +1,129 @@
+// Shared Leaflet location picker: map + reverse geocoding + GPS button.
+// Used by vendor-signup.html and vendor.js (dashboard location card).
+// Requires Leaflet (script + CSS) to already be loaded on the page.
+//
+// Both callers previously had their own near-identical copy of this logic
+// (map init, drag/click-to-pin, geolocate button, Nominatim reverse geocode).
+// This is the single source of truth going forward — if the geocoding
+// behavior ever needs tuning again (as it did on 2026-07-29), it only
+// needs to change here.
+
+const LocationPicker = (() => {
+
+  async function reverseGeocode(lat, lng){
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    if(!res.ok) throw new Error('Reverse geocoding failed');
+    const data = await res.json();
+    if(!data.display_name) throw new Error('No address found');
+    // Prefer a short, human-friendly address built from structured
+    // components over Nominatim's full display_name, which can be a long
+    // administrative chain (or, for sparsely-mapped points, just "Doha, Qatar").
+    const a = data.address || {};
+    const parts = [
+      a.building, a.house_number, a.road, a.neighbourhood || a.suburb, a.city || a.town
+    ].filter(Boolean);
+    return parts.length ? parts.join(', ') : data.display_name;
+  }
+
+  /**
+   * Initializes a map + GPS button + address autofill in one place.
+   *
+   * @param {Object} opts
+   * @param {string} opts.mapContainerId - id of the empty <div> to render the map into
+   * @param {HTMLInputElement} opts.addressInput - text input to autofill on pin change
+   * @param {HTMLElement} [opts.statusEl] - optional status message element
+   * @param {HTMLElement} [opts.gpsButton] - optional "use my current location" button
+   * @param {number|null} [opts.initialLat] - existing latitude to start the pin at
+   * @param {number|null} [opts.initialLng] - existing longitude to start the pin at
+   * @param {(lat:number, lng:number) => void} [opts.onPinChange] - called whenever the pin moves
+   *
+   * @returns {{ getPin: () => {lat:number|null, lng:number|null}, getMap: () => object|null }}
+   *   getMap() returns null if the map failed to initialize — callers should
+   *   treat that as "manual address entry only" rather than an error.
+   */
+  function init(opts){
+    const { mapContainerId, addressInput, statusEl, gpsButton, onPinChange } = opts;
+    let pendingLat = opts.initialLat ?? null;
+    let pendingLng = opts.initialLng ?? null;
+    let map = null;
+    let marker = null;
+
+    async function setPin(lat, lng, skipMove){
+      pendingLat = lat;
+      pendingLng = lng;
+      if(!skipMove && map) map.panTo([lat, lng]);
+      if(statusEl) statusEl.textContent = 'Looking up the address…';
+      try{
+        addressInput.value = await reverseGeocode(lat, lng);
+        if(statusEl) statusEl.textContent = 'Pin updated — edit the address if needed, then save.';
+      }catch(err){
+        if(statusEl) statusEl.textContent = 'Pin updated — enter the address manually, then save.';
+      }
+      if(onPinChange) onPinChange(lat, lng);
+    }
+
+    try{
+      const startCoords = [pendingLat ?? 25.2854, pendingLng ?? 51.5310]; // Doha center as default
+      map = L.map(mapContainerId).setView(startCoords, pendingLat ? 16 : 11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      marker = L.marker(startCoords, { draggable: true }).addTo(map);
+      marker.on('dragend', () => {
+        const pos = marker.getLatLng();
+        setPin(pos.lat, pos.lng, false);
+      });
+      map.on('click', (e) => {
+        marker.setLatLng(e.latlng);
+        setPin(e.latlng.lat, e.latlng.lng, false);
+      });
+    }catch(err){
+      console.error('Location map failed to initialize — falling back to manual address entry.', err);
+      if(statusEl) statusEl.textContent = 'Map unavailable right now — enter your address manually below.';
+      if(gpsButton) gpsButton.style.display = 'none';
+      return {
+        getMap: () => null,
+        getPin: () => ({ lat: pendingLat, lng: pendingLng })
+      };
+    }
+
+    if(gpsButton){
+      gpsButton.addEventListener('click', () => {
+        if(!navigator.geolocation){
+          alert("Your browser doesn't support location access.");
+          return;
+        }
+        if(!map){
+          alert('Map is unavailable right now — please enter your address manually.');
+          return;
+        }
+        gpsButton.disabled = true;
+        const original = gpsButton.textContent;
+        gpsButton.textContent = 'Getting location…';
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+            marker.setLatLng([pos.coords.latitude, pos.coords.longitude]);
+            setPin(pos.coords.latitude, pos.coords.longitude, false);
+            gpsButton.disabled = false;
+            gpsButton.textContent = original;
+          },
+          (err) => {
+            alert('Could not get your location: ' + err.message);
+            gpsButton.disabled = false;
+            gpsButton.textContent = original;
+          }
+        );
+      });
+    }
+
+    return {
+      getMap: () => map,
+      getPin: () => ({ lat: pendingLat, lng: pendingLng })
+    };
+  }
+
+  return { init, reverseGeocode };
+})();

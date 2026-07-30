@@ -75,15 +75,8 @@
   const filterBar = document.getElementById('filterBar');
   const searchInput = document.getElementById('searchInput');
 
-  function money(n){ return 'QAR ' + Number(n).toFixed(0); }
-  function pct(oldP, newP){ return Math.round((1 - newP/oldP) * 100); }
-  function timeFmt(iso){
-    return new Date(iso).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
-  }
-  function categoryGlyph(category){
-    const glyphs = { Bakery: '🥖', 'Café': '☕', Restaurant: '🍽️', Patisserie: '🍰', Grocery: '🧺', Hotel: '🏨' };
-    return glyphs[category] || '🍴';
-  }
+  // Fmt.money()/Fmt.pct()/Fmt.time()/Fmt.categoryGlyph() moved to js/utils.js as Fmt.* —
+  // was previously duplicated identically in js/vendor.js.
 
   function timeAgo(iso){
     const diffMs = Date.now() - new Date(iso).getTime();
@@ -171,7 +164,7 @@
       const vendorLng = l.vendors ? l.vendors.longitude : null;
       const logoUrl = l.vendors ? l.vendors.logo_url : null;
       const isVerified = l.vendors && l.vendors.verification_status === 'verified';
-      const discountPct = pct(l.original_price, l.discounted_price);
+      const discountPct = Fmt.pct(l.original_price, l.discounted_price);
       // Coordinates are the source of truth for navigation, address is just
       // the display label — if the vendor edits the text ("near Lulu"),
       // the pin still points at the exact saved location, not the words.
@@ -186,7 +179,7 @@
             ? `<img class="ticket-image" src="${l.image_url}" alt="${l.item_name}" loading="lazy">`
             : ''
           }
-          <span class="ticket-photo-fallback" aria-hidden="true">${categoryGlyph(l.category)}</span>
+          <span class="ticket-photo-fallback" aria-hidden="true">${Fmt.categoryGlyph(l.category)}</span>
           <span class="discount-tag">${discountPct}% off</span>
         </div>
         <div class="ticket ${isExpired ? 'expired' : (soldOut ? 'sold-out' : '')}">
@@ -205,12 +198,12 @@
             <h3 class="ticket-item">${l.item_name}</h3>
             <p class="ticket-desc">${l.description || ''}</p>
             <div class="ticket-prices">
-              <span class="price-old">${money(l.original_price)}</span>
-              <span class="price-new">${money(l.discounted_price)}</span>
+              <span class="price-old">${Fmt.money(l.original_price)}</span>
+              <span class="price-new">${Fmt.money(l.discounted_price)}</span>
             </div>
             <div class="ticket-meta">
               <span>📍 <strong>${l.category}</strong></span>
-              <span>🕐 Pickup <strong>${timeFmt(l.pickup_start)}–${timeFmt(l.pickup_end)}</strong></span>
+              <span>🕐 Pickup <strong>${Fmt.time(l.pickup_start)}–${Fmt.time(l.pickup_end)}</strong></span>
             </div>
           </div>
           <div class="ticket-stub">
@@ -260,7 +253,7 @@
     reserveQtyValue.textContent = reserveQty;
     if(pendingListing){
       const total = pendingListing.discounted_price * reserveQty;
-      reserveQtyHint.textContent = `${pendingListing.quantity_left} / ${pendingListing.quantity_total} left · Total: ${money(total)}`;
+      reserveQtyHint.textContent = `${pendingListing.quantity_left} / ${pendingListing.quantity_total} left · Total: ${Fmt.money(total)}`;
     }
   }
 
@@ -282,7 +275,7 @@
     updateReserveQtyDisplay();
     document.getElementById('reserveItemName').textContent = listing.item_name;
     document.getElementById('reserveItemMeta').textContent =
-      `${listing.vendors?.business_name} · ${money(listing.discounted_price)} · Pickup ${timeFmt(listing.pickup_start)}–${timeFmt(listing.pickup_end)}`;
+      `${listing.vendors?.business_name} · ${Fmt.money(listing.discounted_price)} · Pickup ${Fmt.time(listing.pickup_start)}–${Fmt.time(listing.pickup_end)}`;
     reserveForm.reset();
     reserveOverlay.classList.add('show');
   }
@@ -305,7 +298,7 @@
       new QRCode(qrContainer, { text: res.id, width: 160, height: 160 });
 
       document.getElementById('confirmWindow').textContent =
-        `Pickup at ${pendingListing.vendors?.business_name}, ${timeFmt(pendingListing.pickup_start)}–${timeFmt(pendingListing.pickup_end)}. Pay ${money(pendingListing.discounted_price * reserveQty)} cash.`;
+        `Pickup at ${pendingListing.vendors?.business_name}, ${Fmt.time(pendingListing.pickup_start)}–${Fmt.time(pendingListing.pickup_end)}. Pay ${Fmt.money(pendingListing.discounted_price * reserveQty)} cash.`;
 
       confirmOverlay.classList.add('show');
       renderListings();
@@ -338,7 +331,7 @@
         <div class="pickup-row">
           <div class="pickup-row-info">
             <strong>${r.item_name}${r.quantity > 1 ? ` ×${r.quantity}` : ''}</strong>
-            <span>${r.vendor_name} · ${timeFmt(r.pickup_start)}–${timeFmt(r.pickup_end)}</span>
+            <span>${r.vendor_name} · ${Fmt.time(r.pickup_start)}–${Fmt.time(r.pickup_end)}</span>
           </div>
           <span class="pickup-code-tag">${r.pickup_code}</span>
           <span class="status-pill status-${r.status}">${r.status}</span>

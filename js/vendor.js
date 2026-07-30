@@ -115,10 +115,8 @@
     return;
   }
 
-  function money(n){ return 'QAR ' + Number(n).toFixed(0); }
-  function timeFmt(iso){
-    return new Date(iso).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
-  }
+  // money()/timeFmt() moved to js/utils.js as Fmt.money()/Fmt.time() —
+  // was previously duplicated identically in js/customer.js.
 
   let cachedListings = [];
   let currentVendor = vendor; // refreshed after logo/document uploads so status reflects latest values
@@ -141,9 +139,10 @@
   }
 
   // ---- business location: map + reverse geocoding + one save action ----
-  // Mirrors vendor-signup.html's flow. Progressive enhancement: if the map
-  // fails to load for any reason, the address field still works manually
-  // and saving still works — it just won't have new coordinates attached.
+  // Actual map/geocoding logic lives in js/location-picker.js, shared with
+  // vendor-signup.html. Progressive enhancement: if the map fails to load
+  // for any reason, the address field still works manually and saving
+  // still works — it just won't have new coordinates attached.
   (function(){
     const addressInput = document.getElementById('vendorAddressInput');
     const statusText = document.getElementById('locationStatusText');
@@ -152,99 +151,30 @@
     if(!addressInput || !saveBtn) return;
 
     addressInput.value = vendor.address || '';
-    let pendingLat = vendor.latitude ?? null;
-    let pendingLng = vendor.longitude ?? null;
-    if(pendingLat && pendingLng){
+    if(vendor.latitude && vendor.longitude){
       statusText.textContent = 'Location saved — customers can find you on the map.';
     }
 
-    let map = null;
-    let marker = null;
-
-    async function reverseGeocode(lat, lng){
-      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-      const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
-      if(!res.ok) throw new Error('Reverse geocoding failed');
-      const data = await res.json();
-      if(!data.display_name) throw new Error('No address found');
-      const a = data.address || {};
-      const parts = [a.building, a.house_number, a.road, a.neighbourhood || a.suburb, a.city || a.town].filter(Boolean);
-      return parts.length ? parts.join(', ') : data.display_name;
-    }
-
-    async function setPin(lat, lng, opts = {}){
-      pendingLat = lat;
-      pendingLng = lng;
-      if(!opts.skipMove && map) map.panTo([lat, lng]);
-      statusText.textContent = 'Looking up the address…';
-      try{
-        addressInput.value = await reverseGeocode(lat, lng);
-        statusText.textContent = 'Pin updated — edit the address if needed, then save.';
-      }catch(err){
-        statusText.textContent = 'Pin updated — enter the address manually, then save.';
-      }
-    }
-
-    try{
-      const startCoords = [pendingLat ?? 25.2854, pendingLng ?? 51.5310];
-      map = L.map('dashboardMapView').setView(startCoords, pendingLat ? 16 : 11);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-      }).addTo(map);
-      marker = L.marker(startCoords, { draggable: true }).addTo(map);
-      marker.on('dragend', () => {
-        const pos = marker.getLatLng();
-        setPin(pos.lat, pos.lng);
-      });
-      map.on('click', (e) => {
-        marker.setLatLng(e.latlng);
-        setPin(e.latlng.lat, e.latlng.lng);
-      });
-    }catch(err){
-      console.error('Dashboard map failed to initialize — falling back to manual address entry.', err);
-      statusText.textContent = 'Map unavailable right now — enter your address manually below.';
-      if(useLocationBtn) useLocationBtn.style.display = 'none';
-    }
-
-    if(useLocationBtn){
-      useLocationBtn.addEventListener('click', () => {
-        if(!navigator.geolocation){
-          alert('Your browser doesn\'t support location access.');
-          return;
-        }
-        if(!map){
-          alert('Map is unavailable right now — please enter your address manually.');
-          return;
-        }
-        useLocationBtn.disabled = true;
-        useLocationBtn.textContent = 'Getting location…';
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            map.setView([pos.coords.latitude, pos.coords.longitude], 16);
-            marker.setLatLng([pos.coords.latitude, pos.coords.longitude]);
-            setPin(pos.coords.latitude, pos.coords.longitude);
-            useLocationBtn.disabled = false;
-            useLocationBtn.textContent = '📍 Use my current location';
-          },
-          (err) => {
-            alert('Could not get your location: ' + err.message);
-            useLocationBtn.disabled = false;
-            useLocationBtn.textContent = '📍 Use my current location';
-          }
-        );
-      });
-    }
+    const picker = LocationPicker.init({
+      mapContainerId: 'dashboardMapView',
+      addressInput,
+      statusEl: statusText,
+      gpsButton: useLocationBtn,
+      initialLat: vendor.latitude ?? null,
+      initialLng: vendor.longitude ?? null
+    });
 
     saveBtn.addEventListener('click', async () => {
       const address = addressInput.value.trim();
       if(!address){ alert('Enter an address first.'); return; }
+      const { lat, lng } = picker.getPin();
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving…';
       try{
-        await Store.updateVendorPin(vendor.id, { address, latitude: pendingLat, longitude: pendingLng });
+        await Store.updateVendorPin(vendor.id, { address, latitude: lat, longitude: lng });
         vendor.address = address;
-        vendor.latitude = pendingLat;
-        vendor.longitude = pendingLng;
+        vendor.latitude = lat;
+        vendor.longitude = lng;
         statusText.textContent = 'Location saved — customers can find you on the map.';
       }catch(err){
         alert('Could not save location: ' + err.message);
@@ -445,7 +375,7 @@
     body.innerHTML = cachedListings.map(l => `
       <tr>
         <td data-label="Item"><strong>${l.item_name}</strong></td>
-        <td data-label="Price">${money(l.discounted_price)} <span style="opacity:.5; text-decoration:line-through;">${money(l.original_price)}</span></td>
+        <td data-label="Price">${Fmt.money(l.discounted_price)} <span style="opacity:.5; text-decoration:line-through;">${Fmt.money(l.original_price)}</span></td>
         <td data-label="Stock">
           <div class="qty-editor">
             <button data-qty-down="${l.id}">−</button>
@@ -453,7 +383,7 @@
             <button data-qty-up="${l.id}">+</button>
           </div>
         </td>
-        <td data-label="Pickup">${timeFmt(l.pickup_start)}–${timeFmt(l.pickup_end)}</td>
+        <td data-label="Pickup">${Fmt.time(l.pickup_start)}–${Fmt.time(l.pickup_end)}</td>
         <td data-label=""><button class="icon-btn" data-edit="${l.id}">Edit</button></td>
         <td data-label=""><button class="icon-btn" data-remove="${l.id}">Remove</button></td>
       </tr>
@@ -710,7 +640,7 @@
         <div class="form-msg success show">
           <strong>${reservation.customer_name}</strong>
           — ${reservation.item_name}${reservation.quantity > 1 ? ` ×${reservation.quantity}` : ''}
-          · ${money(reservation.price)} cash due
+          · ${Fmt.money(reservation.price)} cash due
 
           <div style="margin-top:12px;">
               <button
@@ -806,7 +736,7 @@
         <td data-label="Code"><span class="pickup-code-tag">${r.pickup_code}</span></td>
         <td data-label="Item">${r.item_name}${r.quantity > 1 ? ` ×${r.quantity}` : ''}</td>
         <td data-label="Customer">${r.customer_name}<br><span style="opacity:.55; font-size:.8em;">${r.customer_phone}</span></td>
-        <td data-label="Pickup">${timeFmt(r.pickup_start)}–${timeFmt(r.pickup_end)}</td>
+        <td data-label="Pickup">${Fmt.time(r.pickup_start)}–${Fmt.time(r.pickup_end)}</td>
         <td data-label="Status"><span class="status-pill status-${r.status}">${r.status}</span></td>
       </tr>
     `).join('');

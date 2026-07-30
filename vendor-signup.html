@@ -82,6 +82,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/store.js"></script>
+<script src="js/location-picker.js"></script>
 <script>
   const form = document.getElementById('signupForm');
   const msg = document.getElementById('formMsg');
@@ -128,95 +129,17 @@
   // ---- Map: click or drag to set the pin, reverse geocode to fill the address ----
   // Everything below is a progressive enhancement. If it fails, the address
   // field above still works as a plain manual text input and signup is fine.
-  let signupMap = null;
-  let signupMarker = null;
-
-  function initSignupMap(lat, lng){
-    const startCoords = [lat ?? 25.2854, lng ?? 51.5310]; // Doha center as default
-    signupMap = L.map('signupMapView').setView(startCoords, lat ? 16 : 11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(signupMap);
-
-    signupMarker = L.marker(startCoords, { draggable: true }).addTo(signupMap);
-    signupMarker.on('dragend', () => {
-      const pos = signupMarker.getLatLng();
-      setPin(pos.lat, pos.lng);
-    });
-    signupMap.on('click', (e) => {
-      signupMarker.setLatLng(e.latlng);
-      setPin(e.latlng.lat, e.latlng.lng);
-    });
-
-    if(lat && lng) setPin(lat, lng, { skipMove: true });
-  }
-
-  async function setPin(lat, lng, opts = {}){
-    latInput.value = lat;
-    lngInput.value = lng;
-    if(!opts.skipMove){
-      signupMap.panTo([lat, lng]);
+  // Actual map/geocoding logic lives in js/location-picker.js, shared with
+  // the vendor dashboard's location card.
+  LocationPicker.init({
+    mapContainerId: 'signupMapView',
+    addressInput,
+    statusEl: locationStatus,
+    gpsButton: useLocationBtn,
+    onPinChange: (lat, lng) => {
+      latInput.value = lat;
+      lngInput.value = lng;
     }
-    locationStatus.textContent = 'Looking up the address…';
-    try{
-      const address = await reverseGeocode(lat, lng);
-      addressInput.value = address;
-      locationStatus.textContent = 'Location pinned — edit the address above if needed.';
-    }catch(err){
-      locationStatus.textContent = 'Pinned — enter the address manually below.';
-    }
-  }
-
-  async function reverseGeocode(lat, lng){
-    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
-    if(!res.ok) throw new Error('Reverse geocoding failed');
-    const data = await res.json();
-    if(!data.display_name) throw new Error('No address found');
-
-    // Prefer a short, human-friendly address built from structured
-    // components over Nominatim's full display_name, which can be a long
-    // administrative chain (or, for sparsely-mapped points, just "Doha, Qatar").
-    const a = data.address || {};
-    const parts = [
-      a.building, a.house_number, a.road, a.neighbourhood || a.suburb, a.city || a.town
-    ].filter(Boolean);
-    return parts.length ? parts.join(', ') : data.display_name;
-  }
-
-  try{
-    initSignupMap();
-  }catch(err){
-    console.error('Signup map failed to initialize — falling back to manual address entry.', err);
-    locationStatus.textContent = 'Map unavailable right now — enter your address manually below.';
-    useLocationBtn.style.display = 'none';
-  }
-
-  useLocationBtn.addEventListener('click', () => {
-    if(!navigator.geolocation){
-      alert("Your browser doesn't support location access.");
-      return;
-    }
-    if(!signupMap){
-      alert('Map is unavailable right now — please enter your address manually.');
-      return;
-    }
-    useLocationBtn.disabled = true;
-    useLocationBtn.textContent = 'Getting location…';
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        signupMap.setView([pos.coords.latitude, pos.coords.longitude], 16);
-        signupMarker.setLatLng([pos.coords.latitude, pos.coords.longitude]);
-        setPin(pos.coords.latitude, pos.coords.longitude);
-        useLocationBtn.disabled = false;
-        useLocationBtn.textContent = '📍 Use my current location';
-      },
-      (err) => {
-        alert('Could not get your location: ' + err.message);
-        useLocationBtn.disabled = false;
-        useLocationBtn.textContent = '📍 Use my current location';
-      }
-    );
   });
 </script>
 </body>
