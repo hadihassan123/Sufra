@@ -8,7 +8,7 @@
     const clockText = document.getElementById('vendorClockText');
     const dialStatus = document.getElementById('vendorDialStatus');
     const dialSub = document.getElementById('vendorDialSub');
-    if(!dialSvg) return;
+    if(!clockText) return;
 
     const SURPLUS_WINDOWS = Store.SURPLUS_WINDOWS;
 
@@ -53,7 +53,9 @@
       const minTip = polar(cx, cy, 76, (m/60) * 360);
       const secTip = polar(cx, cy, 84, (now.getSeconds()/60) * 360);
 
-      dialSvg.querySelectorAll('.hand').forEach(el => el.remove());
+      if(dialSvg){
+        dialSvg.querySelectorAll('.hand').forEach(el => el.remove());
+      }
 
       const hourLine = document.createElementNS('http://www.w3.org/2000/svg','line');
       hourLine.setAttribute('class','hand');
@@ -93,7 +95,9 @@
       }
     }
 
-    buildDial();
+    if(dialSvg){
+      buildDial();
+    }
     updateHands();
     setInterval(updateHands, 1000);
   })();
