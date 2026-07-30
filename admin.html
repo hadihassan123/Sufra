@@ -51,7 +51,9 @@
     <p style="color:rgba(36,31,26,0.6);">Approve vendors after manually checking their Commercial Registration, MOPH food license, and Municipality trade license.</p></div>
   </div>
   <div class="dial-label"><span>Doha time</span><span id="vendorClockText">--:--</span></div>
-
+  <svg id="vendorDialSvg" style="display:none;"></svg>
+  <p id="vendorDialStatus" style="display:none;"></p>
+  <span id="vendorDialSub" style="display:none;"></span>
   <div class="section-head" style="margin-top:10px;"><h2 style="font-size:1.15rem;">Pending</h2></div>
   <table class="data-table" style="margin-bottom:36px;">
     <thead><tr><th>Business</th><th>Category</th><th>Area</th><th>Documents</th><th></th></tr></thead>
@@ -209,6 +211,8 @@
     }
   });
 </script>
+<script src="js/supabase-client.js"></script>
+<script src="js/store.js"></script>
 <script src="js/vendor.js"></script>
 </body>
 </html>
