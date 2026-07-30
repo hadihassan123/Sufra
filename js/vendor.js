@@ -102,16 +102,16 @@
     setInterval(updateHands, 1000);
   })();
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  let vendor = await Store.getVendorProfile(session.user.id);
+  DashboardState.vendor = await Store.getVendorProfile(session.user.id);
   // A profile can be momentarily unavailable right after a fresh signup
   // (especially with instant sign-in / no email confirmation) since the
   // dashboard loads immediately after signUp() resolves. Retry briefly
   // before treating it as a real "no profile" case.
-  for(let attempt = 0; !vendor && attempt < 3; attempt++){
+  for(let attempt = 0; !DashboardState.vendor && attempt < 3; attempt++){
     await sleep(700);
-    vendor = await Store.getVendorProfile(session.user.id);
+    DashboardState.vendor = await Store.getVendorProfile(session.user.id);
   }
-  if(!vendor){
+  if(!DashboardState.vendor){
     // Signed in but no vendor profile row after retrying — genuinely missing.
     alert('Your account is signed in but has no business profile yet. Please contact support.');
     await Store.signOutVendor();
@@ -122,17 +122,14 @@
   // money()/timeFmt() moved to js/utils.js as Fmt.money()/Fmt.time() —
   // was previously duplicated identically in js/customer.js.
 
-  let cachedListings = [];
-  let currentVendor = vendor; // refreshed after logo/document uploads so status reflects latest values
-  let editingListingId = null;
-  let editingListingImageUrl = null; // preserves the existing photo when editing without picking a new one
+  DashboardState.currentVendor = DashboardState.vendor; // refreshed after logo/document uploads so status reflects latest values
   // ---- sidebar identity ----
   try{
-    document.getElementById('sideVendorName').textContent = vendor.business_name;
+    document.getElementById('sideVendorName').textContent = DashboardState.vendor.business_name;
     const statusEl = document.getElementById('sideVendorStatus');
-    statusEl.textContent = vendor.verification_status === 'verified' ? 'Verified vendor' : 'Pending verification';
+    statusEl.textContent = DashboardState.vendor.verification_status === 'verified' ? 'Verified vendor' : 'Pending verification';
 
-    if(vendor.verification_status !== 'verified'){
+    if(DashboardState.vendor.verification_status !== 'verified'){
       document.getElementById('verifyBadgeNotice').innerHTML = `
         <div class="form-msg show" style="background:rgba(232,163,61,0.12); color:#C97F1E; border:1px solid rgba(232,163,61,0.3);">
           <strong>Your account is pending verification.</strong> Listings you post won't appear on the public site until an admin confirms your Commercial Registration and food license.
@@ -154,8 +151,8 @@
     const useLocationBtn = document.getElementById('useLocationBtn');
     if(!addressInput || !saveBtn) return;
 
-    addressInput.value = vendor.address || '';
-    if(vendor.latitude && vendor.longitude){
+    addressInput.value = DashboardState.vendor.address || '';
+    if(DashboardState.vendor.latitude && DashboardState.vendor.longitude){
       statusText.textContent = 'Location saved — customers can find you on the map.';
     }
 
@@ -164,8 +161,8 @@
       addressInput,
       statusEl: statusText,
       gpsButton: useLocationBtn,
-      initialLat: vendor.latitude ?? null,
-      initialLng: vendor.longitude ?? null
+      initialLat: DashboardState.vendor.latitude ?? null,
+      initialLng: DashboardState.vendor.longitude ?? null
     });
 
     saveBtn.addEventListener('click', async () => {
@@ -175,10 +172,10 @@
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving…';
       try{
-        await Store.updateVendorPin(vendor.id, { address, latitude: lat, longitude: lng });
-        vendor.address = address;
-        vendor.latitude = lat;
-        vendor.longitude = lng;
+        await Store.updateVendorPin(DashboardState.vendor.id, { address, latitude: lat, longitude: lng });
+        DashboardState.vendor.address = address;
+        DashboardState.vendor.latitude = lat;
+        DashboardState.vendor.longitude = lng;
         statusText.textContent = 'Location saved — customers can find you on the map.';
       }catch(err){
         alert('Could not save location: ' + err.message);
@@ -203,8 +200,8 @@
     const statusText = document.getElementById('logoStatusText');
     const btnText = document.getElementById('logoBtnText');
     const removeBtn = document.getElementById('removeLogoBtn');
-    if(currentVendor.logo_url){
-      preview.src = currentVendor.logo_url;
+    if(DashboardState.currentVendor.logo_url){
+      preview.src = DashboardState.currentVendor.logo_url;
       preview.style.display = 'block';
       statusText.textContent = 'Shown next to your business name on listings.';
       btnText.textContent = 'Replace';
@@ -224,8 +221,8 @@
       const removeBtn = document.getElementById('removeLogoBtn');
       removeBtn.disabled = true;
       try{
-        await Store.removeVendorLogo(vendor.id);
-        currentVendor = await Store.getVendorProfile(vendor.id);
+        await Store.removeVendorLogo(DashboardState.vendor.id);
+        DashboardState.currentVendor = await Store.getVendorProfile(DashboardState.vendor.id);
         renderLogo();
       }catch(err){
         alert('Could not remove logo: ' + err.message);
@@ -244,8 +241,8 @@
       const original = btnText.textContent;
       btnText.textContent = 'Uploading…';
       try{
-        await Store.uploadVendorLogo(vendor.id, file);
-        currentVendor = await Store.getVendorProfile(vendor.id);
+        await Store.uploadVendorLogo(DashboardState.vendor.id, file);
+        DashboardState.currentVendor = await Store.getVendorProfile(DashboardState.vendor.id);
         renderLogo();
       }catch(err){
         alert('Logo upload failed: ' + err.message);
@@ -328,8 +325,8 @@
   // ---- overview ----
  async function renderOverview() {
     const [listings, reservations] = await Promise.all([
-        Store.getListingsByVendor(vendor.id),
-        Store.getReservationsByVendor(vendor.id)
+        Store.getListingsByVendor(DashboardState.vendor.id),
+        Store.getReservationsByVendor(DashboardState.vendor.id)
     ]);
 
     console.log(listings.map(l => ({
@@ -371,12 +368,12 @@
   async function renderListingsTable(){
     const body = document.getElementById('listingsTableBody');
     body.innerHTML = `<tr><td colspan="5">Loading…</td></tr>`;
-    cachedListings = await Store.getListingsByVendor(vendor.id);
-    if(cachedListings.length === 0){
+    DashboardState.cachedListings = await Store.getListingsByVendor(DashboardState.vendor.id);
+    if(DashboardState.cachedListings.length === 0){
       body.innerHTML = `<tr><td colspan="5">No listings yet — post your first item.</td></tr>`;
       return;
     }
-    body.innerHTML = cachedListings.map(l => `
+    body.innerHTML = DashboardState.cachedListings.map(l => `
       <tr>
         <td data-label="Item"><strong>${l.item_name}</strong></td>
         <td data-label="Price">${Fmt.money(l.discounted_price)} <span style="opacity:.5; text-decoration:line-through;">${Fmt.money(l.original_price)}</span></td>
@@ -402,7 +399,7 @@
       const edit = e.target.closest('[data-edit]');
       if(edit){
           const listing =
-              cachedListings.find(
+              DashboardState.cachedListings.find(
                   x => x.id === edit.dataset.edit
               );
           if(!listing) return;
@@ -410,14 +407,14 @@
           return;
       } 
       if(up){
-        const l = cachedListings.find(x => x.id === up.dataset.qtyUp);
+        const l = DashboardState.cachedListings.find(x => x.id === up.dataset.qtyUp);
         if(l && l.quantity_left < l.quantity_total){
           await Store.updateListingQty(l.id, l.quantity_left + 1);
           renderListingsTable();
         }
       }
       if(down){
-        const l = cachedListings.find(x => x.id === down.dataset.qtyDown);
+        const l = DashboardState.cachedListings.find(x => x.id === down.dataset.qtyDown);
         if(l && l.quantity_left > 0){
           await Store.updateListingQty(l.id, l.quantity_left - 1);
           renderListingsTable();
@@ -439,8 +436,8 @@
   // referenced but never defined — clicking Edit did nothing.
   function loadListingIntoForm(listing){
     try{
-      editingListingId = listing.id;
-      editingListingImageUrl = listing.image_url || null;
+      DashboardState.editingListingId = listing.id;
+      DashboardState.editingListingImageUrl = listing.image_url || null;
 
       document.getElementById('itemName').value = listing.item_name || '';
       document.getElementById('description').value = listing.description || '';
@@ -521,7 +518,7 @@
       }
 
       if (imageFile) {
-        imageUrl = await Store.uploadListingImage(vendor.id, imageFile);
+        imageUrl = await Store.uploadListingImage(DashboardState.vendor.id, imageFile);
       }
 
       console.log("========== NEW LISTING ==========");
@@ -535,35 +532,35 @@
       console.log("===============================");
 
       const payload = {
-          vendor_id: vendor.id,
+          vendor_id: DashboardState.vendor.id,
           item_name: document.getElementById('itemName').value.trim(),
           description: document.getElementById('description').value.trim(),
           category: document.getElementById('postCategory').value,
           original_price: originalPrice,
           discounted_price: discountedPrice,
           quantity_total: quantity,
-          quantity_left: editingListingId ? cachedListings.find(x => x.id === editingListingId).quantity_left : quantity,
+          quantity_left: DashboardState.editingListingId ? DashboardState.cachedListings.find(x => x.id === DashboardState.editingListingId).quantity_left : quantity,
           pickup_start: startDate.toISOString(),
           pickup_end: endDate.toISOString(),
           payment_method: 'cash',
-          image_url: imageUrl || (editingListingId ? editingListingImageUrl : null),
+          image_url: imageUrl || (DashboardState.editingListingId ? DashboardState.editingListingImageUrl : null),
           status: 'active'
       };
 
-      if (editingListingId) {
-          await Store.updateListing(editingListingId, payload);
+      if (DashboardState.editingListingId) {
+          await Store.updateListing(DashboardState.editingListingId, payload);
       } else {
           await Store.createListing(payload);
       }
-      editingListingId = null;
-      editingListingImageUrl = null;
+      DashboardState.editingListingId = null;
+      DashboardState.editingListingImageUrl = null;
 
       document.getElementById('postListingBtn').textContent ='Post listing';
      
       submitBtn.disabled = false;
 
       const msg = document.getElementById('postMsg');
-      msg.textContent = vendor.verification_status === 'verified'
+      msg.textContent = DashboardState.vendor.verification_status === 'verified'
         ? "Listing posted — it's live on the site now."
         : "Listing saved. It will go live once your account is verified.";
 
@@ -623,7 +620,7 @@
               </div>`;
           return;
       }
-      if(reservation.vendor_id !== vendor.id){
+      if(reservation.vendor_id !== DashboardState.vendor.id){
           verifyResult.innerHTML =
               `<div class="form-msg error show">
                   That reservation belongs to a different vendor.
@@ -730,7 +727,7 @@
   async function renderReservationsTable(){
     const body = document.getElementById('reservationsTableBody');
     body.innerHTML = `<tr><td colspan="5">Loading…</td></tr>`;
-    const reservations = await Store.getReservationsByVendor(vendor.id);
+    const reservations = await Store.getReservationsByVendor(DashboardState.vendor.id);
     if(reservations.length === 0){
       body.innerHTML = `<tr><td colspan="5">No reservations yet.</td></tr>`;
       return;
@@ -756,7 +753,7 @@
   async function renderDocuments(){
     const list = document.getElementById('documentsList');
     list.innerHTML = DOC_TYPES.map(doc => {
-      const path = currentVendor[doc.column];
+      const path = DashboardState.currentVendor[doc.column];
       const uploaded = !!path;
       return `
         <div class="doc-card" data-doc="${doc.key}">
@@ -794,8 +791,8 @@
       label.firstChild.textContent = 'Uploading…';
 
       try{
-        await Store.uploadVendorDocument(vendor.id, docType, file);
-        currentVendor = await Store.getVendorProfile(vendor.id);
+        await Store.uploadVendorDocument(DashboardState.vendor.id, docType, file);
+        DashboardState.currentVendor = await Store.getVendorProfile(DashboardState.vendor.id);
         renderDocuments();
       }catch(err){
         alert('Upload failed: ' + err.message);
@@ -807,7 +804,7 @@
       const btn = e.target.closest('[data-view-doc]');
       if(!btn) return;
       const doc = DOC_TYPES.find(d => d.key === btn.dataset.viewDoc);
-      const path = currentVendor[doc.column];
+      const path = DashboardState.currentVendor[doc.column];
       if(!path) return;
       btn.disabled = true;
       try{
