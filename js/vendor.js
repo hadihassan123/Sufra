@@ -41,6 +41,15 @@
           <strong>Your account is pending verification.</strong> Listings you post won't appear on the public site until an admin confirms your Commercial Registration and food license.
         </div>`;
     }
+
+    // Admin status now lives in its own admins table, separate from
+    // vendors — a vendor can also be an admin, checked here rather than
+    // via any column on the vendors row itself.
+    const isAdminUser = await Store.isAdmin(DashboardState.vendor.id);
+    if(isAdminUser){
+      const adminLink = document.getElementById('adminPortalLink');
+      if(adminLink) adminLink.style.display = 'inline-block';
+    }
   }catch(err){
     console.error('[sidebar identity] failed to render:', err);
   }

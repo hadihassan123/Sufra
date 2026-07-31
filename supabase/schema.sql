@@ -167,16 +167,22 @@ create trigger on_reservation_created
 create or replace function handle_new_vendor()
 returns trigger as $$
 begin
-  insert into public.vendors (id, business_name, category, area, address, latitude, longitude)
-  values (
-    new.id,
-    new.raw_user_meta_data->>'business_name',
-    new.raw_user_meta_data->>'category',
-    new.raw_user_meta_data->>'area',
-    new.raw_user_meta_data->>'address',
-    (new.raw_user_meta_data->>'latitude')::double precision,
-    (new.raw_user_meta_data->>'longitude')::double precision
-  );
+  -- Only create a vendor row when signup metadata is present (i.e. the
+  -- signup went through vendor-signup.html). Admin-only accounts, created
+  -- directly in the Supabase dashboard with no metadata, correctly get
+  -- no vendor row at all — see the admins table below.
+  if new.raw_user_meta_data->>'business_name' is not null then
+    insert into public.vendors (id, business_name, category, area, address, latitude, longitude)
+    values (
+      new.id,
+      new.raw_user_meta_data->>'business_name',
+      new.raw_user_meta_data->>'category',
+      new.raw_user_meta_data->>'area',
+      new.raw_user_meta_data->>'address',
+      (new.raw_user_meta_data->>'latitude')::double precision,
+      (new.raw_user_meta_data->>'longitude')::double precision
+    );
+  end if;
   return new;
 end;
 $$ language plpgsql security definer set search_path = public;
@@ -184,6 +190,37 @@ $$ language plpgsql security definer set search_path = public;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function handle_new_vendor();
+
+
+-- ============================================================
+-- ADMINS
+-- Decoupled from vendors on purpose — an admin never has to look like
+-- a business. No signup form for this; see the migration file
+-- (20260730_admins_table.sql) for how a new admin gets created.
+-- ============================================================
+create table admins (
+  id uuid primary key references auth.users(id) on delete cascade,
+  name text,
+  created_at timestamptz not null default now()
+);
+
+alter table admins enable row level security;
+-- Deliberately no policies — nobody can query this table directly, not
+-- even to check their own membership. is_admin() below is the only way
+-- in, and it only ever returns true/false.
+
+create or replace function is_admin(check_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return exists(select 1 from admins where id = check_id);
+end;
+$$;
+
+grant execute on function is_admin(uuid) to anon, authenticated;
 
 -- ============================================================
 -- admin_settings / approve_vendor / revoke_vendor already match the

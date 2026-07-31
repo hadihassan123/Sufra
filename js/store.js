@@ -295,12 +295,24 @@ const Store = (() => {
     return data;
   }
 
+  async function verifyAdminPasscode(passcode){
+    const { data, error } = await sb.rpc('verify_admin_passcode', { given_passcode: passcode });
+    if(error) throw error;
+    return data;
+  }
+
+  async function isAdmin(userId){
+    const { data, error } = await sb.rpc('is_admin', { check_id: userId });
+    if(error) throw error;
+    return data;
+  }
+
   return {
     SURPLUS_WINDOWS,
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,updateVendorPin,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
     getActiveListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected, getReservationsByVendor,
-    getAllVendors, approveVendor, revokeVendor
+    getAllVendors, approveVendor, revokeVendor, verifyAdminPasscode, isAdmin
   };
 })();

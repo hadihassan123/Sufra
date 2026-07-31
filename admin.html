@@ -23,24 +23,22 @@
   <div class="auth-card">
     <p class="eyebrow">Admin Portal</p>
     <h1>Secure Login</h1>
-    <p class="sub">Log in with your admin account and passcode to manage vendors and view private documents.</p>
+    <p class="sub" id="gateSub">Checking your session…</p>
     <div class="form-msg error" id="gateMsg"></div>
-    <form id="gateForm">
-      <div class="field">
-        <label for="adminEmail">Email</label>
-        <input type="email" id="adminEmail" required placeholder="admin@sufra.com">
-      </div>
-      <div class="field">
-        <label for="adminPassword">Password</label>
-        <input type="password" id="adminPassword" required placeholder="••••••••">
-      </div>
+
+    <!-- Shown only once we've confirmed this is an already-logged-in admin account -->
+    <form id="passcodeForm" style="display:none;">
       <div class="field">
         <label for="passcode">Admin Passcode</label>
-        <input type="password" id="passcode" required placeholder="Approval passcode">
-        <p class="hint"></p>
+        <input type="password" id="passcode" required placeholder="Enter your admin passcode" autofocus>
       </div>
-      <button type="submit" class="btn btn-ink btn-block">Log in to Dashboard</button>
+      <button type="submit" class="btn btn-ink btn-block">Unlock admin panel</button>
     </form>
+
+    <!-- Shown when not logged in at all, or logged in without admin access -->
+    <div id="notAdminNotice" style="display:none;">
+      <a href="vendor-login.html" class="btn btn-ink btn-block">Log in via vendor dashboard</a>
+    </div>
   </div>
 </div>
 
@@ -74,6 +72,10 @@
   const gateShell = document.getElementById('gateShell' );
   const adminMain = document.getElementById('adminMain');
   const logoutBtn = document.getElementById('logoutBtn');
+  const passcodeForm = document.getElementById('passcodeForm');
+  const notAdminNotice = document.getElementById('notAdminNotice');
+  const gateSub = document.getElementById('gateSub');
+  const gateMsg = document.getElementById('gateMsg');
 
   function getPasscode(){ return sessionStorage.getItem('sufra_admin_passcode'); }
 
@@ -84,41 +86,54 @@
     await renderTables();
   }
 
-  // Check if already logged in via Supabase
+  // Admins are a separate table from vendors now — an admin account
+  // doesn't need a vendors row at all. You're expected to already be
+  // signed in (e.g. via the vendor dashboard, if you're also a vendor,
+  // or via a direct login if you're admin-only) by the time you get
+  // here. This page never asks for email/password itself; it only
+  // checks the existing session and, if it belongs to an admin, asks
+  // for the passcode.
   (async () => {
     const session = await Store.getSession();
-    if(session && getPasscode()) {
-      const profile = await Store.getVendorProfile(session.user.id);
-      if(profile && profile.role === 'admin') {
-        showAdmin();
-      }
+
+    if(!session){
+      gateSub.textContent = "You'll need to log in first.";
+      notAdminNotice.style.display = 'block';
+      return;
     }
+
+    const admin = await Store.isAdmin(session.user.id);
+    if(!admin){
+      gateSub.textContent = "This account doesn't have admin access.";
+      notAdminNotice.style.display = 'block';
+      return;
+    }
+
+    if(getPasscode()){
+      showAdmin();
+      return;
+    }
+
+    gateSub.textContent = `Signed in as ${session.user.email}. Enter your admin passcode to continue.`;
+    passcodeForm.style.display = 'block';
   })();
 
-  document.getElementById('gateForm').addEventListener('submit', async (e) => {
+  passcodeForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('adminEmail').value;
-    const password = document.getElementById('adminPassword').value;
     const passcode = document.getElementById('passcode').value;
-    const msg = document.getElementById('gateMsg');
-
-    try {
-      // 1. Log in to Supabase (This gives us permission to see documents)
-      const { user } = await Store.signInVendor({ email, password });
-      
-      // 2. Check if this user is actually an admin
-      const profile = await Store.getVendorProfile(user.id);
-      if (!profile || profile.role !== 'admin') {
-        await Store.signOutVendor();
-        throw new Error("Access denied: You do not have the admin role.");
+    gateMsg.classList.remove('show');
+    try{
+      const ok = await Store.verifyAdminPasscode(passcode);
+      if(!ok){
+        gateMsg.textContent = 'Incorrect passcode.';
+        gateMsg.classList.add('show');
+        return;
       }
-
-      // 3. Save the passcode for the Approve/Revoke buttons
       sessionStorage.setItem('sufra_admin_passcode', passcode);
       showAdmin();
-    } catch (err) {
-      msg.textContent = err.message;
-      msg.classList.add('show');
+    }catch(err){
+      gateMsg.textContent = err.message;
+      gateMsg.classList.add('show');
     }
   });
 
