@@ -24,6 +24,14 @@
     window.location.href = 'vendor-login.html';
     return;
   }
+  const logoutBtn = document.getElementById('logoutBtn');
+  const adminLink = document.getElementById('adminPortalLink');
+
+  logoutBtn.style.display = 'inline-flex';
+
+  if (DashboardState.vendor.role === 'admin') {
+      adminLink.style.display = 'inline-block';
+  }
 
   // money()/timeFmt() moved to js/utils.js as Fmt.money()/Fmt.time() —
   // was previously duplicated identically in js/customer.js.
