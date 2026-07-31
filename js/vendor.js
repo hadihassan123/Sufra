@@ -66,50 +66,15 @@
   }
 
   // ---- business location: map + reverse geocoding + one save action ----
-  // Actual map/geocoding logic lives in js/location-picker.js, shared with
-  // vendor-signup.html. Progressive enhancement: if the map fails to load
-  // for any reason, the address field still works manually and saving
-  // still works — it just won't have new coordinates attached.
-  (function(){
-    const addressInput = document.getElementById('vendorAddressInput');
-    const statusText = document.getElementById('locationStatusText');
-    const saveBtn = document.getElementById('saveLocationBtn');
-    const useLocationBtn = document.getElementById('useLocationBtn');
-    if(!addressInput || !saveBtn) return;
+  // Moved to js/vendor-location.js (2026-07-30), the first piece split
+  // out of this file now that DashboardState makes cross-file state
+  // explicit. Runs via DashboardState.onReady() below, not directly here.
 
-    addressInput.value = DashboardState.vendor.address || '';
-    if(DashboardState.vendor.latitude && DashboardState.vendor.longitude){
-      statusText.textContent = 'Location saved — customers can find you on the map.';
-    }
-
-    const picker = LocationPicker.init({
-      mapContainerId: 'dashboardMapView',
-      addressInput,
-      statusEl: statusText,
-      gpsButton: useLocationBtn,
-      initialLat: DashboardState.vendor.latitude ?? null,
-      initialLng: DashboardState.vendor.longitude ?? null
-    });
-
-    saveBtn.addEventListener('click', async () => {
-      const address = addressInput.value.trim();
-      if(!address){ alert('Enter an address first.'); return; }
-      const { lat, lng } = picker.getPin();
-      saveBtn.disabled = true;
-      saveBtn.textContent = 'Saving…';
-      try{
-        await Store.updateVendorPin(DashboardState.vendor.id, { address, latitude: lat, longitude: lng });
-        DashboardState.vendor.address = address;
-        DashboardState.vendor.latitude = lat;
-        DashboardState.vendor.longitude = lng;
-        statusText.textContent = 'Location saved — customers can find you on the map.';
-      }catch(err){
-        alert('Could not save location: ' + err.message);
-      }
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Save location';
-    });
-  })();
+  // Trigger every DashboardState.onReady() callback registered by
+  // separately-loaded feature files, now that DashboardState.vendor is
+  // confirmed populated. Must happen after the vendor-not-found check
+  // above (never call this with a null vendor).
+  await DashboardState.runReady();
 
   try{
     document.getElementById('logoutBtn').addEventListener('click', async () => {
