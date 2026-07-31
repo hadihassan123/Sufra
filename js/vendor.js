@@ -8,7 +8,17 @@
   // js/doha-clock.js as a separate <script> tag on any page that wants it.
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  DashboardState.vendor = await Store.getVendorProfile(session.user.id);
+
+  // Fetch the vendor profile and admin status in parallel — isAdmin()
+  // only needs the session's user id, not the profile, so there's no
+  // reason to wait for one before starting the other. This cuts a full
+  // network round-trip off the time before the dashboard becomes usable.
+  let [vendorProfile, isAdminUser] = await Promise.all([
+    Store.getVendorProfile(session.user.id),
+    Store.isAdmin(session.user.id)
+  ]);
+  DashboardState.vendor = vendorProfile;
+
   // A profile can be momentarily unavailable right after a fresh signup
   // (especially with instant sign-in / no email confirmation) since the
   // dashboard loads immediately after signUp() resolves. Retry briefly
@@ -25,12 +35,14 @@
     return;
   }
   const logoutBtn = document.getElementById('logoutBtn');
-  const adminLink = document.getElementById('adminPortalLink');
-
   logoutBtn.style.display = 'inline-flex';
 
-  if (DashboardState.vendor.role === 'admin') {
-      adminLink.style.display = 'inline-block';
+  // Admin status lives in its own admins table, separate from vendors —
+  // a vendor can also be an admin, checked via is_admin() above rather
+  // than any column on the vendors row itself.
+  if(isAdminUser){
+    const adminLink = document.getElementById('adminPortalLink');
+    if(adminLink) adminLink.style.display = 'inline-block';
   }
 
   // money()/timeFmt() moved to js/utils.js as Fmt.money()/Fmt.time() —
@@ -48,15 +60,6 @@
         <div class="form-msg show" style="background:rgba(232,163,61,0.12); color:#C97F1E; border:1px solid rgba(232,163,61,0.3);">
           <strong>Your account is pending verification.</strong> Listings you post won't appear on the public site until an admin confirms your Commercial Registration and food license.
         </div>`;
-    }
-
-    // Admin status now lives in its own admins table, separate from
-    // vendors — a vendor can also be an admin, checked here rather than
-    // via any column on the vendors row itself.
-    const isAdminUser = await Store.isAdmin(DashboardState.vendor.id);
-    if(isAdminUser){
-      const adminLink = document.getElementById('adminPortalLink');
-      if(adminLink) adminLink.style.display = 'inline-block';
     }
   }catch(err){
     console.error('[sidebar identity] failed to render:', err);
