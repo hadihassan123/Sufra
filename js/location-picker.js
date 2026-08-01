@@ -10,6 +10,31 @@
 
 const LocationPicker = (() => {
 
+  // Leaflet was previously loaded via a blocking <script> tag in <head> on
+  // every page that might show a map, delaying initial render even when
+  // the map isn't needed yet (e.g. before scrolling to it, or on pages
+  // where signup fails before the map is touched). Loading it on-demand,
+  // right when init() is actually called, means pages no longer pay that
+  // cost upfront. Cached so multiple init() calls only load it once.
+  let leafletLoadPromise = null;
+  function loadLeaflet(){
+    if(window.L) return Promise.resolve();
+    if(leafletLoadPromise) return leafletLoadPromise;
+    leafletLoadPromise = new Promise((resolve, reject) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load the map library.'));
+      document.head.appendChild(script);
+    });
+    return leafletLoadPromise;
+  }
+
   async function reverseGeocode(lat, lng){
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
     const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
@@ -42,7 +67,7 @@ const LocationPicker = (() => {
    *   getMap() returns null if the map failed to initialize — callers should
    *   treat that as "manual address entry only" rather than an error.
    */
-  function init(opts){
+  async function init(opts){
     const { mapContainerId, addressInput, statusEl, gpsButton, onPinChange } = opts;
     let pendingLat = opts.initialLat ?? null;
     let pendingLng = opts.initialLng ?? null;
@@ -64,6 +89,7 @@ const LocationPicker = (() => {
     }
 
     try{
+      await loadLeaflet();
       const startCoords = [pendingLat ?? 25.2854, pendingLng ?? 51.5310]; // Doha center as default
       map = L.map(mapContainerId).setView(startCoords, pendingLat ? 16 : 11);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

@@ -12,7 +12,7 @@
 // all loaded before this file. Actual map/geocoding logic lives in
 // location-picker.js, shared with vendor-signup.html.
 
-DashboardState.onReady(function(){
+DashboardState.onReady(async function(){
   const addressInput = document.getElementById('vendorAddressInput');
   const statusText = document.getElementById('locationStatusText');
   const saveBtn = document.getElementById('saveLocationBtn');
@@ -24,31 +24,40 @@ DashboardState.onReady(function(){
     statusText.textContent = 'Location saved — customers can find you on the map.';
   }
 
-  const picker = LocationPicker.init({
-    mapContainerId: 'dashboardMapView',
-    addressInput,
-    statusEl: statusText,
-    gpsButton: useLocationBtn,
-    initialLat: DashboardState.vendor.latitude ?? null,
-    initialLng: DashboardState.vendor.longitude ?? null
-  });
+  // Leaflet now loads on-demand (see location-picker.js), so init() is
+  // async and takes a moment. Register the save button FIRST, before
+  // awaiting it — saving the address should never depend on a still-
+  // loading map library. If clicked before the map's ready, this falls
+  // back to whatever coordinates were already saved.
+  let picker = null;
 
   saveBtn.addEventListener('click', async () => {
     const address = addressInput.value.trim();
     if(!address){ alert('Enter an address first.'); return; }
-    const { lat, lng } = picker.getPin();
+    const pin = picker
+      ? picker.getPin()
+      : { lat: DashboardState.vendor.latitude ?? null, lng: DashboardState.vendor.longitude ?? null };
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving…';
     try{
-      await Store.updateVendorPin(DashboardState.vendor.id, { address, latitude: lat, longitude: lng });
+      await Store.updateVendorPin(DashboardState.vendor.id, { address, latitude: pin.lat, longitude: pin.lng });
       DashboardState.vendor.address = address;
-      DashboardState.vendor.latitude = lat;
-      DashboardState.vendor.longitude = lng;
+      DashboardState.vendor.latitude = pin.lat;
+      DashboardState.vendor.longitude = pin.lng;
       statusText.textContent = 'Location saved — customers can find you on the map.';
     }catch(err){
       alert('Could not save location: ' + err.message);
     }
     saveBtn.disabled = false;
     saveBtn.textContent = 'Save location';
+  });
+
+  picker = await LocationPicker.init({
+    mapContainerId: 'dashboardMapView',
+    addressInput,
+    statusEl: statusText,
+    gpsButton: useLocationBtn,
+    initialLat: DashboardState.vendor.latitude ?? null,
+    initialLng: DashboardState.vendor.longitude ?? null
   });
 });

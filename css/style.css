@@ -78,6 +78,15 @@ button{ font-family:inherit; cursor:pointer; }
 .nav-links.nav-loading{
     visibility: hidden;
 }
+/* Auth-state nav visibility — driven by a single class on <body> instead
+   of four separate JS style.display writes. The initial-load flicker
+   itself is already handled by .nav-loading above (hides the whole nav
+   until the session check resolves); this just makes the ongoing
+   logged-in/logged-out toggling a single class swap instead of four
+   individual element writes. */
+.auth-only, .guest-only{ display:none; }
+body.logged-in .auth-only{ display:inline-block; }
+body:not(.logged-in) .guest-only{ display:inline-block; }
 .nav-cta:hover{ background:var(--ink-deep); }
 
 /* ---------- buttons ---------- */
