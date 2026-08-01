@@ -382,7 +382,7 @@
   Pickup.init();
 
   try{
-    Overview.render();
+    await Overview.render();
   }catch(err){
     console.error('[overview] failed to render:', err);
   }
