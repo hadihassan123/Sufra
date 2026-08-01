@@ -123,7 +123,7 @@
     navButtons.forEach(b => b.classList.toggle('active', b.dataset.view === name));
     if(name === 'listings') renderListingsTable();
     if(name === 'overview') Overview.render();
-    if(name === 'reservations') renderReservationsTable();
+    if(name === 'reservations') Pickup.render();
     if(name === 'documents') Documents.render();
     if(name === 'post'){
       const pickupStartInput = document.getElementById('pickupStart');
@@ -375,172 +375,11 @@
     }
   });
 
-  // ---- verify pickup ----
-  const verifyInput = document.getElementById('verifyCodeInput');
-  const verifyResult = document.getElementById('verifyResult');
-  const scanQrBtn = document.getElementById('scanQrBtn');
-  const qrScannerOverlay = document.getElementById('qrScannerOverlay');
-  const closeQrScanner = document.getElementById('closeQrScanner');
-
-  let qrScanner = null;
-
-  try{
-    document.getElementById('verifyBtn').addEventListener('click', async () => {
-
-        const code = verifyInput.value.trim();
-        if(!code) return;
-
-        let reservation;
-
-        try{
-            reservation = await Store.findReservationByCode(code);
-        }catch(err){
-            verifyResult.innerHTML =
-                `<div class="form-msg error show">
-                    Lookup failed: ${err.message}
-                </div>`;
-            return;
-        }
-
-        showReservation(reservation);
-
-    });
-  }catch(err){
-    console.error('[verify button] failed to wire up:', err);
-  }
-
-  async function showReservation(reservation){
-      if(!reservation){
-          verifyResult.innerHTML =
-              `<div class="form-msg error show">
-                  No reservation found.
-              </div>`;
-          return;
-      }
-      if(reservation.vendor_id !== DashboardState.vendor.id){
-          verifyResult.innerHTML =
-              `<div class="form-msg error show">
-                  That reservation belongs to a different vendor.
-              </div>`;
-          return;
-      }
-      if(reservation.status === 'collected'){
-          verifyResult.innerHTML =
-              `<div class="form-msg success show"
-                  style="background:rgba(47,110,103,0.1); color:#204C47;">
-                  Already marked collected for
-                  <strong>${reservation.customer_name}</strong>
-                  — ${reservation.item_name}.
-              </div>`;
-          return;
-      }
-      verifyResult.innerHTML = `
-        <div class="form-msg success show">
-          <strong>${reservation.customer_name}</strong>
-          — ${reservation.item_name}${reservation.quantity > 1 ? ` ×${reservation.quantity}` : ''}
-          · ${Fmt.money(reservation.price)} cash due
-
-          <div style="margin-top:12px;">
-              <button
-                  class="btn btn-teal btn-sm"
-                  id="markCollectedBtn">
-                  Mark as collected
-              </button>
-          </div>
-        </div>
-      `;
-
-      document.getElementById('markCollectedBtn').addEventListener('click', async () => {
-
-          await Store.markCollected(reservation.id);
-
-          verifyInput.value = '';
-
-          verifyResult.innerHTML =
-              `<div class="form-msg success show">
-                  Marked collected.
-              </div>`;
-
-          Overview.render();
-
-      });
-
-  }
-  
-  try{
-    verifyInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') document.getElementById('verifyBtn').click(); });
-    scanQrBtn.addEventListener('click', startQrScanner);
-  }catch(err){
-    console.error('[verify input / QR scan button] failed to wire up:', err);
-  }
-
-  async function startQrScanner(){
-
-        qrScannerOverlay.classList.add('show');
-
-          try {
-
-            const devices = await Html5Qrcode.getCameras();
-            
-
-            qrScanner = new Html5Qrcode("qr-reader");
-
-            await qrScanner.start(
-                { facingMode: "environment" },
-                {
-                    fps: 10,
-                    qrbox: 250
-                },
-                onQrSuccess
-            );
-
-        } catch(err) {
-            console.error(err);
-            alert(err.message);
-        }
-    }
-    async function onQrSuccess(decodedText){
-
-      if(qrScanner){
-          await qrScanner.stop();
-      }
-
-      qrScannerOverlay.classList.remove("show");
-
-      let reservation;
-
-      try{
-          reservation = await Store.getReservation(decodedText.trim());
-      }catch(err){
-          alert(err.message);
-          return;
-      }
-
-      showReservation(reservation);
-
-  }
-
-  // ---- reservations table ----
-  async function renderReservationsTable(){
-    const body = document.getElementById('reservationsTableBody');
-    body.innerHTML = `<tr><td colspan="5">Loading…</td></tr>`;
-    const reservations = await Store.getReservationsByVendor(DashboardState.vendor.id);
-    if(reservations.length === 0){
-      body.innerHTML = `<tr><td colspan="5">No reservations yet.</td></tr>`;
-      return;
-    }
-    body.innerHTML = reservations.map(r => `
-      <tr>
-        <td data-label="Code"><span class="pickup-code-tag">${r.pickup_code}</span></td>
-        <td data-label="Item">${r.item_name}${r.quantity > 1 ? ` ×${r.quantity}` : ''}</td>
-        <td data-label="Customer">${r.customer_name}<br><span style="opacity:.55; font-size:.8em;">${r.customer_phone}</span></td>
-        <td data-label="Pickup">${Fmt.time(r.pickup_start)}–${Fmt.time(r.pickup_end)}</td>
-        <td data-label="Status"><span class="status-pill status-${r.status}">${r.status}</span></td>
-      </tr>
-    `).join('');
-  }
-
-  
+  // ---- verify pickup + reservations table ----
+  // Moved to js/vendor/pickup.js (2026-07-30), same {init, render}
+  // pattern as documents.js/logo.js. showView('reservations') below
+  // now calls Pickup.render() instead of the old local function.
+  Pickup.init();
 
   try{
     Overview.render();
