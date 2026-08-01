@@ -461,7 +461,7 @@
                   Marked collected.
               </div>`;
 
-          renderOverview();
+          Overview.render();
 
       });
 
