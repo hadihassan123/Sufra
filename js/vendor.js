@@ -122,7 +122,7 @@
     document.getElementById('view-' + name).classList.add('active');
     navButtons.forEach(b => b.classList.toggle('active', b.dataset.view === name));
     if(name === 'listings') renderListingsTable();
-    if(name === 'overview') renderOverview();
+    if(name === 'overview') Overview.render();
     if(name === 'reservations') renderReservationsTable();
     if(name === 'documents') Documents.render();
     if(name === 'post'){
@@ -160,49 +160,7 @@
     const m = Math.round((next.startHour % 1) * 60);
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
-
-  // ---- overview ----
- async function renderOverview() {
-    const [listings, reservations] = await Promise.all([
-        Store.getListingsByVendor(DashboardState.vendor.id),
-        Store.getReservationsByVendor(DashboardState.vendor.id)
-    ]);
-
-    console.log(listings.map(l => ({
-        item: l.item_name,
-        pickup_end: l.pickup_end,
-        quantity_left: l.quantity_left
-    })));
-
-    const now = new Date();
-
-    const activeListings = listings.filter(
-        l => new Date(l.pickup_end) >= now
-    );
-
-    const expiredListings = listings.filter(l =>
-        new Date(l.pickup_end) < now &&
-        l.quantity_left > 0
-    );
-    const soldOutListings = listings.filter(l =>
-        l.quantity_left <= 0
-    );
-
-    document.getElementById('statActive').textContent =
-        activeListings.length;
-
-    document.getElementById('statSoldOut').textContent = 
-        soldOutListings.length;
-
-    document.getElementById('statExpired').textContent =
-        expiredListings.length;
-
-    document.getElementById('statReserved').textContent =
-        reservations.filter(r => r.status === 'reserved').length;
-
-    document.getElementById('statCollected').textContent =
-        reservations.filter(r => r.status === 'collected').length;
-}
+ 
   // ---- listings table ----
   async function renderListingsTable(){
     const body = document.getElementById('listingsTableBody');
@@ -585,7 +543,7 @@
   
 
   try{
-    renderOverview();
+    Overview.render();
   }catch(err){
     console.error('[overview] failed to render:', err);
   }
