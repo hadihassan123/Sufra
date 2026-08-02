@@ -18,8 +18,6 @@
   };
 
     function renderMap(listings) {
-    const mapDiv = document.getElementById('mapView');
-
     if (!map) {
       map = L.map('mapView').setView([25.30, 51.51], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -40,7 +38,7 @@
 
     byVendor.forEach(vendorListings => {
       const first = vendorListings[0];
-      let coords = null;
+      let coords;
       if (first.vendors?.latitude && first.vendors?.longitude) {
         coords = [first.vendors.latitude, first.vendors.longitude];
       } else {
@@ -215,6 +213,7 @@
             <div class="ticket-meta">
               <span>📍 <strong>${l.category}</strong></span>
               <span>🕐 Pickup <strong>${Fmt.time(l.pickup_start)}–${Fmt.time(l.pickup_end)}</strong></span>
+              <span class="ticket-posted">Posted ${timeAgo(l.created_at)}</span>
             </div>
           </div>
           <div class="ticket-stub">
