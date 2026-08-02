@@ -145,26 +145,29 @@
   const DEFAULT_LAT = 25.2854;
   const DEFAULT_LNG = 51.5310;
 
-  async function fetchListingsByLocation(lat, lng, radiusMeters = 50000) {
-    // Call PostGIS RPC
+  async function fetchListingsByLocation(lat, lng, radiusMeters = 500000) {
     const { data, error } = await supabase.rpc('nearby_listings', {
       user_lat: lat,
       user_long: lng,
       radius_meters: radiusMeters
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('RPC Error:', error);
+      throw error;
+    }
 
-    // Map RPC return format into the structure expected by renderListingGrid & renderMap
+    console.log('Fetched raw RPC listings:', data);
+
     return (data || []).map(item => ({
       ...item,
-      // Alias vendor details so l.vendors.business_name etc. continue working without UI edits
+      // Re-construct the `vendors` object for renderListingGrid and renderMap compatibility
       vendors: {
         id: item.vendor_id,
         business_name: item.vendor_name,
         address: item.vendor_address,
-        latitude: lat, // preserved for map fallback
-        longitude: lng
+        latitude: item.vendor_lat || lat,
+        longitude: item.vendor_lng || lng
       }
     }));
   }
