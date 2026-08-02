@@ -41,10 +41,8 @@ DashboardState.onReady(async function(){
     saveBtn.textContent = 'Saving…';
     try{
       await Store.updateVendorPin(DashboardState.vendor.id, { address, latitude: pin.lat, longitude: pin.lng });
-      DashboardState.vendor.address = address;
-      DashboardState.vendor.latitude = pin.lat;
-      DashboardState.vendor.longitude = pin.lng;
-      statusText.textContent = 'Location saved — customers can find you on the map.';
+            DashboardState.setVendor(await Store.getVendorProfile(DashboardState.vendor.id));
+            statusText.textContent = 'Location saved — customers can find you on the map.';
     }catch(err){
       alert('Could not save location: ' + err.message);
     }
