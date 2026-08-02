@@ -13,11 +13,11 @@
   // only needs the session's user id, not the profile, so there's no
   // reason to wait for one before starting the other. This cuts a full
   // network round-trip off the time before the dashboard becomes usable.
-  let [vendorProfile, isAdminUser] = await Promise.all([
-    Store.getVendorProfile(session.user.id),
-    Store.isAdmin(session.user.id)
-  ]);
-  DashboardState.vendor = vendorProfile;
+    let [vendorProfile, isAdminUser] = await Promise.all([
+      Store.getVendorProfile(session.user.id),
+      Store.isAdmin(session.user.id)
+    ]);
+    DashboardState.setVendor(vendorProfile);
 
   // A profile can be momentarily unavailable right after a fresh signup
   // (especially with instant sign-in / no email confirmation) since the
@@ -25,7 +25,7 @@
   // before treating it as a real "no profile" case.
   for(let attempt = 0; !DashboardState.vendor && attempt < 3; attempt++){
     await sleep(700);
-    DashboardState.vendor = await Store.getVendorProfile(session.user.id);
+    DashboardState.setvendor = await Store.getVendorProfile(session.user.id);
   }
   if(!DashboardState.vendor){
     // Signed in but no vendor profile row after retrying — genuinely missing.
@@ -48,7 +48,7 @@
   // money()/timeFmt() moved to js/utils.js as Fmt.money()/Fmt.time() —
   // was previously duplicated identically in js/customer.js.
 
-  DashboardState.currentVendor = DashboardState.vendor; // refreshed after logo/document uploads so status reflects latest values
+  //DashboardState.currentVendor = DashboardState.vendor; // refreshed after logo/document uploads so status reflects latest values
   
 
   // ---- business location: map + reverse geocoding + one save action ----
