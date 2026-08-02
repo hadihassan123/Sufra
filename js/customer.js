@@ -146,22 +146,19 @@
   const DEFAULT_LNG = 51.5310;
 
   async function fetchListingsByLocation(lat, lng, radiusMeters = 500000) {
-    const { data, error } = await supabase.rpc('nearby_listings', {
-      user_lat: lat,
-      user_long: lng,
-      radius_meters: radiusMeters
-    });
+    // Query the database view directly using standard Supabase syntax (no .rpc() needed!)
+    const { data, error } = await supabase
+      .from('active_listings_view')
+      .select('*');
 
     if (error) {
-      console.error('RPC Error:', error);
+      console.error('Database View Error:', error);
       throw error;
     }
 
-    console.log('Fetched raw RPC listings:', data);
-
+    // Map rows into the structure expected by renderListingGrid & renderMap
     return (data || []).map(item => ({
       ...item,
-      // Re-construct the `vendors` object for renderListingGrid and renderMap compatibility
       vendors: {
         id: item.vendor_id,
         business_name: item.vendor_name,
