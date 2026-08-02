@@ -26,11 +26,11 @@
     <a href="index.html" class="brand">Sufra <small>The Spread</small></a>
     <nav class="nav-links" nav-loading id="mainNav">
       <a href="#browse">Browse</a>
-      <a href="vendor-dashboard.html" id="vendorDashboardLink" class="nav-cta" style="display:none;">Dashboard</a>
+      <a href="vendor-dashboard.html" id="vendorDashboardLink" class="nav-cta auth-only">Dashboard</a>
       <a href="#pickups">Your pickups</a>
-      <a href="vendor-signup.html" class="nav-cta" id="vendorNavLink" style="display:none;">List your surplus</a>
-      <a href="vendor-login.html" id="vendorLoginNavLink" style="display:none;">Log in</a>
-      <a href="#" id="vendorLogoutNavLink" style="display:none;">Log out</a>
+      <a href="vendor-signup.html" class="nav-cta guest-only" id="vendorNavLink">List your surplus</a>
+      <a href="vendor-login.html" id="vendorLoginNavLink" class="guest-only">Log in</a>
+      <a href="#" id="vendorLogoutNavLink" class="auth-only">Log out</a>
       <a href="admin.html" id="adminLogoutNavLink" style="display:none;">Log out (admin)</a>
     </nav>
   </div>
@@ -239,16 +239,12 @@
 <script src="js/supabase-client.js"></script>
 <script src="js/store.js"></script>
 <script src="js/utils.js"></script>
-<script src="js/map.js"></script>
 <script src="js/customer.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 <script>
   function updateNav(isLoggedIn){
-    document.getElementById('vendorNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
-    document.getElementById('vendorLoginNavLink').style.display = isLoggedIn ? 'none' : 'inline-block';
-    document.getElementById('vendorLogoutNavLink').style.display = isLoggedIn ? 'inline-block' : 'none';
-    document.getElementById('vendorDashboardLink').style.display = isLoggedIn ? 'inline-block' : 'none';
+    document.body.classList.toggle('logged-in', isLoggedIn);
     const heroLink = document.getElementById('heroVendorLink');
     if(isLoggedIn){
       heroLink.textContent = 'Go to dashboard';
