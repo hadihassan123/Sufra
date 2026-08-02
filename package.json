@@ -1,0 +1,27 @@
+{
+  "name": "sufra",
+  "version": "1.0.0",
+  "description": "Sufra is a food surplus marketplace that connects bakeries, cafés, restaurants, hotels, grocery stores, and other food businesses with customers looking for discounted surplus food before it goes to waste.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node scripts/check-integrity.js && eslint ."
+    
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hadihassan123/Sufra.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/hadihassan123/Sufra/issues"
+  },
+  "homepage": "https://github.com/hadihassan123/Sufra#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.0",
+    "eslint-plugin-html": "^8.1.4"
+  }
+}
