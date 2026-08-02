@@ -120,6 +120,17 @@
     }catch(err){
       console.error('[verify input / QR scan button] failed to wire up:', err);
     }
+
+    try{
+      closeQrScanner.addEventListener('click', async () => {
+        if(qrScanner){
+          try{ await qrScanner.stop(); }catch(err){ /* already stopped — fine */ }
+        }
+        qrScannerOverlay.classList.remove('show');
+      });
+    }catch(err){
+      console.error('[close QR scanner button] failed to wire up:', err);
+    }
   }
 
   async function render(){
