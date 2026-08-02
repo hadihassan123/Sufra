@@ -4,8 +4,10 @@
   "description": "Sufra is a food surplus marketplace that connects bakeries, cafés, restaurants, hotels, grocery stores, and other food businesses with customers looking for discounted surplus food before it goes to waste.",
   "main": "index.js",
   "scripts": {
-    "test": "node scripts/check-integrity.mjs && eslint .",
-    "prepare": "husky install"
+    "test": "node scripts/run-tests.mjs",
+    "test:integrity": "node scripts/check-integrity.mjs",
+    "test:lint": "eslint .",
+    "test:all": "npm run test:integrity && npm run test:lint"
   },
   "repository": {
     "type": "git",
