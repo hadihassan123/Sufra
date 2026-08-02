@@ -17,25 +17,20 @@
             }
             }
         }
-        // Exposed so js/vendor/listings.js can switch tabs (e.g. jump to the
-        // post form after clicking "Edit", or back to the listings tab after
-        // a successful post) without vendor.js needing to know about those
-        // features by name in return — showView stays the one place that
-        // orchestrates every feature, other files just call into it.
-        window.Nav = { show: showView };
+        // showView stays the one place that orchestrates every feature;
+        // other files (e.g. listings.js) just call Nav.show(...).
+        // Attach show after it exists so Nav is a single public surface.
+        window.Nav.show = showView;
         try{
             navButtons.forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
             document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => showView(b.dataset.goto)));
         }catch(err){
             console.error('[nav wiring] failed to wire up:', err);
         }
-        
-        
-
     }
 
-    window.Navigation = {
-        init
-    };
+    // Single public surface: Nav.init() from vendor.js, Nav.show() from feature modules
+    // (show is attached during init once the real implementation exists).
+    window.Nav = { init };
 
 })();

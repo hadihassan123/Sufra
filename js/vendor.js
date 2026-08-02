@@ -87,7 +87,7 @@
   // ---- listings table / edit / post form ----
   // Moved to js/vendor/listings.js (2026-07-30).
   Listings.init();
-  Navigation.init();
+  Nav.init();
 
   // ---- verify pickup + reservations table ----
   // Moved to js/vendor/pickup.js (2026-07-30), same {init, render}
