@@ -10,7 +10,7 @@
     const list = document.getElementById('documentsList');
 
     list.innerHTML = DOC_TYPES.map(doc => {
-      const path = DashboardState.currentVendor[doc.column];
+      const path = DashboardState.vendor?.[doc.column];
       const uploaded = !!path;
 
       return `
@@ -66,13 +66,13 @@
         try {
 
           await Store.uploadVendorDocument(
-            DashboardState.vendor.id,
+            DashboardState.vendor?.id,
             docType,
             file
           );
 
           DashboardState.setVendor(
-            await Store.getVendorProfile(DashboardState.vendor.id)
+            await Store.getVendorProfile(DashboardState.vendor?.id)
           );
 
           render();
@@ -93,7 +93,7 @@
 
         const doc = DOC_TYPES.find(d => d.key === btn.dataset.viewDoc);
 
-        const path = DashboardState.currentVendor[doc.column];
+        const path = DashboardState.vendor?.[doc.column];
 
         if (!path) return;
 

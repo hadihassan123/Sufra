@@ -5,12 +5,12 @@
     const statusText = document.getElementById('logoStatusText');
     const btnText = document.getElementById('logoBtnText');
     const removeBtn = document.getElementById('removeLogoBtn');
-    if(DashboardState.currentVendor.logo_url){
-      preview.src = DashboardState.currentVendor.logo_url;
-      preview.style.display = 'block';
-      statusText.textContent = 'Shown next to your business name on listings.';
-      btnText.textContent = 'Replace';
-      removeBtn.style.display = 'inline-flex';
+    if (DashboardState.vendor?.logo_url) {
+        preview.src = DashboardState.vendor.logo_url;
+        preview.style.display = 'block';
+        statusText.textContent = 'Shown next to your business name on listings.';
+        btnText.textContent = 'Replace';
+        removeBtn.style.display = 'inline-flex';
     } else {
       preview.style.display = 'none';
       statusText.textContent = 'Shown next to your business name on listings. Not uploaded yet.';
