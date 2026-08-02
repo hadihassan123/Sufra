@@ -149,16 +149,34 @@ const Store = (() => {
     return data.publicUrl;
   }
 
-  async function getActiveListings(){
-    const { data, error } = await sb
-      .from('listings')
-      .select('*, vendors(business_name,logo_url, verification_status,latitude, longitude, area, address)')
-      .in('status', ['active', 'sold_out'])
-      .order('pickup_start', { ascending: true });
+  async function getActiveListings() {
+  const DEFAULT_LAT = 25.2854;
+  const DEFAULT_LNG = 51.5310;
 
-    if(error) throw error;
-    return data;
+  // Fetch using the PostGIS RPC function we created
+  const { data, error } = await supabase.rpc('nearby_listings', {
+    user_lat: DEFAULT_LAT,
+    user_long: DEFAULT_LNG,
+    radius_meters: 500000
+  });
+
+  if (error) {
+    console.error('Error fetching via RPC:', error);
+    throw error;
   }
+
+  // Map fields to match what your existing cards expect (e.g., nesting vendors object)
+  return (data || []).map(item => ({
+    ...item,
+    vendors: {
+      id: item.vendor_id,
+      business_name: item.vendor_name,
+      address: item.vendor_address,
+      latitude: DEFAULT_LAT,
+      longitude: DEFAULT_LNG
+    }
+  }));
+}
 
   async function getListing(id){
     const { data, error } = await sb
