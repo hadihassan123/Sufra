@@ -10,9 +10,76 @@ let hasErrors = false;
 // Leave empty [] if you only want the automated check.
 // ----------------------------------------------------
 const requiredElements = {
-  'index.html': [], // e.g. ['listings-grid']
-  'vendor-dashboard.html': [] // e.g. ['vendor-pickup-code-input']
+  'index.html': [
+    'mainNav',
+    'vendorDashboardLink',
+    'vendorNavLink',
+    'vendorLoginNavLink',
+    'vendorLogoutNavLink',
+    'adminLogoutNavLink',
+    'heroVendorLink',
+    'clockText',
+    'steamSvg',
+    'dialSvg',
+    'dialStatus',
+    'dialSub',
+    'browse',
+    'searchInput',
+    'filterBar',
+    'listingGrid',
+    'mapView',
+    'how',
+    'pickups',
+    'lookupPhone',
+    'lookupBtn',
+    'liveIndicator',
+    'pickupList',
+    'reserveOverlay',
+    'reserveModal',
+    'reserveItemName',
+    'reserveItemMeta',
+    'reserveForm',
+    'custName',
+    'custPhone',
+    'reserveQtyEditor',
+    'reserveQtyDown',
+    'reserveQtyValue',
+    'reserveQtyUp',
+    'reserveQtyHint',
+    'confirmOverlay',
+    'confirmModal',
+    'confirmQr',
+    'confirmCode',
+    'copyPickupCodeBtn',
+    'confirmWindow'
+
+  ],
+  'vendor-dashboard.html': [
+    'vendor-pickup-code-input',
+    'verify-code-btn',
+    'qr-reader',
+    'new-listing-form',
+    'listings-table'
+  ],
+  'admin.html': [
+    'pending-vendors-table',
+    'verified-vendors-table'
+  ],
+  'vendor-login.html': [
+    'login-email',
+    'login-password',
+    'login-btn'
+  ],
+  'vendor-forgot-password.html': [
+    'reset-email',
+    'send-reset-btn'
+  ],
+  'vendor-reset-password.html': [
+    'new-password',
+    'update-password-btn'
+  ]
 };
+
 
 // ----------------------------------------------------
 // 2. AUTOMATED HTML SCANNER

@@ -141,17 +141,71 @@
     }  
   }
 
-  async function renderListings(){
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Loading…</h3></div>`;
-    try{
-      cachedActiveListings = await Store.getActiveListings();
-      console.log("Cached listings:", cachedActiveListings);
-      console.log("Cached count:", cachedActiveListings.length);
-    }catch(err){
+  // Default coordinates (Doha Center) if user denies location permission
+  const DEFAULT_LAT = 25.2854;
+  const DEFAULT_LNG = 51.5310;
+
+  async function fetchListingsByLocation(lat, lng, radiusMeters = 50000) {
+    // Call PostGIS RPC
+    const { data, error } = await supabase.rpc('nearby_listings', {
+      user_lat: lat,
+      user_long: lng,
+      radius_meters: radiusMeters
+    });
+
+    if (error) throw error;
+
+    // Map RPC return format into the structure expected by renderListingGrid & renderMap
+    return (data || []).map(item => ({
+      ...item,
+      // Alias vendor details so l.vendors.business_name etc. continue working without UI edits
+      vendors: {
+        id: item.vendor_id,
+        business_name: item.vendor_name,
+        address: item.vendor_address,
+        latitude: lat, // preserved for map fallback
+        longitude: lng
+      }
+    }));
+  }
+
+  async function renderListings() {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Loading nearby listings…</h3></div>`;
+    
+    try {
+      // 1. Attempt to get real user GPS location
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            try {
+              cachedActiveListings = await fetchListingsByLocation(pos.coords.latitude, pos.coords.longitude);
+              applyFiltersAndRender();
+            } catch (err) {
+              fallbackToDefaultCoords(err);
+            }
+          },
+          (err) => {
+            // Location access denied or timed out — fallback gracefully
+            fallbackToDefaultCoords(err);
+          },
+          { timeout: 5000 }
+        );
+      } else {
+        await fallbackToDefaultCoords(null);
+      }
+    } catch (err) {
       grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Couldn't load listings</h3><p>${err.message}</p></div>`;
-      return;
     }
-    applyFiltersAndRender();
+  }
+
+  async function fallbackToDefaultCoords(geoError) {
+    if (geoError) console.warn('Geolocation unavailable/denied, defaulting to central Doha:', geoError);
+    try {
+      cachedActiveListings = await fetchListingsByLocation(DEFAULT_LAT, DEFAULT_LNG);
+      applyFiltersAndRender();
+    } catch (err) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Couldn't load listings</h3><p>${err.message}</p></div>`;
+    }
   }
 
   function renderListingGrid(filtered){
