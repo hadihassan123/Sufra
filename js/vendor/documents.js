@@ -71,8 +71,9 @@
             file
           );
 
-          DashboardState.currentVendor =
-            await Store.getVendorProfile(DashboardState.vendor.id);
+          DashboardState.setVendor(
+            await Store.getVendorProfile(DashboardState.vendor.id)
+          );
 
           render();
 
