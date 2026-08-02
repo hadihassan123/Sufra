@@ -66,13 +66,12 @@
 
       const marker = L.marker(coords).addTo(map);
       marker.bindPopup(`
-        <div style="padding:4px; min-width:180px; max-width:260px;">
-          <strong style="display:block; margin-bottom:4px; font-size:1.05em;">${businessName}</strong>
-          <span style="font-size:0.85em; color:#666;">${vendorListings.length} item${vendorListings.length > 1 ? 's' : ''}</span>
+        <div class="map-popup">
+          <div class="map-popup-title">${businessName}</div>
+          <div class="map-popup-meta">${vendorListings.length} item${vendorListings.length > 1 ? 's' : ''}</div>
           ${itemsHtml}
         </div>
-      `);
-      markers.push(marker);
+      `, { maxWidth: 260 });
     });
 
     setTimeout(() => {
