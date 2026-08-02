@@ -146,7 +146,7 @@
   const DEFAULT_LNG = 51.5310;
 
   async function fetchListingsByLocation(lat, lng, radiusMeters = 500000) {
-    // Query the database view directly using standard Supabase syntax (no .rpc() needed!)
+    // 💡 Use standard Supabase table/view query (No .rpc() needed!)
     const { data, error } = await supabase
       .from('active_listings_view')
       .select('*');
