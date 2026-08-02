@@ -71,7 +71,7 @@
           <div class="map-popup-meta">${vendorListings.length} item${vendorListings.length > 1 ? 's' : ''}</div>
           ${itemsHtml}
         </div>
-      `, { maxWidth: 260 });
+      `, { maxWidth: 300 });
     });
 
     setTimeout(() => {
