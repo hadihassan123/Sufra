@@ -1,6 +1,7 @@
 /* Sufra data layer — backed by Supabase (Postgres + Auth).
    Requires js/supabase-client.js loaded first (defines `sb`). */
 
+
 const Store = (() => {
   // Shared surplus windows — used by the homepage time dial (customer.js)
   // and to auto-fill the vendor's pickup start time (vendor.js).
@@ -178,6 +179,7 @@ const Store = (() => {
   async function createListing(payload){
     const { data, error } = await sb.from('listings').insert(payload).select().single();
     if(error) throw error;
+    StoreCache.invalidate('listings');
     return data;
   }
   async function updateListing(id, payload){
@@ -190,6 +192,7 @@ const Store = (() => {
           .single();
 
       if(error) throw error;
+      StoreCache.invalidate('listings');
 
       return data;
 
@@ -207,11 +210,15 @@ const Store = (() => {
       .eq('id', id);
 
     if(error) throw error;
+    StoreCache.invalidate('listings');
+
   }
 
   async function removeListing(id){
     const { error } = await sb.from('listings').update({ status: 'removed' }).eq('id', id);
     if(error) throw error;
+    StoreCache.invalidate('listings');
+
   }
 
     // ---- reservations ----
@@ -231,6 +238,8 @@ const Store = (() => {
       pickup_end: listing.pickup_end
     }).select().single();
     if(error) throw error;
+    StoreCache.invalidate('listings');
+    StoreCache.invalidate('reservations');
     return data;
   }
 
@@ -316,3 +325,5 @@ const Store = (() => {
     getAllVendors, approveVendor, revokeVendor, verifyAdminPasscode, isAdmin
   };
 })();
+
+
