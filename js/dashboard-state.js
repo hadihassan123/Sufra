@@ -39,5 +39,9 @@ const DashboardState = {
     for(const fn of this._readyCallbacks){
       try{ await fn(); }catch(err){ console.error('[DashboardState.onReady handler] failed:', err); }
     }
+  },
+  setVendor(profile){
+    this.vendor = profile;
+    this.currentVendor = profile;
   }
 };
