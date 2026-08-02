@@ -29,7 +29,7 @@
         removeBtn.disabled = true;
         try{
           await Store.removeVendorLogo(DashboardState.vendor.id);
-          DashboardState.currentVendor = await Store.getVendorProfile(DashboardState.vendor.id);
+          DashboardState.setVendor(await Store.getVendorProfile(DashboardState.vendor.id));
           render();
         }catch(err){
           alert('Could not remove logo: ' + err.message);
@@ -49,7 +49,7 @@
         btnText.textContent = 'Uploading…';
         try{
           await Store.uploadVendorLogo(DashboardState.vendor.id, file);
-          DashboardState.currentVendor = await Store.getVendorProfile(DashboardState.vendor.id);
+          DashboardState.setVendor(await Store.getVendorProfile(DashboardState.vendor.id));
           render();
         }catch(err){
           alert('Logo upload failed: ' + err.message);
