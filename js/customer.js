@@ -17,54 +17,66 @@
     'al wakrah': [25.17, 51.60]
   };
 
-  function renderMap(listings) {
+    function renderMap(listings) {
     const mapDiv = document.getElementById('mapView');
-    
-    // PRESERVED LOGS
-    console.log("inline height:", mapDiv.style.height);
-    console.log("computed height:", window.getComputedStyle(mapDiv).height);
-    console.log("offsetHeight:", mapDiv.offsetHeight);
-    console.log("clientHeight:", mapDiv.clientHeight);
 
     if (!map) {
-      console.log("Initializing new Leaflet map...");
       map = L.map('mapView').setView([25.30, 51.51], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap'
       }).addTo(map);
     }
 
-    // Clear old markers
     markers.forEach(m => map.removeLayer(m));
     markers = [];
 
-    console.log(`Placing ${listings.length} pins on map...`);
-
+    // Group active listings by vendor so one pin = one place, popup = all items there
+    const byVendor = new Map();
     listings.forEach(l => {
+      const vendorId = l.vendor_id || l.vendors?.id || 'unknown';
+      if (!byVendor.has(vendorId)) byVendor.set(vendorId, []);
+      byVendor.get(vendorId).push(l);
+    });
+
+    byVendor.forEach(vendorListings => {
+      const first = vendorListings[0];
       let coords = null;
-      if (l.vendors?.latitude && l.vendors?.longitude) {
-        coords = [l.vendors.latitude, l.vendors.longitude];
+      if (first.vendors?.latitude && first.vendors?.longitude) {
+        coords = [first.vendors.latitude, first.vendors.longitude];
       } else {
-        const area = (l.vendors?.area || '').toLowerCase().trim();
+        const area = (first.vendors?.area || '').toLowerCase().trim();
         coords = AREA_COORDS[area] || [25.28, 51.53];
       }
-      
+
+      const businessName = first.vendors?.business_name || 'Vendor';
+      const itemsHtml = vendorListings.map(l => {
+        const soldOut = l.quantity_left <= 0;
+        const price = l.discounted_price;
+        const btn = soldOut
+          ? `<button class="btn btn-ghost btn-sm" style="width:100%; margin-top:6px;" disabled>Sold out</button>`
+          : `<button class="btn btn-teal btn-sm" style="width:100%; margin-top:6px;" onclick="window.openReserveModal('${l.id}')">Reserve</button>`;
+        return `
+          <div style="padding:8px 0; border-top:1px solid #eee;">
+            <strong style="display:block;">${l.item_name}</strong>
+            <span style="font-weight:bold; color:#2F6E67;">QAR ${price}</span>
+            <span style="font-size:0.85em; color:#666;"> · ${l.quantity_left} left</span>
+            ${btn}
+          </div>`;
+      }).join('');
+
       const marker = L.marker(coords).addTo(map);
       marker.bindPopup(`
-        <div style="padding:5px; min-width:150px;">
-          <strong style="display:block; margin-bottom:4px;">${l.item_name}</strong>
-          <span style="font-size:0.9em; color:#666;">${l.vendors?.business_name}</span><br>
-          <span style="font-weight:bold; color:#2F6E67;">QAR ${l.discounted_price}</span>
-          <button class="btn btn-teal btn-sm" style="width:100%; margin-top:8px;" onclick="window.openReserveModal('${l.id}')">Reserve</button>
+        <div style="padding:4px; min-width:180px; max-width:260px;">
+          <strong style="display:block; margin-bottom:4px; font-size:1.05em;">${businessName}</strong>
+          <span style="font-size:0.85em; color:#666;">${vendorListings.length} item${vendorListings.length > 1 ? 's' : ''}</span>
+          ${itemsHtml}
         </div>
       `);
       markers.push(marker);
     });
 
-    // CRITICAL: Force map to redraw its size
-    setTimeout(() => { 
-        console.log("Invalidating map size for display...");
-        map.invalidateSize(); 
+    setTimeout(() => {
+      map.invalidateSize();
     }, 100);
   }
 
