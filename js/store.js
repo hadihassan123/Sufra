@@ -179,7 +179,6 @@ const Store = (() => {
   async function createListing(payload){
     const { data, error } = await sb.from('listings').insert(payload).select().single();
     if(error) throw error;
-    StoreCache.invalidate('listings');
     return data;
   }
   async function updateListing(id, payload){
@@ -192,8 +191,6 @@ const Store = (() => {
           .single();
 
       if(error) throw error;
-      StoreCache.invalidate('listings');
-
       return data;
 
   }
@@ -210,14 +207,12 @@ const Store = (() => {
       .eq('id', id);
 
     if(error) throw error;
-    StoreCache.invalidate('listings');
 
   }
 
   async function removeListing(id){
     const { error } = await sb.from('listings').update({ status: 'removed' }).eq('id', id);
     if(error) throw error;
-    StoreCache.invalidate('listings');
 
   }
 
@@ -238,8 +233,6 @@ const Store = (() => {
       pickup_end: listing.pickup_end
     }).select().single();
     if(error) throw error;
-    StoreCache.invalidate('listings');
-    StoreCache.invalidate('reservations');
     return data;
   }
 
