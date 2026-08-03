@@ -196,10 +196,14 @@ const Store = (() => {
   }
 
   async function getListingsByVendor(vendorId){
+    console.log("Querying listings for vendorId:", vendorId); // <--- Add this
     const { data, error } = await sb
       .from('listings').select('*')
       .eq('vendor_id', vendorId).neq('status', 'removed')
       .order('created_at', { ascending: false });
+
+      if(error) console.error("Supabase Error:", error); // <--- Check for errors
+      console.log("Raw query result data:", data); // <--- See what comes back
     if(error) throw error;
     return data;
   }
