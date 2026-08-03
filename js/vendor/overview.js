@@ -39,6 +39,7 @@
 
       // Use cached listings if available, otherwise fetch them from the store
       const listings = DashboardState.cachedListings || await Store.getListingsByVendor(vendorId);
+      DashboardState.cachedListings = listings; // update cache
       const reservations = Store.getReservationsByVendor ? await Store.getReservationsByVendor(vendorId) : [];
 
       console.log("DEBUG - Listings fetched:", listings);
