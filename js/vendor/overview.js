@@ -33,7 +33,12 @@
 
   async function render() {
     try {
-      const vendorId = DashboardState.vendor.id;
+      console.log("DashboardState.vendor:", DashboardState?.vendor);
+      const vendorId = DashboardState?.vendor?.id;
+      if (!vendorId) {
+        console.error("Vendor ID is missing! DashboardState.vendor is not set.");
+        return;
+      }
 
       // Use cached listings if available, otherwise fetch them from the store
       const listings = DashboardState.cachedListings || await Store.getListingsByVendor(vendorId);

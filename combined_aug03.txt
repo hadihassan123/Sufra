@@ -1,0 +1,14 @@
+
+📦 Repomix v1.14.0
+
+No custom config found at repomix.config.ts, repomix.config.mts, repomix.config.cts, repomix.config.js, repomix.config.mjs, repomix.config.cjs, repomix.config.json5, repomix.config.jsonc, repomix.config.json or global config at /home/hadi/.config/repomix/repomix.config.ts, /home/hadi/.config/repomix/repomix.config.mts, /home/hadi/.config/repomix/repomix.config.cts, /home/hadi/.config/repomix/repomix.config.js, /home/hadi/.config/repomix/repomix.config.mjs, /home/hadi/.config/repomix/repomix.config.cjs, /home/hadi/.config/repomix/repomix.config.json5, /home/hadi/.config/repomix/repomix.config.jsonc, /home/hadi/.config/repomix/repomix.config.json.
+You can add a config file for additional settings. Please check https://github.com/yamadashy/repomix for more information.
+[K[?25l⠋ Initializing...
+[K[1A[K[?25l✖ Error during packing
+[?25h
+
+For detailed debug information, use the --verbose flag
+
+Need help?
+• File an issue on GitHub: https://github.com/yamadashy/repomix/issues
+• Join our Discord community: https://discord.gg/wNYzTwZFku
