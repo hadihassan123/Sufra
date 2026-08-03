@@ -181,6 +181,7 @@ const Store = (() => {
         business_name: item.vendor_name,
         latitude: item.latitude,
         longitude: item.longitude,
+        address: item.address,
         verification_status: item.verification_status
       }
     }));
