@@ -149,10 +149,11 @@
   const DEFAULT_LNG = 51.5310;
 
   async function fetchListingsByLocation(lat, lng, radiusMeters = 500000) {
-    // Call the updated Store method which handles the secure PostGIS RPC call
+    // Fall back to a general listing fetch if available so sold-out items aren't omitted
+    if (typeof Store.getListings === 'function') {
+      return await Store.getListings(lat, lng, radiusMeters);
+    }
     return await Store.getActiveListings(lat, lng, radiusMeters);
-    // 💡 Use standard Supabase table/view query (No .rpc() needed!)
-   
   }
 
   async function renderListings() {
