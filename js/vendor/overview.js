@@ -41,8 +41,8 @@
       const listings = DashboardState.cachedListings || await Store.getListingsByVendor(vendorId);
       const reservations = Store.getReservationsByVendor ? await Store.getReservationsByVendor(vendorId) : [];
 
-      console.log("Fetched listings:", listings);
-      console.log("Fetched reservations:", reservations);
+      console.log("DEBUG - Listings fetched:", listings);
+      console.log("DEBUG - Reservations fetched:", reservations);
 
       const now = new Date();
 
@@ -91,6 +91,7 @@
 
     } catch (err) {
       console.error('[overview] failed to render stats:', err);
+      throw err;
     }
   }
 
