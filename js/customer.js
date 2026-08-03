@@ -118,12 +118,15 @@
       console.log("Local End:", new Date(l.pickup_end).toString());
       console.log("Current Time:", now.toString());
 
+
       const isExpired = new Date(l.pickup_end) < now;
-      const matchesCategory = (activeFilter === 'all' || activeFilter === 'map') 
-        ? !isExpired 
-        : (activeFilter === 'expired') 
-          ? isExpired 
-          : (l.category === activeFilter && !isExpired);
+      const isSoldOut = l.quantity_left <= 0;
+
+      const matchesCategory = 
+        (activeFilter === 'all' || activeFilter === 'map') ? (!isExpired && !isSoldOut) :
+        (activeFilter === 'expired') ? isExpired :
+        (activeFilter === 'sold_out') ? isSoldOut :
+        (l.category === activeFilter && !isExpired && !isSoldOut);  
       
       return matchesCategory && matchesSearch(l);
     });
