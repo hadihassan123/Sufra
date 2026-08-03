@@ -70,6 +70,7 @@ js/
   vendor.js
 scripts/
   check-integrity.mjs
+  run-tests.mjs
 supabase/
   migrations/
     20260728_vendor_signup_latlng.sql
@@ -79,6 +80,7 @@ supabase/
 .gitignore
 admin.html
 codebase.txt
+combined_ayg03.txt
 eslint.config.mjs
 index.html
 package.json
@@ -187,6 +189,10 @@ insert into admin_settings (id, passcode) values (1, 'REPLACE_WITH_YOUR_REAL_PAS
   
   ]
 }
+</file>
+
+<file path="combined_ayg03.txt">
+
 </file>
 
 <file path="vendor-forgot-password.html">
@@ -504,272 +510,6 @@ jobs:
           PYEOF
 </file>
 
-<file path=".husky/pre-commit">
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-npm test
-</file>
-
-<file path="js/vendor/listings.js">
-(function () {
-
-  const listingImageInput = document.getElementById('listingImage');
-  const listingImagePreviewRow = document.getElementById('listingImagePreviewRow');
-  const listingImageFilename = document.getElementById('listingImageFilename');
-
-  // If a surplus window is live right now, default to the current time.
-  // Otherwise default to the start of the next upcoming window today
-  // (e.g. posting at 1pm defaults to 3pm; posting at 5pm — between the
-  // lunch and closing windows — defaults to 7pm; posting at 8pm, which
-  // is inside the closing window, defaults to the current time, 8pm).
-  function computeDefaultPickupStart(){
-    const now = new Date();
-    const hourNow = now.getHours() + now.getMinutes() / 60;
-    const windows = Store.SURPLUS_WINDOWS;
-
-    const liveWindow = windows.find(w => hourNow >= w.startHour && hourNow < w.endHour);
-    if(liveWindow){
-      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    }
-
-    const next = windows.find(w => w.startHour > hourNow) || windows[0];
-    const h = Math.floor(next.startHour);
-    const m = Math.round((next.startHour % 1) * 60);
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-  }
-
-  async function render(){
-    const body = document.getElementById('listingsTableBody');
-    body.innerHTML = `<tr><td colspan="5">Loading…</td></tr>`;
-    DashboardState.cachedListings = await Store.getListingsByVendor(DashboardState.vendor.id);
-    if(DashboardState.cachedListings.length === 0){
-      body.innerHTML = `<tr><td colspan="5">No listings yet — post your first item.</td></tr>`;
-      return;
-    }
-    body.innerHTML = DashboardState.cachedListings.map(l => `
-      <tr>
-        <td data-label="Item"><strong>${l.item_name}</strong></td>
-        <td data-label="Price">${Fmt.money(l.discounted_price)} <span style="opacity:.5; text-decoration:line-through;">${Fmt.money(l.original_price)}</span></td>
-        <td data-label="Stock">
-          <div class="qty-editor">
-            <button data-qty-down="${l.id}">−</button>
-            <span>${l.quantity_left}</span>
-            <button data-qty-up="${l.id}">+</button>
-          </div>
-        </td>
-        <td data-label="Pickup">${Fmt.time(l.pickup_start)}–${Fmt.time(l.pickup_end)}</td>
-        <td data-label=""><button class="icon-btn" data-edit="${l.id}">Edit</button></td>
-        <td data-label=""><button class="icon-btn" data-remove="${l.id}">Remove</button></td>
-      </tr>
-    `).join('');
-  }
-
-  // Called from the listings table's "Edit" button.
-  function loadIntoForm(listing){
-    try{
-      DashboardState.editingListingId = listing.id;
-      DashboardState.editingListingImageUrl = listing.image_url || null;
-
-      document.getElementById('itemName').value = listing.item_name || '';
-      document.getElementById('description').value = listing.description || '';
-      document.getElementById('postCategory').value = listing.category || '';
-      document.getElementById('originalPrice').value = listing.original_price;
-      document.getElementById('discountedPrice').value = listing.discounted_price;
-      document.getElementById('quantity').value = listing.quantity_total;
-
-      const start = new Date(listing.pickup_start);
-      const end = new Date(listing.pickup_end);
-      const toHHMM = (d) => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-      document.getElementById('pickupStart').value = toHHMM(start);
-      document.getElementById('pickupEnd').value = toHHMM(end);
-
-      // File inputs can't be pre-filled by script — leave it empty and
-      // tell the vendor the existing photo stays unless they pick a new one.
-      document.getElementById('listingImage').value = '';
-      listingImagePreviewRow.style.display = listing.image_url ? 'flex' : 'none';
-      if(listing.image_url) listingImageFilename.textContent = 'Current photo (choose a new file to replace it)';
-
-      document.getElementById('postListingBtn').textContent = 'Update listing';
-      Nav.show('post');
-    }catch(err){
-      console.error('[edit listing] failed to load listing into form:', err);
-      alert('Could not load this listing for editing.');
-    }
-  }
-
-  function initPhotoPreview(){
-    try{
-      listingImageInput.addEventListener('change', () => {
-        const file = listingImageInput.files[0];
-        if(file){
-          listingImageFilename.textContent = file.name;
-          listingImagePreviewRow.style.display = 'flex';
-        } else {
-          listingImagePreviewRow.style.display = 'none';
-        }
-      });
-
-      document.getElementById('clearListingImageBtn').addEventListener('click', () => {
-        listingImageInput.value = '';
-        listingImagePreviewRow.style.display = 'none';
-      });
-    }catch(err){
-      console.error('[item photo preview] failed to wire up:', err);
-    }
-  }
-
-  function initListingsTable(){
-    try{
-      document.getElementById('listingsTableBody').addEventListener('click', async (e) => {
-        const up = e.target.closest('[data-qty-up]');
-        const down = e.target.closest('[data-qty-down]');
-        const rm = e.target.closest('[data-remove]');
-        const edit = e.target.closest('[data-edit]');
-        if(edit){
-          const listing = DashboardState.cachedListings.find(x => x.id === edit.dataset.edit);
-          if(!listing) return;
-          loadIntoForm(listing);
-          return;
-        }
-        if(up){
-          const l = DashboardState.cachedListings.find(x => x.id === up.dataset.qtyUp);
-          if(l && l.quantity_left < l.quantity_total){
-            await Store.updateListingQty(l.id, l.quantity_left + 1);
-            render();
-          }
-        }
-        if(down){
-          const l = DashboardState.cachedListings.find(x => x.id === down.dataset.qtyDown);
-          if(l && l.quantity_left > 0){
-            await Store.updateListingQty(l.id, l.quantity_left - 1);
-            render();
-          }
-        }
-        if(rm){
-          if(confirm('Remove this listing?')){
-            await Store.removeListing(rm.dataset.remove);
-            render();
-          }
-        }
-      });
-    }catch(err){
-      console.error('[listings table] failed to wire up:', err);
-    }
-  }
-
-  function initPostForm(){
-    document.getElementById('postForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const originalPrice = Number(document.getElementById('originalPrice').value);
-      const discountedPrice = Number(document.getElementById('discountedPrice').value);
-
-      if (discountedPrice >= originalPrice) {
-        alert('Discounted price must be lower than the original price.');
-        return;
-      }
-
-      const pStart = document.getElementById('pickupStart').value;
-      const pEnd = document.getElementById('pickupEnd').value;
-
-      const today = new Date();
-
-      function toDate(hhmm,base) {
-        const [h, m] = hhmm.split(':').map(Number);
-        const d = new Date(today);
-        d.setHours(h, m, 0, 0);
-        return d;
-      }
-      const startDate = toDate(pStart, today);
-      let endDate = toDate(pEnd, today);
-      if(endDate <= startDate){
-        endDate.setDate(endDate.getDate() + 1); // pickup window crosses midnight
-      }
-
-      const quantity = Number(document.getElementById('quantity').value);
-      const imageFile = document.getElementById('listingImage').files[0];
-
-      const submitBtn = e.target.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
-
-      try {
-        let imageUrl = null;
-
-        let finalImage = imageFile;
-        if (imageFile){
-          try {
-            const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1200, useWebWorker: true };
-            finalImage = await imageCompression(imageFile, options);
-          } catch (err) {
-            console.error("Compression failed, using original", err);
-            finalImage = imageFile;
-          }
-        }
-
-        if (imageFile) {
-          imageUrl = await Store.uploadListingImage(DashboardState.vendor.id, imageFile);
-        }
-
-        const payload = {
-            vendor_id: DashboardState.vendor.id,
-            item_name: document.getElementById('itemName').value.trim(),
-            description: document.getElementById('description').value.trim(),
-            category: document.getElementById('postCategory').value,
-            original_price: originalPrice,
-            discounted_price: discountedPrice,
-            quantity_total: quantity,
-            quantity_left: DashboardState.editingListingId ? DashboardState.cachedListings.find(x => x.id === DashboardState.editingListingId).quantity_left : quantity,
-            pickup_start: startDate.toISOString(),
-            pickup_end: endDate.toISOString(),
-            payment_method: 'cash',
-            image_url: imageUrl || (DashboardState.editingListingId ? DashboardState.editingListingImageUrl : null),
-            status: 'active'
-        };
-
-        if (DashboardState.editingListingId) {
-            await Store.updateListing(DashboardState.editingListingId, payload);
-        } else {
-            await Store.createListing(payload);
-        }
-        DashboardState.editingListingId = null;
-        DashboardState.editingListingImageUrl = null;
-
-        document.getElementById('postListingBtn').textContent ='Post listing';
-
-        submitBtn.disabled = false;
-
-        const msg = document.getElementById('postMsg');
-        msg.textContent = DashboardState.vendor.verification_status === 'verified'
-          ? "Listing posted — it's live on the site now."
-          : "Listing saved. It will go live once your account is verified.";
-
-        msg.className = 'form-msg success show';
-
-        e.target.reset();
-        document.getElementById('listingImage').value = '';
-        listingImagePreviewRow.style.display = 'none';
-
-        setTimeout(() => Nav.show('listings'), 900);
-
-      } catch (err) {
-        alert('Could not post listing: ' + err.message);
-        submitBtn.disabled = false;
-      }
-    });
-  }
-
-  function init(){
-    initPhotoPreview();
-    initListingsTable();
-    initPostForm();
-  }
-
-  window.Listings = { init, render, loadIntoForm, computeDefaultPickupStart };
-
-})();
-</file>
-
 <file path="js/vendor/sidebar.js">
 // Sidebar identity — split from js/vendor.js on 2026-07-30.
 // Runs after DashboardState.vendor has been loaded.
@@ -958,74 +698,6 @@ const Fmt = {
     return glyphs[category] || '🍴';
   }
 };
-</file>
-
-<file path="scripts/check-integrity.mjs">
-/* global console, process */
-import fs from 'fs';
-
-console.log('🔍 Running Sufra DOM & Script Integrity Check...\n');
-let hasErrors = false;
-
-// ----------------------------------------------------
-// 1. MANUAL CHECK LIST (Opt-in)
-// Add specific critical IDs you want to guarantee exist.
-// Leave empty [] if you only want the automated check.
-// ----------------------------------------------------
-const requiredElements = {
-  'index.html': [], // e.g. ['listings-grid']
-  'vendor-dashboard.html': [] // e.g. ['vendor-pickup-code-input']
-};
-
-// ----------------------------------------------------
-// 2. AUTOMATED HTML SCANNER
-// ----------------------------------------------------
-const htmlFiles = fs.readdirSync('.').filter(file => file.endsWith('.html'));
-
-htmlFiles.forEach(file => {
-  const content = fs.readFileSync(file, 'utf8');
-
-  // A. AUTOMATED: Check for duplicate IDs
-  const idRegex = /id=["']([^"']+)["']/g;
-  const foundIds = [];
-  let match;
-
-  while ((match = idRegex.exec(content)) !== null) {
-    foundIds.push(match[1]);
-  }
-
-  const duplicates = foundIds.filter((id, index) => foundIds.indexOf(id) !== index);
-  if (duplicates.length > 0) {
-    console.error(`❌ DOM ERROR in ${file}: Duplicate IDs found -> [${[...new Set(duplicates)].join(', ')}]`);
-    hasErrors = true;
-  }
-
-  // B. AUTOMATED: Check for broken <script src="..."> files
-  const scriptRegex = /src=["'](js\/[^"']+)["']/g;
-  while ((match = scriptRegex.exec(content)) !== null) {
-    const scriptPath = match[1];
-    if (!fs.existsSync(scriptPath)) {
-      console.error(`❌ SCRIPT ERROR in ${file}: Missing script file "${scriptPath}"`);
-      hasErrors = true;
-    }
-  }
-
-  // C. MANUAL: Verify required elements defined in map above
-  if (requiredElements[file] && requiredElements[file].length > 0) {
-    requiredElements[file].forEach(id => {
-      if (!content.includes(`id="${id}"`)) {
-        console.error(`❌ DOM ERROR in ${file}: Missing manually required ID "#${id}"`);
-        hasErrors = true;
-      }
-    });
-  }
-});
-
-if (!hasErrors) {
-  console.log(`✅ Passed! Checked ${htmlFiles.length} HTML files for broken scripts, duplicate IDs, and manual rules.\n`);
-} else {
-  process.exit(1);
-}
 </file>
 
 <file path="supabase/migrations/20260728_vendor_signup_latlng.sql">
@@ -10584,6 +10256,281 @@ One reservation at a time.
 - Provide affordable meals while promoting sustainability.
 </file>
 
+<file path=".husky/pre-commit">
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+npm run test:all
+</file>
+
+<file path="js/vendor/listings.js">
+(function () {
+
+  const listingImageInput = document.getElementById('listingImage');
+  const listingImagePreviewRow = document.getElementById('listingImagePreviewRow');
+  const listingImageFilename = document.getElementById('listingImageFilename');
+
+  // If a surplus window is live right now, default to the current time.
+  // Otherwise default to the start of the next upcoming window today
+  // (e.g. posting at 1pm defaults to 3pm; posting at 5pm — between the
+  // lunch and closing windows — defaults to 7pm; posting at 8pm, which
+  // is inside the closing window, defaults to the current time, 8pm).
+  function computeDefaultPickupStart(){
+    const now = new Date();
+    const hourNow = now.getHours() + now.getMinutes() / 60;
+    const windows = Store.SURPLUS_WINDOWS;
+
+    const liveWindow = windows.find(w => hourNow >= w.startHour && hourNow < w.endHour);
+    if(liveWindow){
+      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+
+    const next = windows.find(w => w.startHour > hourNow) || windows[0];
+    const h = Math.floor(next.startHour);
+    const m = Math.round((next.startHour % 1) * 60);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  function statusFor(l){
+    if(l.quantity_left <= 0) return { key: 'sold_out', label: 'Sold out' };
+    if(new Date(l.pickup_end) < new Date()) return { key: 'expired', label: 'Expired' };
+    return { key: 'active', label: 'Active' };
+  }
+
+  async function render(){
+    const body = document.getElementById('listingsTableBody');
+    body.innerHTML = `<tr><td colspan="5">Loading…</td></tr>`;
+    DashboardState.cachedListings = await Store.getListingsByVendor(DashboardState.vendor.id);
+    if(DashboardState.cachedListings.length === 0){
+      body.innerHTML = `<tr><td colspan="5">No listings yet — post your first item.</td></tr>`;
+      return;
+    }
+    body.innerHTML = DashboardState.cachedListings.map(l => {
+      const status = statusFor(l);
+      return `
+      <tr>
+        <td data-label="Item"><strong>${l.item_name}</strong> <span class="status-pill status-${status.key}">${status.label}</span></td>
+        <td data-label="Price">${Fmt.money(l.discounted_price)} <span style="opacity:.5; text-decoration:line-through;">${Fmt.money(l.original_price)}</span></td>
+        <td data-label="Stock">
+          <div class="qty-editor">
+            <button data-qty-down="${l.id}">−</button>
+            <span>${l.quantity_left}</span>
+            <button data-qty-up="${l.id}">+</button>
+          </div>
+        </td>
+        <td data-label="Pickup">${Fmt.time(l.pickup_start)}–${Fmt.time(l.pickup_end)}</td>
+        <td data-label=""><button class="icon-btn" data-edit="${l.id}">Edit</button></td>
+        <td data-label=""><button class="icon-btn" data-remove="${l.id}">Remove</button></td>
+      </tr>
+    `;
+    }).join('');
+  }
+
+  // Called from the listings table's "Edit" button.
+  function loadIntoForm(listing){
+    try{
+      DashboardState.editingListingId = listing.id;
+      DashboardState.editingListingImageUrl = listing.image_url || null;
+
+      document.getElementById('itemName').value = listing.item_name || '';
+      document.getElementById('description').value = listing.description || '';
+      document.getElementById('postCategory').value = listing.category || '';
+      document.getElementById('originalPrice').value = listing.original_price;
+      document.getElementById('discountedPrice').value = listing.discounted_price;
+      document.getElementById('quantity').value = listing.quantity_total;
+
+      const start = new Date(listing.pickup_start);
+      const end = new Date(listing.pickup_end);
+      const toHHMM = (d) => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      document.getElementById('pickupStart').value = toHHMM(start);
+      document.getElementById('pickupEnd').value = toHHMM(end);
+
+      // File inputs can't be pre-filled by script — leave it empty and
+      // tell the vendor the existing photo stays unless they pick a new one.
+      document.getElementById('listingImage').value = '';
+      listingImagePreviewRow.style.display = listing.image_url ? 'flex' : 'none';
+      if(listing.image_url) listingImageFilename.textContent = 'Current photo (choose a new file to replace it)';
+
+      document.getElementById('postListingBtn').textContent = 'Update listing';
+      Nav.show('post');
+    }catch(err){
+      console.error('[edit listing] failed to load listing into form:', err);
+      alert('Could not load this listing for editing.');
+    }
+  }
+
+  function initPhotoPreview(){
+    try{
+      listingImageInput.addEventListener('change', () => {
+        const file = listingImageInput.files[0];
+        if(file){
+          listingImageFilename.textContent = file.name;
+          listingImagePreviewRow.style.display = 'flex';
+        } else {
+          listingImagePreviewRow.style.display = 'none';
+        }
+      });
+
+      document.getElementById('clearListingImageBtn').addEventListener('click', () => {
+        listingImageInput.value = '';
+        listingImagePreviewRow.style.display = 'none';
+      });
+    }catch(err){
+      console.error('[item photo preview] failed to wire up:', err);
+    }
+  }
+
+  function initListingsTable(){
+    try{
+      document.getElementById('listingsTableBody').addEventListener('click', async (e) => {
+        const up = e.target.closest('[data-qty-up]');
+        const down = e.target.closest('[data-qty-down]');
+        const rm = e.target.closest('[data-remove]');
+        const edit = e.target.closest('[data-edit]');
+        if(edit){
+          const listing = DashboardState.cachedListings.find(x => x.id === edit.dataset.edit);
+          if(!listing) return;
+          loadIntoForm(listing);
+          return;
+        }
+        if(up){
+          const l = DashboardState.cachedListings.find(x => x.id === up.dataset.qtyUp);
+          if(l && l.quantity_left < l.quantity_total){
+            await Store.updateListingQty(l.id, l.quantity_left + 1);
+            render();
+          }
+        }
+        if(down){
+          const l = DashboardState.cachedListings.find(x => x.id === down.dataset.qtyDown);
+          if(l && l.quantity_left > 0){
+            await Store.updateListingQty(l.id, l.quantity_left - 1);
+            render();
+          }
+        }
+        if(rm){
+          if(confirm('Remove this listing?')){
+            await Store.removeListing(rm.dataset.remove);
+            render();
+          }
+        }
+      });
+    }catch(err){
+      console.error('[listings table] failed to wire up:', err);
+    }
+  }
+
+  function initPostForm(){
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const originalPrice = Number(document.getElementById('originalPrice').value);
+      const discountedPrice = Number(document.getElementById('discountedPrice').value);
+
+      if (discountedPrice >= originalPrice) {
+        alert('Discounted price must be lower than the original price.');
+        return;
+      }
+
+      const pStart = document.getElementById('pickupStart').value;
+      const pEnd = document.getElementById('pickupEnd').value;
+
+      const today = new Date();
+
+      function toDate(hhmm,base) {
+        const [h, m] = hhmm.split(':').map(Number);
+        const d = new Date(today);
+        d.setHours(h, m, 0, 0);
+        return d;
+      }
+      const startDate = toDate(pStart, today);
+      let endDate = toDate(pEnd, today);
+      if(endDate <= startDate){
+        endDate.setDate(endDate.getDate() + 1); // pickup window crosses midnight
+      }
+
+      const quantity = Number(document.getElementById('quantity').value);
+      const imageFile = document.getElementById('listingImage').files[0];
+
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+
+      try {
+        let imageUrl = null;
+
+        let finalImage = imageFile;
+        if (imageFile){
+          try {
+            const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1200, useWebWorker: true };
+            finalImage = await imageCompression(imageFile, options);
+          } catch (err) {
+            console.error("Compression failed, using original", err);
+            finalImage = imageFile;
+          }
+        }
+
+        if (imageFile) {
+          imageUrl = await Store.uploadListingImage(DashboardState.vendor.id, imageFile);
+        }
+
+        const payload = {
+            vendor_id: DashboardState.vendor.id,
+            item_name: document.getElementById('itemName').value.trim(),
+            description: document.getElementById('description').value.trim(),
+            category: document.getElementById('postCategory').value,
+            original_price: originalPrice,
+            discounted_price: discountedPrice,
+            quantity_total: quantity,
+            quantity_left: DashboardState.editingListingId ? DashboardState.cachedListings.find(x => x.id === DashboardState.editingListingId).quantity_left : quantity,
+            pickup_start: startDate.toISOString(),
+            pickup_end: endDate.toISOString(),
+            payment_method: 'cash',
+            image_url: imageUrl || (DashboardState.editingListingId ? DashboardState.editingListingImageUrl : null),
+            status: 'active'
+        };
+
+        if (DashboardState.editingListingId) {
+            await Store.updateListing(DashboardState.editingListingId, payload);
+        } else {
+            await Store.createListing(payload);
+        }
+        DashboardState.editingListingId = null;
+        DashboardState.editingListingImageUrl = null;
+
+        document.getElementById('postListingBtn').textContent ='Post listing';
+
+        submitBtn.disabled = false;
+
+        const msg = document.getElementById('postMsg');
+        msg.textContent = DashboardState.vendor.verification_status === 'verified'
+          ? "Listing posted — it's live on the site now."
+          : "Listing saved. It will go live once your account is verified.";
+
+        msg.className = 'form-msg success show';
+
+        e.target.reset();
+        document.getElementById('listingImage').value = '';
+        listingImagePreviewRow.style.display = 'none';
+
+        setTimeout(() => Nav.show('listings'), 900);
+
+      } catch (err) {
+        alert('Could not post listing: ' + err.message);
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  function init(){
+    initPhotoPreview();
+    initListingsTable();
+    initPostForm();
+  }
+
+  window.Listings = { init, render, loadIntoForm, computeDefaultPickupStart };
+
+})();
+</file>
+
 <file path="js/vendor/navigation.js">
 (function(){
 
@@ -10781,34 +10728,61 @@ const LocationPicker = (() => {
 })();
 </file>
 
-<file path="package.json">
-{
-  "name": "sufra",
-  "version": "1.0.0",
-  "description": "Sufra is a food surplus marketplace that connects bakeries, cafés, restaurants, hotels, grocery stores, and other food businesses with customers looking for discounted surplus food before it goes to waste.",
-  "main": "index.js",
-  "scripts": {
-    "test": "node scripts/check-integrity.mjs && eslint .",
-    "prepare": "husky install"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/hadihassan123/Sufra.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/hadihassan123/Sufra/issues"
-  },
-  "homepage": "https://github.com/hadihassan123/Sufra#readme",
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "eslint": "^10.8.0",
-    "eslint-plugin-html": "^8.1.4",
-    "husky": "^8.0.0"
-  }
+<file path="scripts/run-tests.mjs">
+/* global console, process */
+import { spawn } from 'child_process';
+import readline from 'readline';
+
+function runCommand(command, args) {
+  const child = spawn(command, args, { stdio: 'inherit', shell: true });
+  child.on('exit', (code) => {
+    process.exit(code);
+  });
+}
+
+// ----------------------------------------------------
+// 1. AUTOMATED / NON-INTERACTIVE MODE (Git Hooks / CI)
+// ----------------------------------------------------
+if (!process.stdin.isTTY) {
+  console.log('🤖 Non-interactive environment detected. Running full test suite...\n');
+  runCommand('npm', ['run', 'test:all']);
+} else {
+  // ----------------------------------------------------
+  // 2. INTERACTIVE TERMINAL MENU (Manual `npm test`)
+  // ----------------------------------------------------
+  console.clear();
+  console.log('🧪 === Sufra Test Suite ===\n');
+  console.log('1) 🔍 Run DOM & Script Integrity Check');
+  console.log('2) 🧹 Run ESLint');
+  console.log('3) 🚀 Run BOTH (Full Suite)');
+  console.log('4) ❌ Exit\n');
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  rl.question('Select an option (1-4): ', (answer) => {
+    rl.close();
+    switch (answer.trim()) {
+      case '1':
+        runCommand('node', ['scripts/check-integrity.mjs']);
+        break;
+      case '2':
+        runCommand('npx', ['eslint', '.']);
+        break;
+      case '3':
+        runCommand('npm', ['run', 'test:all']);
+        break;
+      case '4':
+        console.log('Exiting tests.');
+        process.exit(0);
+        break;
+      default:
+        console.error('❌ Invalid option!');
+        process.exit(1);
+    }
+  });
 }
 </file>
 
@@ -11010,197 +10984,6 @@ const LocationPicker = (() => {
   }
 
   window.Logo = { init, render };
-
-})();
-</file>
-
-<file path="js/vendor/overview.js">
-(function () {
-
-    let currentFilter = 'today';
-    let rawListings = [];
-    let rawReservations = [];
-
-    function isSameDay(d1, d2) {
-        return d1.getFullYear() === d2.getFullYear() &&
-               d1.getMonth() === d2.getMonth() &&
-               d1.getDate() === d2.getDate();
-    }
-
-    function isWithinRange(dateStr, filter) {
-        if (filter === 'all') return true;
-        const itemDate = new Date(dateStr);
-        const now = new Date();
-
-        if (filter === 'today') return isSameDay(itemDate, now);
-        if (filter === 'week') {
-            const sevenDaysAgo = new Date(now);
-            sevenDaysAgo.setDate(now.getDate() - 7);
-            return itemDate >= sevenDaysAgo && itemDate <= now;
-        }
-        if (filter === 'month') {
-            return itemDate.getFullYear() === now.getFullYear() &&
-                   itemDate.getMonth() === now.getMonth();
-        }
-        return true;
-    }
-
-    async function render() {
-        const [listings, reservations] = await Promise.all([
-            Store.getListingsByVendor(DashboardState.vendor.id),
-            Store.getReservationsByVendor(DashboardState.vendor.id)
-        ]);
-        
-        rawListings = listings || [];
-        rawReservations = reservations || [];
-
-        ensureFilterControls();
-        updateDashboard();
-    }
-
-    function ensureFilterControls() {
-        const container = document.getElementById('statActive')?.parentElement?.parentElement;
-        if (!container || document.getElementById('analyticsFilterGroup')) return;
-
-        const filterWrapper = document.createElement('div');
-        filterWrapper.id = 'analyticsFilterGroup';
-        filterWrapper.style.cssText = 'display: flex; gap: 8px; margin-bottom: 20px;';
-
-        ['today', 'week', 'month', 'all'].forEach(id => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = `filter-btn ${id === currentFilter ? 'active' : ''}`;
-            btn.textContent = id === 'all' ? 'All Time' : id.charAt(0).toUpperCase() + id.slice(1);
-            btn.onclick = () => {
-                currentFilter = id;
-                document.querySelectorAll('#analyticsFilterGroup .filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                updateDashboard();
-            };
-            filterWrapper.appendChild(btn);
-        });
-
-        container.parentNode.insertBefore(filterWrapper, container);
-    }
-
-    function updateDashboard() {
-        const now = new Date();
-
-        const filteredListings = rawListings.filter(l => isWithinRange(l.created_at, currentFilter));
-        const filteredReservations = rawReservations.filter(r => isWithinRange(r.created_at, currentFilter));
-
-        // Phase 1 definitions
-        const activeListings = filteredListings.filter(l => new Date(l.pickup_end) >= now && l.quantity_left > 0);
-        const expiredListings = filteredListings.filter(l => new Date(l.pickup_end) < now && l.quantity_left > 0);
-        const soldOutListings = filteredListings.filter(l => l.quantity_left <= 0);
-
-        const reservedItems = filteredReservations.filter(r => r.status === 'reserved');
-        const collectedItems = filteredReservations.filter(r => r.status === 'collected');
-
-        if (document.getElementById('statActive')) document.getElementById('statActive').textContent = activeListings.length;
-        if (document.getElementById('statSoldOut')) document.getElementById('statSoldOut').textContent = soldOutListings.length;
-        if (document.getElementById('statExpired')) document.getElementById('statExpired').textContent = expiredListings.length;
-        if (document.getElementById('statReserved')) document.getElementById('statReserved').textContent = reservedItems.length;
-        if (document.getElementById('statCollected')) document.getElementById('statCollected').textContent = collectedItems.length;
-
-        // Phase 2 calculations
-        const totalRevenue = collectedItems.reduce((sum, r) => sum + (Number(r.price) * (r.quantity || 1)), 0);
-        const totalReservationsCount = filteredReservations.length;
-        const collectionRate = totalReservationsCount > 0 ? Math.round((collectedItems.length / totalReservationsCount) * 100) : 0;
-        const unsoldFoodItems = expiredListings.reduce((sum, l) => sum + l.quantity_left, 0);
-
-        const listingMap = new Map(rawListings.map(l => [l.id, l]));
-        const moneySaved = collectedItems.reduce((sum, r) => {
-            const original = listingMap.get(r.listing_id);
-            return original ? sum + ((original.original_price - original.discounted_price) * (r.quantity || 1)) : sum;
-        }, 0);
-
-        renderDerivedMetricsRow({
-            revenue: totalRevenue,
-            reservations: totalReservationsCount,
-            collectionRate: collectionRate,
-            unsoldItems: unsoldFoodItems,
-            moneySaved: moneySaved,
-            collectedItems: collectedItems
-        });
-    }
-
-    function renderDerivedMetricsRow(metrics) {
-        let row = document.getElementById('derivedMetricsRow');
-        if (!row) {
-            row = document.createElement('div');
-            row.id = 'derivedMetricsRow';
-            row.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 20px;';
-            const primaryCardContainer = document.getElementById('statActive')?.parentElement?.parentElement;
-            if (primaryCardContainer) primaryCardContainer.parentNode.insertBefore(row, primaryCardContainer.nextSibling);
-        }
-
-        row.innerHTML = `
-            <div id="metricCardRevenue" style="cursor:pointer; border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
-                <small style="color:#64748b; font-size:12px;">Revenue (${currentFilter})</small>
-                <h3 style="margin:4px 0 0; font-size:18px;">${Fmt.money(metrics.revenue)}</h3>
-            </div>
-            <div style="border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
-                <small style="color:#64748b; font-size:12px;">Reservations</small>
-                <h3 style="margin:4px 0 0; font-size:18px;">${metrics.reservations}</h3>
-            </div>
-            <div style="border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
-                <small style="color:#64748b; font-size:12px;">Collection Rate</small>
-                <h3 style="margin:4px 0 0; font-size:18px;">${metrics.collectionRate}%</h3>
-            </div>
-            <div style="border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
-                <small style="color:#64748b; font-size:12px;">Unsold Food</small>
-                <h3 style="margin:4px 0 0; font-size:18px;">${metrics.unsoldItems} items</h3>
-            </div>
-            <div style="border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
-                <small style="color:#64748b; font-size:12px;">Money Saved</small>
-                <h3 style="margin:4px 0 0; font-size:18px;">${Fmt.money(metrics.moneySaved)}</h3>
-            </div>
-        `;
-
-        document.getElementById('metricCardRevenue').onclick = () => {
-            showRevenueBreakdownModal(metrics.collectedItems, metrics.revenue);
-        };
-    }
-
-    function showRevenueBreakdownModal(collectedItems, totalRevenue) {
-        let modal = document.getElementById('revenueModal');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'revenueModal';
-            modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:9999;';
-            document.body.appendChild(modal);
-        }
-
-        const itemsListHtml = collectedItems.length === 0
-            ? `<p style="color:#64748b; text-align:center; padding: 12px 0;">No collected orders found for this period.</p>`
-            : collectedItems.map(item => `
-                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f1f5f9;">
-                    <span><strong style="margin-right:8px;">${Fmt.time(item.created_at)}</strong> ${item.item_name} ${item.quantity > 1 ? `(x${item.quantity})` : ''}</span>
-                    <span>${Fmt.money(Number(item.price) * (item.quantity || 1))}</span>
-                </div>
-            `).join('');
-
-        modal.innerHTML = `
-            <div style="background:#fff; border-radius:12px; width:100%; max-width:440px; padding:20px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                    <h3 style="margin:0;">Revenue Breakdown (${currentFilter})</h3>
-                    <button id="closeRevenueModal" style="border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
-                </div>
-                <div style="max-height:300px; overflow-y:auto; margin-bottom:16px;">
-                    ${itemsListHtml}
-                </div>
-                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px; border-top:2px solid #e2e8f0; padding-top:12px;">
-                    <span>TOTAL</span>
-                    <span>${Fmt.money(totalRevenue)}</span>
-                </div>
-            </div>
-        `;
-
-        modal.style.display = 'flex';
-        document.getElementById('closeRevenueModal').onclick = () => { modal.style.display = 'none'; };
-        modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
-    }
 
 })();
 </file>
@@ -11479,6 +11262,74 @@ DashboardState.onReady(async function(){
 });
 </file>
 
+<file path="scripts/check-integrity.mjs">
+/* global console, process */
+import fs from 'fs';
+
+console.log('🔍 Running Sufra DOM & Script Integrity Check...\n');
+let hasErrors = false;
+
+// ----------------------------------------------------
+// 1. MANUAL CHECK LIST (Opt-in)
+// Add specific critical IDs you want to guarantee exist.
+// Leave empty [] if you only want the automated check.
+// ----------------------------------------------------
+const requiredElements = {
+  'index.html': [], // e.g. ['listings-grid']
+  'vendor-dashboard.html': [] // e.g. ['vendor-pickup-code-input']
+};
+
+// ----------------------------------------------------
+// 2. AUTOMATED HTML SCANNER
+// ----------------------------------------------------
+const htmlFiles = fs.readdirSync('.').filter(file => file.endsWith('.html'));
+
+htmlFiles.forEach(file => {
+  const content = fs.readFileSync(file, 'utf8');
+
+  // A. AUTOMATED: Check for duplicate IDs
+  const idRegex = /id=["']([^"']+)["']/g;
+  const foundIds = [];
+  let match;
+
+  while ((match = idRegex.exec(content)) !== null) {
+    foundIds.push(match[1]);
+  }
+
+  const duplicates = foundIds.filter((id, index) => foundIds.indexOf(id) !== index);
+  if (duplicates.length > 0) {
+    console.error(`❌ DOM ERROR in ${file}: Duplicate IDs found -> [${[...new Set(duplicates)].join(', ')}]`);
+    hasErrors = true;
+  }
+
+  // B. AUTOMATED: Check for broken <script src="..."> files
+  const scriptRegex = /src=["'](js\/[^"']+)["']/g;
+  while ((match = scriptRegex.exec(content)) !== null) {
+    const scriptPath = match[1];
+    if (!fs.existsSync(scriptPath)) {
+      console.error(`❌ SCRIPT ERROR in ${file}: Missing script file "${scriptPath}"`);
+      hasErrors = true;
+    }
+  }
+
+  // C. MANUAL: Verify required elements defined in map above
+  if (requiredElements[file] && requiredElements[file].length > 0) {
+    requiredElements[file].forEach(id => {
+      if (!content.includes(`id="${id}"`)) {
+        console.error(`❌ DOM ERROR in ${file}: Missing manually required ID "#${id}"`);
+        hasErrors = true;
+      }
+    });
+  }
+});
+
+if (!hasErrors) {
+  console.log(`✅ Passed! Checked ${htmlFiles.length} HTML files for broken scripts, duplicate IDs, and manual rules.\n`);
+} else {
+  process.exit(1);
+}
+</file>
+
 <file path="supabase/schema.sql">
 -- Sufra database schema
 -- Reconstructed from the live Supabase project (yplswfpbcssfmgeejcpy) on 2026-07-28
@@ -11719,326 +11570,304 @@ grant execute on function is_admin(uuid) to anon, authenticated;
 -- ============================================================
 </file>
 
-<file path="js/store.js">
-/* Sufra data layer — backed by Supabase (Postgres + Auth).
-   Requires js/supabase-client.js loaded first (defines `sb`). */
+<file path="package.json">
+{
+  "name": "sufra",
+  "version": "1.0.0",
+  "description": "Sufra is a food surplus marketplace that connects bakeries, cafés, restaurants, hotels, grocery stores, and other food businesses with customers looking for discounted surplus food before it goes to waste.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node scripts/run-tests.mjs",
+    "test:integrity": "node scripts/check-integrity.mjs",
+    "test:lint": "eslint .",
+    "test:all": "npm run test:integrity && npm run test:lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hadihassan123/Sufra.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/hadihassan123/Sufra/issues"
+  },
+  "homepage": "https://github.com/hadihassan123/Sufra#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.0",
+    "eslint-plugin-html": "^8.1.4",
+    "husky": "^8.0.0"
+  }
+}
+</file>
 
+<file path="js/vendor/overview.js">
+(function () {
 
-const Store = (() => {
-  // Shared surplus windows — used by the homepage time dial (customer.js)
-  // and to auto-fill the vendor's pickup start time (vendor.js).
-  const SURPLUS_WINDOWS = [
-    { startHour: 10, endHour: 12, label: 'Morning surplus' },
-    { startHour: 15, endHour: 16.5, label: 'Lunch-service surplus' },
-    { startHour: 22, endHour: 24, label: 'Closing-time surplus' }
-  ];
+  const listingImageInput = document.getElementById('listingImage');
+  const listingImagePreviewRow = document.getElementById('listingImagePreviewRow');
+  const listingImageFilename = document.getElementById('listingImageFilename');
 
-  function pickupCode(){
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
-    let out = '';
-    for(let i=0;i<6;i++) out += chars[Math.floor(Math.random()*chars.length)];
-    return out;
+  // If a surplus window is live right now, default to the current time.
+  // Otherwise default to the start of the next upcoming window today
+  // (e.g. posting at 1pm defaults to 3pm; posting at 5pm — between the
+  // lunch and closing windows — defaults to 7pm; posting at 8pm, which
+  // is inside the closing window, defaults to the current time, 8pm).
+  function computeDefaultPickupStart(){
+    const now = new Date();
+    const hourNow = now.getHours() + now.getMinutes() / 60;
+    const windows = Store.SURPLUS_WINDOWS;
+
+    const liveWindow = windows.find(w => hourNow >= w.startHour && hourNow < w.endHour);
+    if(liveWindow){
+      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+
+    const next = windows.find(w => w.startHour > hourNow) || windows[0];
+    const h = Math.floor(next.startHour);
+    const m = Math.round((next.startHour % 1) * 60);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
-  // ---- auth / vendor identity ----
-  async function signUpVendor({ email, password, businessName, category, area, address, latitude, longitude }){
-    const { data, error } = await sb.auth.signUp({
-      email, password,
-      options: {
-        data: { business_name: businessName, category, area, address, latitude, longitude }
+  function statusFor(l){
+    if(l.quantity_left <= 0) return { key: 'sold_out', label: 'Sold out' };
+    if(new Date(l.pickup_end) < new Date()) return { key: 'expired', label: 'Expired' };
+    return { key: 'active', label: 'Active' };
+  }
+
+  async function render(){
+    const body = document.getElementById('listingsTableBody');
+    body.innerHTML = `<tr><td colspan="5">Loading…</td></tr>`;
+    DashboardState.cachedListings = await Store.getListingsByVendor(DashboardState.vendor.id);
+    if(DashboardState.cachedListings.length === 0){
+      body.innerHTML = `<tr><td colspan="5">No listings yet — post your first item.</td></tr>`;
+      return;
+    }
+    body.innerHTML = DashboardState.cachedListings.map(l => {
+      const status = statusFor(l);
+      return `
+      <tr>
+        <td data-label="Item"><strong>${l.item_name}</strong> <span class="status-pill status-${status.key}">${status.label}</span></td>
+        <td data-label="Price">${Fmt.money(l.discounted_price)} <span style="opacity:.5; text-decoration:line-through;">${Fmt.money(l.original_price)}</span></td>
+        <td data-label="Stock">
+          <div class="qty-editor">
+            <button data-qty-down="${l.id}">−</button>
+            <span>${l.quantity_left}</span>
+            <button data-qty-up="${l.id}">+</button>
+          </div>
+        </td>
+        <td data-label="Pickup">${Fmt.time(l.pickup_start)}–${Fmt.time(l.pickup_end)}</td>
+        <td data-label=""><button class="icon-btn" data-edit="${l.id}">Edit</button></td>
+        <td data-label=""><button class="icon-btn" data-remove="${l.id}">Remove</button></td>
+      </tr>
+    `;
+    }).join('');
+  }
+
+  // Called from the listings table's "Edit" button.
+  function loadIntoForm(listing){
+    try{
+      DashboardState.editingListingId = listing.id;
+      DashboardState.editingListingImageUrl = listing.image_url || null;
+
+      document.getElementById('itemName').value = listing.item_name || '';
+      document.getElementById('description').value = listing.description || '';
+      document.getElementById('postCategory').value = listing.category || '';
+      document.getElementById('originalPrice').value = listing.original_price;
+      document.getElementById('discountedPrice').value = listing.discounted_price;
+      document.getElementById('quantity').value = listing.quantity_total;
+
+      const start = new Date(listing.pickup_start);
+      const end = new Date(listing.pickup_end);
+      const toHHMM = (d) => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      document.getElementById('pickupStart').value = toHHMM(start);
+      document.getElementById('pickupEnd').value = toHHMM(end);
+
+      // File inputs can't be pre-filled by script — leave it empty and
+      // tell the vendor the existing photo stays unless they pick a new one.
+      document.getElementById('listingImage').value = '';
+      listingImagePreviewRow.style.display = listing.image_url ? 'flex' : 'none';
+      if(listing.image_url) listingImageFilename.textContent = 'Current photo (choose a new file to replace it)';
+
+      document.getElementById('postListingBtn').textContent = 'Update listing';
+      Nav.show('post');
+    }catch(err){
+      console.error('[edit listing] failed to load listing into form:', err);
+      alert('Could not load this listing for editing.');
+    }
+  }
+
+  function initPhotoPreview(){
+    try{
+      listingImageInput.addEventListener('change', () => {
+        const file = listingImageInput.files[0];
+        if(file){
+          listingImageFilename.textContent = file.name;
+          listingImagePreviewRow.style.display = 'flex';
+        } else {
+          listingImagePreviewRow.style.display = 'none';
+        }
+      });
+
+      document.getElementById('clearListingImageBtn').addEventListener('click', () => {
+        listingImageInput.value = '';
+        listingImagePreviewRow.style.display = 'none';
+      });
+    }catch(err){
+      console.error('[item photo preview] failed to wire up:', err);
+    }
+  }
+
+  function initListingsTable(){
+    try{
+      document.getElementById('listingsTableBody').addEventListener('click', async (e) => {
+        const up = e.target.closest('[data-qty-up]');
+        const down = e.target.closest('[data-qty-down]');
+        const rm = e.target.closest('[data-remove]');
+        const edit = e.target.closest('[data-edit]');
+        if(edit){
+          const listing = DashboardState.cachedListings.find(x => x.id === edit.dataset.edit);
+          if(!listing) return;
+          loadIntoForm(listing);
+          return;
+        }
+        if(up){
+          const l = DashboardState.cachedListings.find(x => x.id === up.dataset.qtyUp);
+          if(l && l.quantity_left < l.quantity_total){
+            await Store.updateListingQty(l.id, l.quantity_left + 1);
+            render();
+          }
+        }
+        if(down){
+          const l = DashboardState.cachedListings.find(x => x.id === down.dataset.qtyDown);
+          if(l && l.quantity_left > 0){
+            await Store.updateListingQty(l.id, l.quantity_left - 1);
+            render();
+          }
+        }
+        if(rm){
+          if(confirm('Remove this listing?')){
+            await Store.removeListing(rm.dataset.remove);
+            render();
+          }
+        }
+      });
+    }catch(err){
+      console.error('[listings table] failed to wire up:', err);
+    }
+  }
+
+  function initPostForm(){
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const originalPrice = Number(document.getElementById('originalPrice').value);
+      const discountedPrice = Number(document.getElementById('discountedPrice').value);
+
+      if (discountedPrice >= originalPrice) {
+        alert('Discounted price must be lower than the original price.');
+        return;
+      }
+
+      const pStart = document.getElementById('pickupStart').value;
+      const pEnd = document.getElementById('pickupEnd').value;
+
+      const today = new Date();
+
+      function toDate(hhmm,base) {
+        const [h, m] = hhmm.split(':').map(Number);
+        const d = new Date(today);
+        d.setHours(h, m, 0, 0);
+        return d;
+      }
+      const startDate = toDate(pStart, today);
+      let endDate = toDate(pEnd, today);
+      if(endDate <= startDate){
+        endDate.setDate(endDate.getDate() + 1); // pickup window crosses midnight
+      }
+
+      const quantity = Number(document.getElementById('quantity').value);
+      const imageFile = document.getElementById('listingImage').files[0];
+
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+
+      try {
+        let imageUrl = null;
+
+        let finalImage = imageFile;
+        if (imageFile){
+          try {
+            const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1200, useWebWorker: true };
+            finalImage = await imageCompression(imageFile, options);
+          } catch (err) {
+            console.error("Compression failed, using original", err);
+            finalImage = imageFile;
+          }
+        }
+
+        if (imageFile) {
+          imageUrl = await Store.uploadListingImage(DashboardState.vendor.id, imageFile);
+        }
+
+        const payload = {
+            vendor_id: DashboardState.vendor.id,
+            item_name: document.getElementById('itemName').value.trim(),
+            description: document.getElementById('description').value.trim(),
+            category: document.getElementById('postCategory').value,
+            original_price: originalPrice,
+            discounted_price: discountedPrice,
+            quantity_total: quantity,
+            quantity_left: DashboardState.editingListingId ? DashboardState.cachedListings.find(x => x.id === DashboardState.editingListingId).quantity_left : quantity,
+            pickup_start: startDate.toISOString(),
+            pickup_end: endDate.toISOString(),
+            payment_method: 'cash',
+            image_url: imageUrl || (DashboardState.editingListingId ? DashboardState.editingListingImageUrl : null),
+            status: 'active'
+        };
+
+        if (DashboardState.editingListingId) {
+            await Store.updateListing(DashboardState.editingListingId, payload);
+        } else {
+            await Store.createListing(payload);
+        }
+        DashboardState.editingListingId = null;
+        DashboardState.editingListingImageUrl = null;
+
+        document.getElementById('postListingBtn').textContent ='Post listing';
+
+        submitBtn.disabled = false;
+
+        const msg = document.getElementById('postMsg');
+        msg.textContent = DashboardState.vendor.verification_status === 'verified'
+          ? "Listing posted — it's live on the site now."
+          : "Listing saved. It will go live once your account is verified.";
+
+        msg.className = 'form-msg success show';
+
+        e.target.reset();
+        document.getElementById('listingImage').value = '';
+        listingImagePreviewRow.style.display = 'none';
+
+        setTimeout(() => Nav.show('listings'), 900);
+
+      } catch (err) {
+        alert('Could not post listing: ' + err.message);
+        submitBtn.disabled = false;
       }
     });
-    if(error) throw error;
-    return { needsConfirmation: !data.session };
   }
 
-  async function signInVendor({ email, password }){
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if(error) throw error;
-    return data;
+  function init(){
+    initPhotoPreview();
+    initListingsTable();
+    initPostForm();
   }
 
-  async function signOutVendor(){
-    await sb.auth.signOut();
-  }
+  window.Listings = { init, render, loadIntoForm, computeDefaultPickupStart };
 
-  async function requestPasswordReset(email){
-    const { error } = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/vendor-reset-password.html'
-    });
-    if(error) throw error;
-  }
-
-  async function updatePassword(newPassword){
-    const { error } = await sb.auth.updateUser({ password: newPassword });
-    if(error) throw error;
-  }
-
-  async function getSession(){
-    const { data } = await sb.auth.getSession();
-    return data.session;
-  }
-
-  async function getVendorProfile(userId){
-    const { data, error } = await sb.from('vendors').select('*').eq('id', userId).maybeSingle();
-    if(error) throw error;
-    return data;
-  }
-
-  // Saves address + coordinates together, always as one write — a vendor's
-  // pin and its address text should never be able to drift out of sync.
-  async function updateVendorPin(vendorId, { address, latitude, longitude }){
-    const { error } = await sb
-      .from('vendors')
-      .update({ address, latitude, longitude })
-      .eq('id', vendorId);
-    if(error) throw error;
-  }
-
-  // ---- vendor verification documents ----
-  const DOC_COLUMNS = {
-    cr: 'cr_document_path',
-    moph: 'moph_document_path',
-    municipality: 'municipality_document_path'
-  };
-
-  async function uploadVendorDocument(vendorId, docType, file){
-    const column = DOC_COLUMNS[docType];
-    if(!column) throw new Error('Unknown document type: ' + docType);
-
-    const ext = file.name.split('.').pop();
-    const path = `${vendorId}/${docType}-${Date.now()}.${ext}`;
-
-    const { error: uploadError } = await sb.storage
-      .from('vendor-documents')
-      .upload(path, file, { upsert: false });
-    if(uploadError) throw uploadError;
-
-    const { error: updateError } = await sb
-      .from('vendors')
-      .update({ [column]: path, documents_submitted_at: new Date().toISOString() })
-      .eq('id', vendorId);
-    if(updateError) throw updateError;
-
-    return path;
-  }
-
-  async function getVendorDocumentUrl(path){
-    const { data, error } = await sb.storage
-      .from('vendor-documents')
-      .createSignedUrl(path, 300); // 5 minutes
-    if(error) throw error;
-    return data.signedUrl;
-  }
-
-  // ---- vendor logo ----
-  async function uploadVendorLogo(vendorId, file){
-    const ext = file.name.split('.').pop();
-    const path = `${vendorId}/logo-${Date.now()}.${ext}`;
-
-    const { error: uploadError } = await sb.storage
-      .from('listing-images')
-      .upload(path, file, { upsert: false });
-    if(uploadError) throw uploadError;
-
-    const { data } = sb.storage.from('listing-images').getPublicUrl(path);
-
-    const { error: updateError } = await sb
-      .from('vendors')
-      .update({ logo_url: data.publicUrl })
-      .eq('id', vendorId);
-    if(updateError) throw updateError;
-
-    return data.publicUrl;
-  }
-
-  async function removeVendorLogo(vendorId){
-    const { error } = await sb.from('vendors').update({ logo_url: null }).eq('id', vendorId);
-    if(error) throw error;
-  }
-
-  // ---- listings ----
-  async function uploadListingImage(vendorId, file){
-    const ext = file.name.split('.').pop();
-    const path = `${vendorId}/${crypto.randomUUID()}.${ext}`;
-
-    const { error } = await sb.storage
-      .from('listing-images')
-      .upload(path, file);
-    if(error) throw error;
-
-    const { data } = sb.storage.from('listing-images').getPublicUrl(path);
-    return data.publicUrl;
-  }
-
-  async function getActiveListings(){
-    const { data, error } = await sb
-      .from('listings')
-      .select('*, vendors(business_name,logo_url, verification_status,latitude, longitude, area, address)')
-      .in('status', ['active', 'sold_out'])
-      .order('pickup_start', { ascending: true });
-
-    if(error) throw error;
-    return data;
-  }
-
-  async function getListing(id){
-    const { data, error } = await sb
-      .from('listings').select('*, vendors(business_name, logo_url, verification_status,latitude,longitude,address)').eq('id', id).maybeSingle();
-    if(error) throw error;
-    return data;
-  }
-
-  async function getListingsByVendor(vendorId){
-    const { data, error } = await sb
-      .from('listings').select('*')
-      .eq('vendor_id', vendorId).eq('status', 'active')
-      .order('created_at', { ascending: false });
-    if(error) throw error;
-    return data;
-  }
-
-  async function createListing(payload){
-    const { data, error } = await sb.from('listings').insert(payload).select().single();
-    if(error) throw error;
-    return data;
-  }
-  async function updateListing(id, payload){
-
-      const { data, error } = await sb
-          .from('listings')
-          .update(payload)
-          .eq('id', id)
-          .select()
-          .single();
-
-      if(error) throw error;
-      return data;
-
-  }
-
-  async function updateListingQty(id, newQty){
-    const status = newQty <= 0 ? 'sold_out' : 'active';
-
-    const { error } = await sb
-      .from('listings')
-      .update({
-        quantity_left: newQty,
-        status
-      })
-      .eq('id', id);
-
-    if(error) throw error;
-
-  }
-
-  async function removeListing(id){
-    const { error } = await sb.from('listings').update({ status: 'removed' }).eq('id', id);
-    if(error) throw error;
-
-  }
-
-    // ---- reservations ----
-  async function createReservation(listing, customerName, customerPhone, quantity){
-    const qty = Math.max(1, Number(quantity) || 1);
-    const { data, error } = await sb.from('reservations').insert({
-      listing_id: listing.id,
-      vendor_id: listing.vendor_id,
-      vendor_name: listing.vendors ? listing.vendors.business_name : '',
-      item_name: listing.item_name,
-      price: listing.discounted_price * qty,
-      quantity: qty,
-      customer_name: customerName,
-      customer_phone: customerPhone,
-      pickup_code: pickupCode(),
-      pickup_start: listing.pickup_start,
-      pickup_end: listing.pickup_end
-    }).select().single();
-    if(error) throw error;
-    return data;
-  }
-
-  async function getReservationsByPhone(phone){
-    const { data, error } = await sb
-      .from('reservations').select('*')
-      .eq('customer_phone', phone)
-      .order('created_at', { ascending: false });
-    if(error) throw error;
-    return data;
-  }
-
-  async function findReservationByCode(code){
-    const { data, error } = await sb
-      .from('reservations').select('*')
-      .eq('pickup_code', code.toUpperCase()).maybeSingle();
-    if(error) throw error;
-    return data;
-  }
-  async function getReservation(id){
-    const { data, error } = await sb
-        .from('reservations')
-        .select('*')
-         .eq('id', id)
-         .maybeSingle();
-
-    if(error) throw error;
-
-    return data;
-  }
-
-  async function markCollected(id){
-    const { error } = await sb.from('reservations').update({ status: 'collected' }).eq('id', id);
-    if(error) throw error;
-  }
-
-  async function getReservationsByVendor(vendorId){
-    const { data, error } = await sb
-      .from('reservations').select('*')
-      .eq('vendor_id', vendorId)
-      .order('created_at', { ascending: false });
-    if(error) throw error;
-    return data;
-  }
-
-  // ---- admin ----
-  async function getAllVendors(){
-    const { data, error } = await sb.from('vendors').select('*').order('created_at', { ascending: false });
-    if(error) throw error;
-    return data;
-  }
-
-  async function approveVendor(vendorId, passcode){
-    const { data, error } = await sb.rpc('approve_vendor', { target_id: vendorId, given_passcode: passcode });
-    if(error) throw error;
-    return data;
-  }
-
-  async function revokeVendor(vendorId, passcode){
-    const { data, error } = await sb.rpc('revoke_vendor', { target_id: vendorId, given_passcode: passcode });
-    if(error) throw error;
-    return data;
-  }
-
-  async function verifyAdminPasscode(passcode){
-    const { data, error } = await sb.rpc('verify_admin_passcode', { given_passcode: passcode });
-    if(error) throw error;
-    return data;
-  }
-
-  async function isAdmin(userId){
-    const { data, error } = await sb.rpc('is_admin', { check_id: userId });
-    if(error) throw error;
-    return data;
-  }
-
-  return {
-    SURPLUS_WINDOWS,
-    signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,updateVendorPin,
-    uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
-    getActiveListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
-    createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected, getReservationsByVendor,
-    getAllVendors, approveVendor, revokeVendor, verifyAdminPasscode, isAdmin
-  };
 })();
 </file>
 
@@ -12274,6 +12103,347 @@ const Store = (() => {
 <script src="js/doha-clock.js"></script>
 </body>
 </html>
+</file>
+
+<file path="js/store.js">
+/* Sufra data layer — backed by Supabase (Postgres + Auth).
+   Requires js/supabase-client.js loaded first (defines `sb`). */
+
+
+const Store = (() => {
+  // Shared surplus windows — used by the homepage time dial (customer.js)
+  // and to auto-fill the vendor's pickup start time (vendor.js).
+  const SURPLUS_WINDOWS = [
+    { startHour: 10, endHour: 12, label: 'Morning surplus' },
+    { startHour: 15, endHour: 16.5, label: 'Lunch-service surplus' },
+    { startHour: 22, endHour: 24, label: 'Closing-time surplus' }
+  ];
+
+  function pickupCode(){
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
+    let out = '';
+    for(let i=0;i<6;i++) out += chars[Math.floor(Math.random()*chars.length)];
+    return out;
+  }
+
+  // ---- auth / vendor identity ----
+  async function signUpVendor({ email, password, businessName, category, area, address, latitude, longitude }){
+    const { data, error } = await sb.auth.signUp({
+      email, password,
+      options: {
+        data: { business_name: businessName, category, area, address, latitude, longitude }
+      }
+    });
+    if(error) throw error;
+    return { needsConfirmation: !data.session };
+  }
+
+  async function signInVendor({ email, password }){
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if(error) throw error;
+    return data;
+  }
+
+  async function signOutVendor(){
+    await sb.auth.signOut();
+  }
+
+  async function requestPasswordReset(email){
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/vendor-reset-password.html'
+    });
+    if(error) throw error;
+  }
+
+  async function updatePassword(newPassword){
+    const { error } = await sb.auth.updateUser({ password: newPassword });
+    if(error) throw error;
+  }
+
+  async function getSession(){
+    const { data } = await sb.auth.getSession();
+    return data.session;
+  }
+
+  async function getVendorProfile(userId){
+    const { data, error } = await sb.from('vendors').select('*').eq('id', userId).maybeSingle();
+    if(error) throw error;
+    return data;
+  }
+
+  // Saves address + coordinates together, always as one write — a vendor's
+  // pin and its address text should never be able to drift out of sync.
+  async function updateVendorPin(vendorId, { address, latitude, longitude }){
+    const { error } = await sb
+      .from('vendors')
+      .update({ address, latitude, longitude })
+      .eq('id', vendorId);
+    if(error) throw error;
+  }
+
+  // ---- vendor verification documents ----
+  const DOC_COLUMNS = {
+    cr: 'cr_document_path',
+    moph: 'moph_document_path',
+    municipality: 'municipality_document_path'
+  };
+
+  async function uploadVendorDocument(vendorId, docType, file){
+    const column = DOC_COLUMNS[docType];
+    if(!column) throw new Error('Unknown document type: ' + docType);
+
+    const ext = file.name.split('.').pop();
+    const path = `${vendorId}/${docType}-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await sb.storage
+      .from('vendor-documents')
+      .upload(path, file, { upsert: false });
+    if(uploadError) throw uploadError;
+
+    const { error: updateError } = await sb
+      .from('vendors')
+      .update({ [column]: path, documents_submitted_at: new Date().toISOString() })
+      .eq('id', vendorId);
+    if(updateError) throw updateError;
+
+    return path;
+  }
+
+  async function getVendorDocumentUrl(path){
+    const { data, error } = await sb.storage
+      .from('vendor-documents')
+      .createSignedUrl(path, 300); // 5 minutes
+    if(error) throw error;
+    return data.signedUrl;
+  }
+
+  // ---- vendor logo ----
+  async function uploadVendorLogo(vendorId, file){
+    const ext = file.name.split('.').pop();
+    const path = `${vendorId}/logo-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await sb.storage
+      .from('listing-images')
+      .upload(path, file, { upsert: false });
+    if(uploadError) throw uploadError;
+
+    const { data } = sb.storage.from('listing-images').getPublicUrl(path);
+
+    const { error: updateError } = await sb
+      .from('vendors')
+      .update({ logo_url: data.publicUrl })
+      .eq('id', vendorId);
+    if(updateError) throw updateError;
+
+    return data.publicUrl;
+  }
+
+  async function removeVendorLogo(vendorId){
+    const { error } = await sb.from('vendors').update({ logo_url: null }).eq('id', vendorId);
+    if(error) throw error;
+  }
+
+  // ---- listings ----
+  async function uploadListingImage(vendorId, file){
+    const ext = file.name.split('.').pop();
+    const path = `${vendorId}/${crypto.randomUUID()}.${ext}`;
+
+    const { error } = await sb.storage
+      .from('listing-images')
+      .upload(path, file);
+    if(error) throw error;
+
+    const { data } = sb.storage.from('listing-images').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  async function getActiveListings() {
+  const DEFAULT_LAT = 25.2854;
+  const DEFAULT_LNG = 51.5310;
+
+  // Fetch using the PostGIS RPC function we created
+  const { data, error } = await supabase.rpc('nearby_listings', {
+    user_lat: DEFAULT_LAT,
+    user_long: DEFAULT_LNG,
+    radius_meters: 500000
+  });
+
+  if (error) {
+    console.error('Error fetching via RPC:', error);
+    throw error;
+  }
+
+  // Map fields to match what your existing cards expect (e.g., nesting vendors object)
+  return (data || []).map(item => ({
+    ...item,
+    vendors: {
+      id: item.vendor_id,
+      business_name: item.vendor_name,
+      address: item.vendor_address,
+      latitude: DEFAULT_LAT,
+      longitude: DEFAULT_LNG
+    }
+  }));
+}
+
+  async function getListing(id){
+    const { data, error } = await sb
+      .from('listings').select('*, vendors(business_name, logo_url, verification_status,latitude,longitude,address)').eq('id', id).maybeSingle();
+    if(error) throw error;
+    return data;
+  }
+
+  async function getListingsByVendor(vendorId){
+    const { data, error } = await sb
+      .from('listings').select('*')
+      .eq('vendor_id', vendorId).neq('status', 'removed')
+      .order('created_at', { ascending: false });
+    if(error) throw error;
+    return data;
+  }
+
+  async function createListing(payload){
+    const { data, error } = await sb.from('listings').insert(payload).select().single();
+    if(error) throw error;
+    return data;
+  }
+  async function updateListing(id, payload){
+
+      const { data, error } = await sb
+          .from('listings')
+          .update(payload)
+          .eq('id', id)
+          .select()
+          .single();
+
+      if(error) throw error;
+      return data;
+
+  }
+
+  async function updateListingQty(id, newQty){
+    const status = newQty <= 0 ? 'sold_out' : 'active';
+
+    const { error } = await sb
+      .from('listings')
+      .update({
+        quantity_left: newQty,
+        status
+      })
+      .eq('id', id);
+
+    if(error) throw error;
+
+  }
+
+  async function removeListing(id){
+    const { error } = await sb.from('listings').update({ status: 'removed' }).eq('id', id);
+    if(error) throw error;
+
+  }
+
+    // ---- reservations ----
+  async function createReservation(listing, customerName, customerPhone, quantity){
+    const qty = Math.max(1, Number(quantity) || 1);
+    const { data, error } = await sb.from('reservations').insert({
+      listing_id: listing.id,
+      vendor_id: listing.vendor_id,
+      vendor_name: listing.vendors ? listing.vendors.business_name : '',
+      item_name: listing.item_name,
+      price: listing.discounted_price * qty,
+      quantity: qty,
+      customer_name: customerName,
+      customer_phone: customerPhone,
+      pickup_code: pickupCode(),
+      pickup_start: listing.pickup_start,
+      pickup_end: listing.pickup_end
+    }).select().single();
+    if(error) throw error;
+    return data;
+  }
+
+  async function getReservationsByPhone(phone){
+    const { data, error } = await sb
+      .from('reservations').select('*')
+      .eq('customer_phone', phone)
+      .order('created_at', { ascending: false });
+    if(error) throw error;
+    return data;
+  }
+
+  async function findReservationByCode(code){
+    const { data, error } = await sb
+      .from('reservations').select('*')
+      .eq('pickup_code', code.toUpperCase()).maybeSingle();
+    if(error) throw error;
+    return data;
+  }
+  async function getReservation(id){
+    const { data, error } = await sb
+        .from('reservations')
+        .select('*')
+         .eq('id', id)
+         .maybeSingle();
+
+    if(error) throw error;
+
+    return data;
+  }
+
+  async function markCollected(id){
+    const { error } = await sb.from('reservations').update({ status: 'collected' }).eq('id', id);
+    if(error) throw error;
+  }
+
+  async function getReservationsByVendor(vendorId){
+    const { data, error } = await sb
+      .from('reservations').select('*')
+      .eq('vendor_id', vendorId)
+      .order('created_at', { ascending: false });
+    if(error) throw error;
+    return data;
+  }
+
+  // ---- admin ----
+  async function getAllVendors(){
+    const { data, error } = await sb.from('vendors').select('*').order('created_at', { ascending: false });
+    if(error) throw error;
+    return data;
+  }
+
+  async function approveVendor(vendorId, passcode){
+    const { data, error } = await sb.rpc('approve_vendor', { target_id: vendorId, given_passcode: passcode });
+    if(error) throw error;
+    return data;
+  }
+
+  async function revokeVendor(vendorId, passcode){
+    const { data, error } = await sb.rpc('revoke_vendor', { target_id: vendorId, given_passcode: passcode });
+    if(error) throw error;
+    return data;
+  }
+
+  async function verifyAdminPasscode(passcode){
+    const { data, error } = await sb.rpc('verify_admin_passcode', { given_passcode: passcode });
+    if(error) throw error;
+    return data;
+  }
+
+  async function isAdmin(userId){
+    const { data, error } = await sb.rpc('is_admin', { check_id: userId });
+    if(error) throw error;
+    return data;
+  }
+
+  return {
+    SURPLUS_WINDOWS,
+    signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,updateVendorPin,
+    uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
+    getActiveListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
+    createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected, getReservationsByVendor,
+    getAllVendors, approveVendor, revokeVendor, verifyAdminPasscode, isAdmin
+  };
+})();
 </file>
 
 <file path="index.html">
@@ -12713,6 +12883,526 @@ const Store = (() => {
 </script>
 </body>
 </html>
+</file>
+
+<file path="js/customer.js">
+(() => {
+  let activeFilter = 'all';
+  let searchQuery = '';
+  let pendingListing = null;
+  let cachedActiveListings = [];
+
+  // === NEW: MAP VIEW LOGIC ===
+  let map = null;
+  let markers = [];
+  const AREA_COORDS = {
+    'lusail': [25.41, 51.51],
+    'west bay': [25.32, 51.53],
+    'doha jadeed': [25.28, 51.53],
+    'al sadd': [25.28, 51.50],
+    'msheireb': [25.28, 51.52],
+    'the pearl': [25.37, 51.55],
+    'al wakrah': [25.17, 51.60]
+  };
+
+    function renderMap(listings) {
+    if (!map) {
+      map = L.map('mapView').setView([25.30, 51.51], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap'
+      }).addTo(map);
+    }
+
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    // Group active listings by vendor so one pin = one place, popup = all items there
+    const byVendor = new Map();
+    listings.forEach(l => {
+      const vendorId = l.vendor_id || l.vendors?.id || 'unknown';
+      if (!byVendor.has(vendorId)) byVendor.set(vendorId, []);
+      byVendor.get(vendorId).push(l);
+    });
+
+    byVendor.forEach(vendorListings => {
+      const first = vendorListings[0];
+      let coords;
+      if (first.vendors?.latitude && first.vendors?.longitude) {
+        coords = [first.vendors.latitude, first.vendors.longitude];
+      } else {
+        const area = (first.vendors?.area || '').toLowerCase().trim();
+        coords = AREA_COORDS[area] || [25.28, 51.53];
+      }
+
+      const businessName = first.vendors?.business_name || 'Vendor';
+      const itemsHtml = vendorListings.map(l => {
+        const soldOut = l.quantity_left <= 0;
+        const price = l.discounted_price;
+        const btn = soldOut
+          ? `<button class="btn btn-ghost btn-sm" style="width:100%; margin-top:6px;" disabled>Sold out</button>`
+          : `<button class="btn btn-teal btn-sm" style="width:100%; margin-top:6px;" onclick="window.openReserveModal('${l.id}')">Reserve</button>`;
+        return `
+          <div style="padding:8px 0; border-top:1px solid #eee;">
+            <strong style="display:block;">${l.item_name}</strong>
+            <span style="font-weight:bold; color:#2F6E67;">QAR ${price}</span>
+            <span style="font-size:0.85em; color:#666;"> · ${l.quantity_left} left</span>
+            ${btn}
+          </div>`;
+      }).join('');
+
+      const marker = L.marker(coords).addTo(map);
+      marker.bindPopup(`
+        <div class="map-popup">
+          <div class="map-popup-title">${businessName}</div>
+          <div class="map-popup-meta">${vendorListings.length} item${vendorListings.length > 1 ? 's' : ''}</div>
+          ${itemsHtml}
+        </div>
+      `, { maxWidth: 300 });
+    });
+
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+  }
+
+  window.openReserveModal = openReserveModal;
+  // === END MAP VIEW ===
+
+  const grid = document.getElementById('listingGrid');
+  const filterBar = document.getElementById('filterBar');
+  const searchInput = document.getElementById('searchInput');
+
+  // Fmt.money()/Fmt.pct()/Fmt.time()/Fmt.categoryGlyph() moved to js/utils.js as Fmt.* —
+  // was previously duplicated identically in js/vendor.js.
+
+  function timeAgo(iso){
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if(mins < 1) return 'just now';
+    if(mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if(hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  }
+
+  function matchesSearch(l){
+    if(!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const vendorName = l.vendors ? l.vendors.business_name : '';
+    return (
+      l.item_name.toLowerCase().includes(q) ||
+      (l.description || '').toLowerCase().includes(q) ||
+      vendorName.toLowerCase().includes(q) ||
+      l.category.toLowerCase().includes(q)
+    );
+  }
+
+  function applyFiltersAndRender(){
+    const now = new Date();
+    const filtered = cachedActiveListings.filter(l => {
+      // PRESERVED LOGS
+      console.log("Checking listing:", l.pickup_end);
+      console.log("Local End:", new Date(l.pickup_end).toString());
+      console.log("Current Time:", now.toString());
+
+      const isExpired = new Date(l.pickup_end) < now;
+      const matchesCategory = (activeFilter === 'all' || activeFilter === 'map') 
+        ? !isExpired 
+        : (activeFilter === 'expired') 
+          ? isExpired 
+          : (l.category === activeFilter && !isExpired);
+      
+      return matchesCategory && matchesSearch(l);
+    });
+
+    if (activeFilter === 'map') {
+      grid.style.display = 'none';
+      document.getElementById('mapView').style.display = 'block';
+      setTimeout(() => {
+          renderMap(filtered);
+      },200); 
+    } else {
+      grid.style.display = 'grid';
+      document.getElementById('mapView').style.display = 'none';
+      renderListingGrid(filtered);
+    }  
+  }
+
+  // Default coordinates (Doha Center) if user denies location permission
+  const DEFAULT_LAT = 25.2854;
+  const DEFAULT_LNG = 51.5310;
+
+  async function fetchListingsByLocation(lat, lng, radiusMeters = 500000) {
+    // 💡 Use standard Supabase table/view query (No .rpc() needed!)
+    const { data, error } = await supabase
+      .from('active_listings_view')
+      .select('*');
+
+    if (error) {
+      console.error('Database View Error:', error);
+      throw error;
+    }
+
+    // Map rows into the structure expected by renderListingGrid & renderMap
+    return (data || []).map(item => ({
+      ...item,
+      vendors: {
+        id: item.vendor_id,
+        business_name: item.vendor_name,
+        address: item.vendor_address,
+        latitude: item.vendor_lat || lat,
+        longitude: item.vendor_lng || lng
+      }
+    }));
+  }
+
+  async function renderListings() {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Loading nearby listings…</h3></div>`;
+    
+    try {
+      // 1. Attempt to get real user GPS location
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            try {
+              cachedActiveListings = await fetchListingsByLocation(pos.coords.latitude, pos.coords.longitude);
+              applyFiltersAndRender();
+            } catch (err) {
+              fallbackToDefaultCoords(err);
+            }
+          },
+          (err) => {
+            // Location access denied or timed out — fallback gracefully
+            fallbackToDefaultCoords(err);
+          },
+          { timeout: 5000 }
+        );
+      } else {
+        await fallbackToDefaultCoords(null);
+      }
+    } catch (err) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Couldn't load listings</h3><p>${err.message}</p></div>`;
+    }
+  }
+
+  async function fallbackToDefaultCoords(geoError) {
+    if (geoError) console.warn('Geolocation unavailable/denied, defaulting to central Doha:', geoError);
+    try {
+      cachedActiveListings = await fetchListingsByLocation(DEFAULT_LAT, DEFAULT_LNG);
+      applyFiltersAndRender();
+    } catch (err) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Couldn't load listings</h3><p>${err.message}</p></div>`;
+    }
+  }
+
+  function renderListingGrid(filtered){
+    if(filtered.length === 0){
+      const noun = searchQuery ? 'matches' : 'listings';
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+        <h3>No ${noun} right now</h3>
+        <p>${searchQuery ? 'Try a different search term, or clear it to see everything.' : 'Check back later, or try a different category.'}</p>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(l => {
+      const soldOut = l.quantity_left <= 0;
+      const isExpired = new Date(l.pickup_end) < new Date();
+      const vendorName = l.vendors ? l.vendors.business_name : '';
+      const vendorAddress = l.vendors ? l.vendors.address : '';
+      const vendorLat = l.vendors ? l.vendors.latitude : null;
+      const vendorLng = l.vendors ? l.vendors.longitude : null;
+      const logoUrl = l.vendors ? l.vendors.logo_url : null;
+      const isVerified = l.vendors && l.vendors.verification_status === 'verified';
+      const discountPct = Fmt.pct(l.original_price, l.discounted_price);
+      // Coordinates are the source of truth for navigation, address is just
+      // the display label — if the vendor edits the text ("near Lulu"),
+      // the pin still points at the exact saved location, not the words.
+      const mapsUrl = (vendorLat && vendorLng)
+        ? `https://www.google.com/maps/search/?api=1&query=${vendorLat},${vendorLng}`
+        : (vendorAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(vendorAddress)}` : null);
+      
+      return `
+      <div class="ticket-card">
+        <div class="ticket-photo">
+          ${l.image_url
+            ? `<img class="ticket-image" src="${l.image_url}" alt="${l.item_name}" loading="lazy">`
+            : ''
+          }
+          <span class="ticket-photo-fallback" aria-hidden="true">${Fmt.categoryGlyph(l.category)}</span>
+          <span class="discount-tag">${discountPct}% off</span>
+        </div>
+        <div class="ticket ${isExpired ? 'expired' : (soldOut ? 'sold-out' : '')}">
+          <div class="ticket-main">
+            <div class="ticket-top">
+              <span class="ticket-vendor">
+                ${logoUrl ? `<img class="ticket-vendor-logo" src="${logoUrl}" alt="">` : ''}
+                <span class="ticket-vendor-name">${vendorName}</span>
+                ${isVerified ? `<span class="verified-check">✓</span>` : ''}
+              </span>
+              ${vendorAddress ? (mapsUrl
+                ? `<a class="ticket-vendor-address" href="${mapsUrl}" target="_blank" rel="noopener">📍 ${vendorAddress}</a>`
+                : `<span class="ticket-vendor-address">📍 ${vendorAddress}</span>`
+              ) : ''}
+            </div>
+            <h3 class="ticket-item">${l.item_name}</h3>
+            <p class="ticket-desc">${l.description || ''}</p>
+            <div class="ticket-prices">
+              <span class="price-old">${Fmt.money(l.original_price)}</span>
+              <span class="price-new">${Fmt.money(l.discounted_price)}</span>
+            </div>
+            <div class="ticket-meta">
+              <span>📍 <strong>${l.category}</strong></span>
+              <span>🕐 Pickup <strong>${Fmt.time(l.pickup_start)}–${Fmt.time(l.pickup_end)}</strong></span>
+              <span class="ticket-posted">Posted ${timeAgo(l.created_at)}</span>
+            </div>
+          </div>
+          <div class="ticket-stub">
+            <button class="btn ${(isExpired || soldOut) ? 'btn-ghost' : 'btn-teal'}" ${(isExpired || soldOut) ? 'disabled' : ''} data-reserve="${l.id}">
+              ${isExpired ? 'Expired' : (soldOut ? 'Sold out' : 'Reserve')}
+            </button>
+
+            <div class="stock-info">
+              <span>${l.quantity_left}/${l.quantity_total}</span>
+              <span></span>
+              <small>available</small>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  filterBar.addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-chip');
+    if(!btn) return;
+    filterBar.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    applyFiltersAndRender();
+  });
+
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value.trim();
+    applyFiltersAndRender();
+  });
+
+  grid.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-reserve]');
+    if(!btn) return;
+    openReserveModal(btn.dataset.reserve);
+  });
+
+  const reserveOverlay = document.getElementById('reserveOverlay');
+  const confirmOverlay = document.getElementById('confirmOverlay');
+  const reserveForm = document.getElementById('reserveForm');
+  const reserveQtyValue = document.getElementById('reserveQtyValue');
+  const reserveQtyHint = document.getElementById('reserveQtyHint');
+  let reserveQty = 1;
+
+  function updateReserveQtyDisplay(){
+    reserveQtyValue.textContent = reserveQty;
+    if(pendingListing){
+      const total = pendingListing.discounted_price * reserveQty;
+      reserveQtyHint.textContent = `${pendingListing.quantity_left} / ${pendingListing.quantity_total} left · Total: ${Fmt.money(total)}`;
+    }
+  }
+
+  document.getElementById('reserveQtyDown').addEventListener('click', () => {
+    if(reserveQty > 1){ reserveQty--; updateReserveQtyDisplay(); }
+  });
+  document.getElementById('reserveQtyUp').addEventListener('click', () => {
+    if(pendingListing && reserveQty < pendingListing.quantity_left){ reserveQty++; updateReserveQtyDisplay(); }
+  });
+
+  async function openReserveModal(listingId){
+    let listing;
+    try{
+      listing = await Store.getListing(listingId);
+    }catch(err){ alert('Could not load listing: ' + err.message); return; }
+    if(!listing) return;
+    pendingListing = listing;
+    reserveQty = 1;
+    updateReserveQtyDisplay();
+    document.getElementById('reserveItemName').textContent = listing.item_name;
+    document.getElementById('reserveItemMeta').textContent =
+      `${listing.vendors?.business_name} · ${Fmt.money(listing.discounted_price)} · Pickup ${Fmt.time(listing.pickup_start)}–${Fmt.time(listing.pickup_end)}`;
+    reserveForm.reset();
+    reserveOverlay.classList.add('show');
+  }
+
+  reserveForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if(!pendingListing) return;
+    const name = document.getElementById('custName').value.trim();
+    const phone = document.getElementById('custPhone').value.trim();
+    const submitBtn = reserveForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+
+    try{
+      const res = await Store.createReservation(pendingListing, name, phone, reserveQty);
+      reserveOverlay.classList.remove('show');
+      document.getElementById('confirmCode').textContent = res.pickup_code;
+      
+      const qrContainer = document.getElementById('confirmQr');
+      qrContainer.innerHTML = '';
+      new QRCode(qrContainer, { text: res.id, width: 160, height: 160 });
+
+      document.getElementById('confirmWindow').textContent =
+        `Pickup at ${pendingListing.vendors?.business_name}, ${Fmt.time(pendingListing.pickup_start)}–${Fmt.time(pendingListing.pickup_end)}. Pay ${Fmt.money(pendingListing.discounted_price * reserveQty)} cash.`;
+
+      confirmOverlay.classList.add('show');
+      renderListings();
+    }catch(err){
+      alert('Could not reserve: ' + err.message);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+
+  document.querySelectorAll('[data-close]').forEach(el => {
+    el.addEventListener('click', () => {
+      reserveOverlay.classList.remove('show');
+      confirmOverlay.classList.remove('show');
+    });
+  });
+
+  const lookupBtn = document.getElementById('lookupBtn');
+  const pickupList = document.getElementById('pickupList');
+
+  async function renderPickups(phone){
+    pickupList.innerHTML = `<div class="empty-state"><h3>Looking…</h3></div>`;
+    try{
+      const reservations = await Store.getReservationsByPhone(phone);
+      if(reservations.length === 0){
+        pickupList.innerHTML = `<div class="empty-state"><h3>No pickups found</h3></div>`;
+        return;
+      }
+      pickupList.innerHTML = reservations.map(r => `
+        <div class="pickup-row">
+          <div class="pickup-row-info">
+            <strong>${r.item_name}${r.quantity > 1 ? ` ×${r.quantity}` : ''}</strong>
+            <span>${r.vendor_name} · ${Fmt.time(r.pickup_start)}–${Fmt.time(r.pickup_end)}</span>
+          </div>
+          <span class="pickup-code-tag">${r.pickup_code}</span>
+          <span class="status-pill status-${r.status}">${r.status}</span>
+        </div>
+      `).join('');
+    }catch(err){
+      pickupList.innerHTML = `<div class="empty-state"><h3>Error: ${err.message}</h3></div>`;
+    }
+  }
+
+  lookupBtn.addEventListener('click', () => {
+    const phone = document.getElementById('lookupPhone').value.trim();
+    if(phone) renderPickups(phone);
+  });
+
+  // ---- time-of-day dial ----
+  const dialSvg = document.getElementById('dialSvg');
+  const clockText = document.getElementById('clockText');
+  const dialStatus = document.getElementById('dialStatus');
+  const dialSub = document.getElementById('dialSub');
+
+  function angleForHour(h){ return (h / 12) * 360; }
+  function polar(cx, cy, r, angleDeg){
+    const a = (angleDeg - 90) * Math.PI / 180;
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+  }
+  function arcPath(cx, cy, r, startAngle, endAngle){
+    const s = polar(cx, cy, r, startAngle);
+    const e = polar(cx, cy, r, endAngle);
+    const largeArc = (endAngle - startAngle) % 360 > 180 ? 1 : 0;
+    return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`;
+  }
+
+  function buildDial(){
+    if(!dialSvg) return;
+    const cx = 120, cy = 120, r = 96;
+    let svg = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(246,241,227,0.18)" stroke-width="1.5"/>`;
+    for(let i=0;i<12;i++){
+      const ang = i * 30;
+      const p1 = polar(cx, cy, r, ang);
+      const p2 = polar(cx, cy, r - (i%3===0?10:5), ang);
+      svg += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(246,241,227,0.35)" stroke-width="${i%3===0?2:1}"/>`;
+    }
+    (Store.SURPLUS_WINDOWS || []).forEach(w => {
+      const startH = w.startHour % 12;
+      const endH = w.endHour % 12;
+      svg += `<path d="${arcPath(cx, cy, r, angleForHour(startH), angleForHour(endH))}"
+        fill="none" stroke="#2F6E67" stroke-width="6" stroke-linecap="round" opacity="0.85"/>`;
+    });
+    svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#E8A33D"/>`;
+    dialSvg.setAttribute('viewBox', '0 0 240 240');
+    dialSvg.innerHTML = svg;
+  }
+
+  function updateHands(){
+    if(!dialSvg) return;
+    const now = new Date();
+    const h12 = now.getHours() % 12 + now.getMinutes()/60;
+    const m = now.getMinutes() + now.getSeconds()/60;
+    const cx = 120, cy = 120;
+
+    const hourTip = polar(cx, cy, 52, angleForHour(h12));
+    const minTip = polar(cx, cy, 76, (m/60) * 360);
+    const secTip = polar(cx, cy, 84, (now.getSeconds()/60) * 360);
+
+    dialSvg.querySelectorAll('.hand').forEach(el => el.remove());
+
+    const hourLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+    hourLine.setAttribute('class','hand');
+    hourLine.setAttribute('x1', cx); hourLine.setAttribute('y1', cy);
+    hourLine.setAttribute('x2', hourTip.x); hourLine.setAttribute('y2', hourTip.y);
+    hourLine.setAttribute('stroke', '#F6F1E3'); hourLine.setAttribute('stroke-width', '4'); hourLine.setAttribute('stroke-linecap','round');
+    dialSvg.appendChild(hourLine);
+
+    const minLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+    minLine.setAttribute('class','hand');
+    minLine.setAttribute('x1', cx); minLine.setAttribute('y1', cy);
+    minLine.setAttribute('x2', minTip.x); minLine.setAttribute('y2', minTip.y);
+    minLine.setAttribute('stroke', '#E8A33D'); minLine.setAttribute('stroke-width', '2.5'); minLine.setAttribute('stroke-linecap','round');
+    dialSvg.appendChild(minLine);
+
+    const secLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    secLine.setAttribute('class', 'hand');
+    secLine.setAttribute('x1', cx); secLine.setAttribute('y1', cy);
+    secLine.setAttribute('x2', secTip.x); secLine.setAttribute('y2', secTip.y);
+    secLine.setAttribute('stroke', '#ec4e33'); secLine.setAttribute('stroke-width', '1.5'); secLine.setAttribute('stroke-linecap', 'round');
+    dialSvg.appendChild(secLine);
+
+    if(clockText) clockText.textContent = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+
+    const hourNow = now.getHours() + now.getMinutes()/60;
+    const windows = Store.SURPLUS_WINDOWS || [];
+    const inWindow = windows.find(w => {
+      if(w.endHour > 24) return hourNow >= w.startHour || hourNow < (w.endHour - 24);
+      return hourNow >= w.startHour && hourNow < w.endHour;
+    });
+    const steamEl = document.getElementById('steamSvg');
+    if(steamEl) steamEl.classList.toggle('steam-active', !!inWindow);
+    if(dialStatus){
+      if(inWindow){
+        dialStatus.firstChild.textContent = inWindow.label + ' is live';
+        if(dialSub) dialSub.textContent = 'Vendors are posting now';
+      } else {
+        const next = windows.find(w => w.startHour > hourNow) || windows[0];
+        if(next){
+          const nextH = Math.floor(next.startHour);
+          const nextM = Math.round((next.startHour % 1) * 60);
+          const label = new Date().setHours(nextH, nextM, 0, 0);
+          dialStatus.firstChild.textContent = 'Next surplus window at ' + new Date(label).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+        }
+        if(dialSub) dialSub.textContent = 'Browse today\'s listings below';
+      }
+    }
+  }
+  buildDial();
+  updateHands();
+  setInterval(updateHands, 1000);
+  renderListings();
+})();
 </file>
 
 <file path="vendor-dashboard.html">
@@ -13427,6 +14117,9 @@ body:not(.logged-in) .guest-only{ display:inline-block; }
 .status-pill{ font-size:0.7rem; font-weight:600; padding:4px 10px; border-radius:999px; text-transform:uppercase; letter-spacing:0.04em; }
 .status-reserved{ background:rgba(232,163,61,0.18); color:var(--amber-deep); }
 .status-collected{ background:rgba(47,110,103,0.15); color:var(--teal-deep); }
+.status-active{ background:rgba(47,110,103,0.15); color:var(--teal-deep); }
+.status-sold_out{ background:rgba(193,84,60,0.14); color:var(--rust); }
+.status-expired{ background:rgba(120,120,120,0.15); color:#666; }
 .status-cancelled{ background:rgba(193,84,60,0.14); color:var(--rust); }
 
 /* ---------- forms ---------- */
@@ -13867,472 +14560,6 @@ table.data-table tr:last-child td{ border-bottom:none; }
   font-size: 11px;
   margin: 0;
 }
-</file>
-
-<file path="js/customer.js">
-(() => {
-  let activeFilter = 'all';
-  let searchQuery = '';
-  let pendingListing = null;
-  let cachedActiveListings = [];
-
-  // === NEW: MAP VIEW LOGIC ===
-  let map = null;
-  let markers = [];
-  const AREA_COORDS = {
-    'lusail': [25.41, 51.51],
-    'west bay': [25.32, 51.53],
-    'doha jadeed': [25.28, 51.53],
-    'al sadd': [25.28, 51.50],
-    'msheireb': [25.28, 51.52],
-    'the pearl': [25.37, 51.55],
-    'al wakrah': [25.17, 51.60]
-  };
-
-    function renderMap(listings) {
-    if (!map) {
-      map = L.map('mapView').setView([25.30, 51.51], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap'
-      }).addTo(map);
-    }
-
-    markers.forEach(m => map.removeLayer(m));
-    markers = [];
-
-    // Group active listings by vendor so one pin = one place, popup = all items there
-    const byVendor = new Map();
-    listings.forEach(l => {
-      const vendorId = l.vendor_id || l.vendors?.id || 'unknown';
-      if (!byVendor.has(vendorId)) byVendor.set(vendorId, []);
-      byVendor.get(vendorId).push(l);
-    });
-
-    byVendor.forEach(vendorListings => {
-      const first = vendorListings[0];
-      let coords;
-      if (first.vendors?.latitude && first.vendors?.longitude) {
-        coords = [first.vendors.latitude, first.vendors.longitude];
-      } else {
-        const area = (first.vendors?.area || '').toLowerCase().trim();
-        coords = AREA_COORDS[area] || [25.28, 51.53];
-      }
-
-      const businessName = first.vendors?.business_name || 'Vendor';
-      const itemsHtml = vendorListings.map(l => {
-        const soldOut = l.quantity_left <= 0;
-        const price = l.discounted_price;
-        const btn = soldOut
-          ? `<button class="btn btn-ghost btn-sm" style="width:100%; margin-top:6px;" disabled>Sold out</button>`
-          : `<button class="btn btn-teal btn-sm" style="width:100%; margin-top:6px;" onclick="window.openReserveModal('${l.id}')">Reserve</button>`;
-        return `
-          <div style="padding:8px 0; border-top:1px solid #eee;">
-            <strong style="display:block;">${l.item_name}</strong>
-            <span style="font-weight:bold; color:#2F6E67;">QAR ${price}</span>
-            <span style="font-size:0.85em; color:#666;"> · ${l.quantity_left} left</span>
-            ${btn}
-          </div>`;
-      }).join('');
-
-      const marker = L.marker(coords).addTo(map);
-      marker.bindPopup(`
-        <div class="map-popup">
-          <div class="map-popup-title">${businessName}</div>
-          <div class="map-popup-meta">${vendorListings.length} item${vendorListings.length > 1 ? 's' : ''}</div>
-          ${itemsHtml}
-        </div>
-      `, { maxWidth: 300 });
-    });
-
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
-  }
-
-  window.openReserveModal = openReserveModal;
-  // === END MAP VIEW ===
-
-  const grid = document.getElementById('listingGrid');
-  const filterBar = document.getElementById('filterBar');
-  const searchInput = document.getElementById('searchInput');
-
-  // Fmt.money()/Fmt.pct()/Fmt.time()/Fmt.categoryGlyph() moved to js/utils.js as Fmt.* —
-  // was previously duplicated identically in js/vendor.js.
-
-  function timeAgo(iso){
-    const diffMs = Date.now() - new Date(iso).getTime();
-    const mins = Math.floor(diffMs / 60000);
-    if(mins < 1) return 'just now';
-    if(mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if(hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  }
-
-  function matchesSearch(l){
-    if(!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    const vendorName = l.vendors ? l.vendors.business_name : '';
-    return (
-      l.item_name.toLowerCase().includes(q) ||
-      (l.description || '').toLowerCase().includes(q) ||
-      vendorName.toLowerCase().includes(q) ||
-      l.category.toLowerCase().includes(q)
-    );
-  }
-
-  function applyFiltersAndRender(){
-    const now = new Date();
-    const filtered = cachedActiveListings.filter(l => {
-      // PRESERVED LOGS
-      console.log("Checking listing:", l.pickup_end);
-      console.log("Local End:", new Date(l.pickup_end).toString());
-      console.log("Current Time:", now.toString());
-
-      const isExpired = new Date(l.pickup_end) < now;
-      const matchesCategory = (activeFilter === 'all' || activeFilter === 'map') 
-        ? !isExpired 
-        : (activeFilter === 'expired') 
-          ? isExpired 
-          : (l.category === activeFilter && !isExpired);
-      
-      return matchesCategory && matchesSearch(l);
-    });
-
-    if (activeFilter === 'map') {
-      grid.style.display = 'none';
-      document.getElementById('mapView').style.display = 'block';
-      setTimeout(() => {
-          renderMap(filtered);
-      },200); 
-    } else {
-      grid.style.display = 'grid';
-      document.getElementById('mapView').style.display = 'none';
-      renderListingGrid(filtered);
-    }  
-  }
-
-  async function renderListings(){
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Loading…</h3></div>`;
-    try{
-      cachedActiveListings = await Store.getActiveListings();
-      console.log("Cached listings:", cachedActiveListings);
-      console.log("Cached count:", cachedActiveListings.length);
-    }catch(err){
-      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Couldn't load listings</h3><p>${err.message}</p></div>`;
-      return;
-    }
-    applyFiltersAndRender();
-  }
-
-  function renderListingGrid(filtered){
-    if(filtered.length === 0){
-      const noun = searchQuery ? 'matches' : 'listings';
-      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
-        <h3>No ${noun} right now</h3>
-        <p>${searchQuery ? 'Try a different search term, or clear it to see everything.' : 'Check back later, or try a different category.'}</p>
-      </div>`;
-      return;
-    }
-
-    grid.innerHTML = filtered.map(l => {
-      const soldOut = l.quantity_left <= 0;
-      const isExpired = new Date(l.pickup_end) < new Date();
-      const vendorName = l.vendors ? l.vendors.business_name : '';
-      const vendorAddress = l.vendors ? l.vendors.address : '';
-      const vendorLat = l.vendors ? l.vendors.latitude : null;
-      const vendorLng = l.vendors ? l.vendors.longitude : null;
-      const logoUrl = l.vendors ? l.vendors.logo_url : null;
-      const isVerified = l.vendors && l.vendors.verification_status === 'verified';
-      const discountPct = Fmt.pct(l.original_price, l.discounted_price);
-      // Coordinates are the source of truth for navigation, address is just
-      // the display label — if the vendor edits the text ("near Lulu"),
-      // the pin still points at the exact saved location, not the words.
-      const mapsUrl = (vendorLat && vendorLng)
-        ? `https://www.google.com/maps/search/?api=1&query=${vendorLat},${vendorLng}`
-        : (vendorAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(vendorAddress)}` : null);
-      
-      return `
-      <div class="ticket-card">
-        <div class="ticket-photo">
-          ${l.image_url
-            ? `<img class="ticket-image" src="${l.image_url}" alt="${l.item_name}" loading="lazy">`
-            : ''
-          }
-          <span class="ticket-photo-fallback" aria-hidden="true">${Fmt.categoryGlyph(l.category)}</span>
-          <span class="discount-tag">${discountPct}% off</span>
-        </div>
-        <div class="ticket ${isExpired ? 'expired' : (soldOut ? 'sold-out' : '')}">
-          <div class="ticket-main">
-            <div class="ticket-top">
-              <span class="ticket-vendor">
-                ${logoUrl ? `<img class="ticket-vendor-logo" src="${logoUrl}" alt="">` : ''}
-                <span class="ticket-vendor-name">${vendorName}</span>
-                ${isVerified ? `<span class="verified-check">✓</span>` : ''}
-              </span>
-              ${vendorAddress ? (mapsUrl
-                ? `<a class="ticket-vendor-address" href="${mapsUrl}" target="_blank" rel="noopener">📍 ${vendorAddress}</a>`
-                : `<span class="ticket-vendor-address">📍 ${vendorAddress}</span>`
-              ) : ''}
-            </div>
-            <h3 class="ticket-item">${l.item_name}</h3>
-            <p class="ticket-desc">${l.description || ''}</p>
-            <div class="ticket-prices">
-              <span class="price-old">${Fmt.money(l.original_price)}</span>
-              <span class="price-new">${Fmt.money(l.discounted_price)}</span>
-            </div>
-            <div class="ticket-meta">
-              <span>📍 <strong>${l.category}</strong></span>
-              <span>🕐 Pickup <strong>${Fmt.time(l.pickup_start)}–${Fmt.time(l.pickup_end)}</strong></span>
-              <span class="ticket-posted">Posted ${timeAgo(l.created_at)}</span>
-            </div>
-          </div>
-          <div class="ticket-stub">
-            <button class="btn ${(isExpired || soldOut) ? 'btn-ghost' : 'btn-teal'}" ${(isExpired || soldOut) ? 'disabled' : ''} data-reserve="${l.id}">
-              ${isExpired ? 'Expired' : (soldOut ? 'Sold out' : 'Reserve')}
-            </button>
-
-            <div class="stock-info">
-              <span>${l.quantity_left}/${l.quantity_total}</span>
-              <span></span>
-              <small>available</small>
-            </div>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  filterBar.addEventListener('click', (e) => {
-    const btn = e.target.closest('.filter-chip');
-    if(!btn) return;
-    filterBar.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    activeFilter = btn.dataset.filter;
-    applyFiltersAndRender();
-  });
-
-  searchInput.addEventListener('input', () => {
-    searchQuery = searchInput.value.trim();
-    applyFiltersAndRender();
-  });
-
-  grid.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-reserve]');
-    if(!btn) return;
-    openReserveModal(btn.dataset.reserve);
-  });
-
-  const reserveOverlay = document.getElementById('reserveOverlay');
-  const confirmOverlay = document.getElementById('confirmOverlay');
-  const reserveForm = document.getElementById('reserveForm');
-  const reserveQtyValue = document.getElementById('reserveQtyValue');
-  const reserveQtyHint = document.getElementById('reserveQtyHint');
-  let reserveQty = 1;
-
-  function updateReserveQtyDisplay(){
-    reserveQtyValue.textContent = reserveQty;
-    if(pendingListing){
-      const total = pendingListing.discounted_price * reserveQty;
-      reserveQtyHint.textContent = `${pendingListing.quantity_left} / ${pendingListing.quantity_total} left · Total: ${Fmt.money(total)}`;
-    }
-  }
-
-  document.getElementById('reserveQtyDown').addEventListener('click', () => {
-    if(reserveQty > 1){ reserveQty--; updateReserveQtyDisplay(); }
-  });
-  document.getElementById('reserveQtyUp').addEventListener('click', () => {
-    if(pendingListing && reserveQty < pendingListing.quantity_left){ reserveQty++; updateReserveQtyDisplay(); }
-  });
-
-  async function openReserveModal(listingId){
-    let listing;
-    try{
-      listing = await Store.getListing(listingId);
-    }catch(err){ alert('Could not load listing: ' + err.message); return; }
-    if(!listing) return;
-    pendingListing = listing;
-    reserveQty = 1;
-    updateReserveQtyDisplay();
-    document.getElementById('reserveItemName').textContent = listing.item_name;
-    document.getElementById('reserveItemMeta').textContent =
-      `${listing.vendors?.business_name} · ${Fmt.money(listing.discounted_price)} · Pickup ${Fmt.time(listing.pickup_start)}–${Fmt.time(listing.pickup_end)}`;
-    reserveForm.reset();
-    reserveOverlay.classList.add('show');
-  }
-
-  reserveForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if(!pendingListing) return;
-    const name = document.getElementById('custName').value.trim();
-    const phone = document.getElementById('custPhone').value.trim();
-    const submitBtn = reserveForm.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-
-    try{
-      const res = await Store.createReservation(pendingListing, name, phone, reserveQty);
-      reserveOverlay.classList.remove('show');
-      document.getElementById('confirmCode').textContent = res.pickup_code;
-      
-      const qrContainer = document.getElementById('confirmQr');
-      qrContainer.innerHTML = '';
-      new QRCode(qrContainer, { text: res.id, width: 160, height: 160 });
-
-      document.getElementById('confirmWindow').textContent =
-        `Pickup at ${pendingListing.vendors?.business_name}, ${Fmt.time(pendingListing.pickup_start)}–${Fmt.time(pendingListing.pickup_end)}. Pay ${Fmt.money(pendingListing.discounted_price * reserveQty)} cash.`;
-
-      confirmOverlay.classList.add('show');
-      renderListings();
-    }catch(err){
-      alert('Could not reserve: ' + err.message);
-    } finally {
-      submitBtn.disabled = false;
-    }
-  });
-
-  document.querySelectorAll('[data-close]').forEach(el => {
-    el.addEventListener('click', () => {
-      reserveOverlay.classList.remove('show');
-      confirmOverlay.classList.remove('show');
-    });
-  });
-
-  const lookupBtn = document.getElementById('lookupBtn');
-  const pickupList = document.getElementById('pickupList');
-
-  async function renderPickups(phone){
-    pickupList.innerHTML = `<div class="empty-state"><h3>Looking…</h3></div>`;
-    try{
-      const reservations = await Store.getReservationsByPhone(phone);
-      if(reservations.length === 0){
-        pickupList.innerHTML = `<div class="empty-state"><h3>No pickups found</h3></div>`;
-        return;
-      }
-      pickupList.innerHTML = reservations.map(r => `
-        <div class="pickup-row">
-          <div class="pickup-row-info">
-            <strong>${r.item_name}${r.quantity > 1 ? ` ×${r.quantity}` : ''}</strong>
-            <span>${r.vendor_name} · ${Fmt.time(r.pickup_start)}–${Fmt.time(r.pickup_end)}</span>
-          </div>
-          <span class="pickup-code-tag">${r.pickup_code}</span>
-          <span class="status-pill status-${r.status}">${r.status}</span>
-        </div>
-      `).join('');
-    }catch(err){
-      pickupList.innerHTML = `<div class="empty-state"><h3>Error: ${err.message}</h3></div>`;
-    }
-  }
-
-  lookupBtn.addEventListener('click', () => {
-    const phone = document.getElementById('lookupPhone').value.trim();
-    if(phone) renderPickups(phone);
-  });
-
-  // ---- time-of-day dial ----
-  const dialSvg = document.getElementById('dialSvg');
-  const clockText = document.getElementById('clockText');
-  const dialStatus = document.getElementById('dialStatus');
-  const dialSub = document.getElementById('dialSub');
-
-  function angleForHour(h){ return (h / 12) * 360; }
-  function polar(cx, cy, r, angleDeg){
-    const a = (angleDeg - 90) * Math.PI / 180;
-    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
-  }
-  function arcPath(cx, cy, r, startAngle, endAngle){
-    const s = polar(cx, cy, r, startAngle);
-    const e = polar(cx, cy, r, endAngle);
-    const largeArc = (endAngle - startAngle) % 360 > 180 ? 1 : 0;
-    return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`;
-  }
-
-  function buildDial(){
-    if(!dialSvg) return;
-    const cx = 120, cy = 120, r = 96;
-    let svg = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(246,241,227,0.18)" stroke-width="1.5"/>`;
-    for(let i=0;i<12;i++){
-      const ang = i * 30;
-      const p1 = polar(cx, cy, r, ang);
-      const p2 = polar(cx, cy, r - (i%3===0?10:5), ang);
-      svg += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(246,241,227,0.35)" stroke-width="${i%3===0?2:1}"/>`;
-    }
-    (Store.SURPLUS_WINDOWS || []).forEach(w => {
-      const startH = w.startHour % 12;
-      const endH = w.endHour % 12;
-      svg += `<path d="${arcPath(cx, cy, r, angleForHour(startH), angleForHour(endH))}"
-        fill="none" stroke="#2F6E67" stroke-width="6" stroke-linecap="round" opacity="0.85"/>`;
-    });
-    svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#E8A33D"/>`;
-    dialSvg.setAttribute('viewBox', '0 0 240 240');
-    dialSvg.innerHTML = svg;
-  }
-
-  function updateHands(){
-    if(!dialSvg) return;
-    const now = new Date();
-    const h12 = now.getHours() % 12 + now.getMinutes()/60;
-    const m = now.getMinutes() + now.getSeconds()/60;
-    const cx = 120, cy = 120;
-
-    const hourTip = polar(cx, cy, 52, angleForHour(h12));
-    const minTip = polar(cx, cy, 76, (m/60) * 360);
-    const secTip = polar(cx, cy, 84, (now.getSeconds()/60) * 360);
-
-    dialSvg.querySelectorAll('.hand').forEach(el => el.remove());
-
-    const hourLine = document.createElementNS('http://www.w3.org/2000/svg','line');
-    hourLine.setAttribute('class','hand');
-    hourLine.setAttribute('x1', cx); hourLine.setAttribute('y1', cy);
-    hourLine.setAttribute('x2', hourTip.x); hourLine.setAttribute('y2', hourTip.y);
-    hourLine.setAttribute('stroke', '#F6F1E3'); hourLine.setAttribute('stroke-width', '4'); hourLine.setAttribute('stroke-linecap','round');
-    dialSvg.appendChild(hourLine);
-
-    const minLine = document.createElementNS('http://www.w3.org/2000/svg','line');
-    minLine.setAttribute('class','hand');
-    minLine.setAttribute('x1', cx); minLine.setAttribute('y1', cy);
-    minLine.setAttribute('x2', minTip.x); minLine.setAttribute('y2', minTip.y);
-    minLine.setAttribute('stroke', '#E8A33D'); minLine.setAttribute('stroke-width', '2.5'); minLine.setAttribute('stroke-linecap','round');
-    dialSvg.appendChild(minLine);
-
-    const secLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    secLine.setAttribute('class', 'hand');
-    secLine.setAttribute('x1', cx); secLine.setAttribute('y1', cy);
-    secLine.setAttribute('x2', secTip.x); secLine.setAttribute('y2', secTip.y);
-    secLine.setAttribute('stroke', '#ec4e33'); secLine.setAttribute('stroke-width', '1.5'); secLine.setAttribute('stroke-linecap', 'round');
-    dialSvg.appendChild(secLine);
-
-    if(clockText) clockText.textContent = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
-
-    const hourNow = now.getHours() + now.getMinutes()/60;
-    const windows = Store.SURPLUS_WINDOWS || [];
-    const inWindow = windows.find(w => {
-      if(w.endHour > 24) return hourNow >= w.startHour || hourNow < (w.endHour - 24);
-      return hourNow >= w.startHour && hourNow < w.endHour;
-    });
-    const steamEl = document.getElementById('steamSvg');
-    if(steamEl) steamEl.classList.toggle('steam-active', !!inWindow);
-    if(dialStatus){
-      if(inWindow){
-        dialStatus.firstChild.textContent = inWindow.label + ' is live';
-        if(dialSub) dialSub.textContent = 'Vendors are posting now';
-      } else {
-        const next = windows.find(w => w.startHour > hourNow) || windows[0];
-        if(next){
-          const nextH = Math.floor(next.startHour);
-          const nextM = Math.round((next.startHour % 1) * 60);
-          const label = new Date().setHours(nextH, nextM, 0, 0);
-          dialStatus.firstChild.textContent = 'Next surplus window at ' + new Date(label).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-        }
-        if(dialSub) dialSub.textContent = 'Browse today\'s listings below';
-      }
-    }
-  }
-  buildDial();
-  updateHands();
-  setInterval(updateHands, 1000);
-  renderListings();
-})();
 </file>
 
 <file path="js/vendor.js">

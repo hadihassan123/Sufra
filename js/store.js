@@ -149,34 +149,41 @@ const Store = (() => {
     return data.publicUrl;
   }
 
-  async function getActiveListings() {
-  const DEFAULT_LAT = 25.2854;
-  const DEFAULT_LNG = 51.5310;
+  async function getActiveListings(lat = 25.2854, lng = 51.5310, radius = 500000) {
+    const { data, error } = await sb.rpc('nearby_listings', {
+      user_lat: lat,
+      user_lng: lng,
+      radius_meters: radius
+    });
 
-  // Fetch using the PostGIS RPC function we created
-  const { data, error } = await supabase.rpc('nearby_listings', {
-    user_lat: DEFAULT_LAT,
-    user_long: DEFAULT_LNG,
-    radius_meters: 500000
-  });
-
-  if (error) {
-    console.error('Error fetching via RPC:', error);
-    throw error;
-  }
-
-  // Map fields to match what your existing cards expect (e.g., nesting vendors object)
-  return (data || []).map(item => ({
-    ...item,
-    vendors: {
-      id: item.vendor_id,
-      business_name: item.vendor_name,
-      address: item.vendor_address,
-      latitude: DEFAULT_LAT,
-      longitude: DEFAULT_LNG
+    if (error) {
+      console.error('Error fetching via RPC:', error);
+      throw error;
     }
-  }));
-}
+
+    // Map RPC return fields to match what your existing cards and map expect
+    return (data || []).map(item => ({
+      id: item.listing_id,
+      vendor_id: item.vendor_id,
+      item_name: item.title,
+      description: item.description,
+      discounted_price: item.price,
+      original_price: item.original_price,
+      quantity_left: item.quantity_available,
+      quantity_total: item.quantity_available, // or map if total is tracked separately
+      pickup_start: item.pickup_start,
+      pickup_end: item.pickup_end,
+      status: item.status,
+      category: item.category || 'Restaurant', // Ensure category fallback exists if needed
+      vendors: {
+        id: item.vendor_id,
+        business_name: item.vendor_name,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        verification_status: item.verification_status
+      }
+    }));
+  }
 
   async function getListing(id){
     const { data, error } = await sb
