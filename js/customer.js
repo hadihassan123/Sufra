@@ -297,15 +297,15 @@
   let reserveQty = 1;
 
   function updateReserveQtyDisplay(){
-  reserveQtyValue.textContent = reserveQty;
-  if(pendingListing){
-    const total = pendingListing.discounted_price * reserveQty;
-    const currentLeft = Math.max(0, pendingListing.quantity_left - reserveQty);
-    const totalStock = pendingListing.quantity_available || pendingListing.quantity_total;
-    
-    reserveQtyHint.textContent = `${currentLeft} / ${totalStock} left · Total: ${Fmt.money(total)}`;
+    reserveQtyValue.textContent = reserveQty;
+    if(pendingListing){
+      const total = pendingListing.discounted_price * reserveQty;
+      const currentLeft = Math.max(0, pendingListing.quantity_left - reserveQty);
+      const totalStock = pendingListing.quantity_available || pendingListing.quantity_total;
+      
+      reserveQtyHint.textContent = `${currentLeft} / ${totalStock} left · Total: ${Fmt.money(total)}`;
+    }
   }
-}
 
   document.getElementById('reserveQtyDown').addEventListener('click', () => {
     if(reserveQty > 1){ reserveQty--; updateReserveQtyDisplay(); }

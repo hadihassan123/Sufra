@@ -31,34 +31,70 @@
     return { key: 'active', label: 'Active' };
   }
 
-  async function render(){
-    const body = document.getElementById('listingsTableBody');
-    body.innerHTML = `<tr><td colspan="5">Loading…</td></tr>`;
-    DashboardState.cachedListings = await Store.getListingsByVendor(DashboardState.vendor.id);
-    if(DashboardState.cachedListings.length === 0){
-      body.innerHTML = `<tr><td colspan="5">No listings yet — post your first item.</td></tr>`;
-      return;
+  async function render() {
+    try {
+      const vendorId = DashboardState.vendor.id;
+
+      // Use cached listings if available, otherwise fetch them from the store
+      const listings = DashboardState.cachedListings || await Store.getListingsByVendor(vendorId);
+      const reservations = Store.getReservationsByVendor ? await Store.getReservationsByVendor(vendorId) : [];
+
+      const now = new Date();
+
+      let activeCount = 0;
+      let soldOutCount = 0;
+      let expiredCount = 0;
+
+      listings.forEach(l => {
+        const isSoldOut = l.quantity_left <= 0;
+        const isExpired = new Date(l.pickup_end) < now;
+
+        if (isSoldOut) {
+          soldOutCount++;
+        } else if (isExpired) {
+          expiredCount++;
+        } else {
+          activeCount++;
+        }
+      });
+
+      let reservedCount = 0;
+      let collectedCount = 0;
+
+      if (Array.isArray(reservations)) {
+        reservations.forEach(r => {
+          if (r.status === 'reserved' || r.status === 'pending') {
+            reservedCount++;
+          } else if (r.status === 'collected' || r.status === 'completed') {
+            collectedCount++;
+          }
+        });
+      }
+
+      // Update overview counter elements on the dashboard
+      const elActive = document.getElementById('statActive');
+      const elReserved = document.getElementById('statReserved');
+      const elCollected = document.getElementById('statCollected');
+      const elSoldOut = document.getElementById('statSoldOut');
+      const elExpired = document.getElementById('statExpired');
+
+      if (elActive) elActive.textContent = activeCount;
+      if (elReserved) elReserved.textContent = reservedCount;
+      if (elCollected) elCollected.textContent = collectedCount;
+      if (elSoldOut) elSoldOut.textContent = soldOutCount;
+      if (elExpired) elExpired.textContent = expiredCount;
+
+    } catch (err) {
+      console.error('[overview] failed to render stats:', err);
     }
-    body.innerHTML = DashboardState.cachedListings.map(l => {
-      const status = statusFor(l);
-      return `
-      <tr>
-        <td data-label="Item"><strong>${l.item_name}</strong> <span class="status-pill status-${status.key}">${status.label}</span></td>
-        <td data-label="Price">${Fmt.money(l.discounted_price)} <span style="opacity:.5; text-decoration:line-through;">${Fmt.money(l.original_price)}</span></td>
-        <td data-label="Stock">
-          <div class="qty-editor">
-            <button data-qty-down="${l.id}">−</button>
-            <span>${l.quantity_left}</span>
-            <button data-qty-up="${l.id}">+</button>
-          </div>
-        </td>
-        <td data-label="Pickup">${Fmt.time(l.pickup_start)}–${Fmt.time(l.pickup_end)}</td>
-        <td data-label=""><button class="icon-btn" data-edit="${l.id}">Edit</button></td>
-        <td data-label=""><button class="icon-btn" data-remove="${l.id}">Remove</button></td>
-      </tr>
-    `;
-    }).join('');
   }
+
+  function init() {
+    render();
+  }
+
+  window.Overview = { init, render };
+
 
   // Called from the listings table's "Edit" button.
   function loadIntoForm(listing){
