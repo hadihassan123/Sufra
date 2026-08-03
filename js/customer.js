@@ -355,7 +355,13 @@
         `Pickup at ${pendingListing.vendors?.business_name}, ${Fmt.time(pendingListing.pickup_start)}–${Fmt.time(pendingListing.pickup_end)}. Pay ${Fmt.money(pendingListing.discounted_price * reserveQty)} cash.`;
 
       confirmOverlay.classList.add('show');
-      renderListings();
+
+      const localItem = cachedActiveListings.find(l => l.id === pendingListing.id);
+      if (localItem) {
+        localItem.quantity_left = Math.max(0, localItem.quantity_left - reserveQty);
+      }
+      applyFiltersAndRender();
+      
     }catch(err){
       alert('Could not reserve: ' + err.message);
     } finally {
