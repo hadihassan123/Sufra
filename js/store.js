@@ -175,6 +175,7 @@ const Store = (() => {
       pickup_end: item.pickup_end,
       status: item.status,
       category: item.category || 'Restaurant', // Ensure category fallback exists if needed
+      created_at: item.created_at,
       vendors: {
         id: item.vendor_id,
         business_name: item.vendor_name,

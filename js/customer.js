@@ -146,30 +146,10 @@
   const DEFAULT_LNG = 51.5310;
 
   async function fetchListingsByLocation(lat, lng, radiusMeters = 500000) {
-
     // Call the updated Store method which handles the secure PostGIS RPC call
     return await Store.getActiveListings(lat, lng, radiusMeters);
     // 💡 Use standard Supabase table/view query (No .rpc() needed!)
-    const { data, error } = await supabase
-      .from('active_listings_view')
-      .select('*');
-
-    if (error) {
-      console.error('Database View Error:', error);
-      throw error;
-    }
-
-    // Map rows into the structure expected by renderListingGrid & renderMap
-    return (data || []).map(item => ({
-      ...item,
-      vendors: {
-        id: item.vendor_id,
-        business_name: item.vendor_name,
-        address: item.vendor_address,
-        latitude: item.vendor_lat || lat,
-        longitude: item.vendor_lng || lng
-      }
-    }));
+   
   }
 
   async function renderListings() {
