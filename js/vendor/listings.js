@@ -25,6 +25,12 @@
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
+  function statusFor(l){
+    if(l.quantity_left <= 0) return { key: 'sold_out', label: 'Sold out' };
+    if(new Date(l.pickup_end) < new Date()) return { key: 'expired', label: 'Expired' };
+    return { key: 'active', label: 'Active' };
+  }
+
   async function render(){
     const body = document.getElementById('listingsTableBody');
     body.innerHTML = `<tr><td colspan="5">Loading…</td></tr>`;
@@ -33,9 +39,11 @@
       body.innerHTML = `<tr><td colspan="5">No listings yet — post your first item.</td></tr>`;
       return;
     }
-    body.innerHTML = DashboardState.cachedListings.map(l => `
+    body.innerHTML = DashboardState.cachedListings.map(l => {
+      const status = statusFor(l);
+      return `
       <tr>
-        <td data-label="Item"><strong>${l.item_name}</strong></td>
+        <td data-label="Item"><strong>${l.item_name}</strong> <span class="status-pill status-${status.key}">${status.label}</span></td>
         <td data-label="Price">${Fmt.money(l.discounted_price)} <span style="opacity:.5; text-decoration:line-through;">${Fmt.money(l.original_price)}</span></td>
         <td data-label="Stock">
           <div class="qty-editor">
@@ -48,7 +56,8 @@
         <td data-label=""><button class="icon-btn" data-edit="${l.id}">Edit</button></td>
         <td data-label=""><button class="icon-btn" data-remove="${l.id}">Remove</button></td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
   }
 
   // Called from the listings table's "Edit" button.

@@ -188,7 +188,7 @@ const Store = (() => {
   async function getListingsByVendor(vendorId){
     const { data, error } = await sb
       .from('listings').select('*')
-      .eq('vendor_id', vendorId).eq('status', 'active')
+      .eq('vendor_id', vendorId).neq('status', 'removed')
       .order('created_at', { ascending: false });
     if(error) throw error;
     return data;
@@ -336,5 +336,3 @@ const Store = (() => {
     getAllVendors, approveVendor, revokeVendor, verifyAdminPasscode, isAdmin
   };
 })();
-
-

@@ -384,6 +384,9 @@ body:not(.logged-in) .guest-only{ display:inline-block; }
 .status-pill{ font-size:0.7rem; font-weight:600; padding:4px 10px; border-radius:999px; text-transform:uppercase; letter-spacing:0.04em; }
 .status-reserved{ background:rgba(232,163,61,0.18); color:var(--amber-deep); }
 .status-collected{ background:rgba(47,110,103,0.15); color:var(--teal-deep); }
+.status-active{ background:rgba(47,110,103,0.15); color:var(--teal-deep); }
+.status-sold_out{ background:rgba(193,84,60,0.14); color:var(--rust); }
+.status-expired{ background:rgba(120,120,120,0.15); color:#666; }
 .status-cancelled{ background:rgba(193,84,60,0.14); color:var(--rust); }
 
 /* ---------- forms ---------- */

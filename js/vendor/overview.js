@@ -1,188 +1,265 @@
 (function () {
 
-    let currentFilter = 'today';
-    let rawListings = [];
-    let rawReservations = [];
+  const listingImageInput = document.getElementById('listingImage');
+  const listingImagePreviewRow = document.getElementById('listingImagePreviewRow');
+  const listingImageFilename = document.getElementById('listingImageFilename');
 
-    function isSameDay(d1, d2) {
-        return d1.getFullYear() === d2.getFullYear() &&
-               d1.getMonth() === d2.getMonth() &&
-               d1.getDate() === d2.getDate();
+  // If a surplus window is live right now, default to the current time.
+  // Otherwise default to the start of the next upcoming window today
+  // (e.g. posting at 1pm defaults to 3pm; posting at 5pm — between the
+  // lunch and closing windows — defaults to 7pm; posting at 8pm, which
+  // is inside the closing window, defaults to the current time, 8pm).
+  function computeDefaultPickupStart(){
+    const now = new Date();
+    const hourNow = now.getHours() + now.getMinutes() / 60;
+    const windows = Store.SURPLUS_WINDOWS;
+
+    const liveWindow = windows.find(w => hourNow >= w.startHour && hourNow < w.endHour);
+    if(liveWindow){
+      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     }
 
-    function isWithinRange(dateStr, filter) {
-        if (filter === 'all') return true;
-        const itemDate = new Date(dateStr);
-        const now = new Date();
+    const next = windows.find(w => w.startHour > hourNow) || windows[0];
+    const h = Math.floor(next.startHour);
+    const m = Math.round((next.startHour % 1) * 60);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
 
-        if (filter === 'today') return isSameDay(itemDate, now);
-        if (filter === 'week') {
-            const sevenDaysAgo = new Date(now);
-            sevenDaysAgo.setDate(now.getDate() - 7);
-            return itemDate >= sevenDaysAgo && itemDate <= now;
+  function statusFor(l){
+    if(l.quantity_left <= 0) return { key: 'sold_out', label: 'Sold out' };
+    if(new Date(l.pickup_end) < new Date()) return { key: 'expired', label: 'Expired' };
+    return { key: 'active', label: 'Active' };
+  }
+
+  async function render(){
+    const body = document.getElementById('listingsTableBody');
+    body.innerHTML = `<tr><td colspan="5">Loading…</td></tr>`;
+    DashboardState.cachedListings = await Store.getListingsByVendor(DashboardState.vendor.id);
+    if(DashboardState.cachedListings.length === 0){
+      body.innerHTML = `<tr><td colspan="5">No listings yet — post your first item.</td></tr>`;
+      return;
+    }
+    body.innerHTML = DashboardState.cachedListings.map(l => {
+      const status = statusFor(l);
+      return `
+      <tr>
+        <td data-label="Item"><strong>${l.item_name}</strong> <span class="status-pill status-${status.key}">${status.label}</span></td>
+        <td data-label="Price">${Fmt.money(l.discounted_price)} <span style="opacity:.5; text-decoration:line-through;">${Fmt.money(l.original_price)}</span></td>
+        <td data-label="Stock">
+          <div class="qty-editor">
+            <button data-qty-down="${l.id}">−</button>
+            <span>${l.quantity_left}</span>
+            <button data-qty-up="${l.id}">+</button>
+          </div>
+        </td>
+        <td data-label="Pickup">${Fmt.time(l.pickup_start)}–${Fmt.time(l.pickup_end)}</td>
+        <td data-label=""><button class="icon-btn" data-edit="${l.id}">Edit</button></td>
+        <td data-label=""><button class="icon-btn" data-remove="${l.id}">Remove</button></td>
+      </tr>
+    `;
+    }).join('');
+  }
+
+  // Called from the listings table's "Edit" button.
+  function loadIntoForm(listing){
+    try{
+      DashboardState.editingListingId = listing.id;
+      DashboardState.editingListingImageUrl = listing.image_url || null;
+
+      document.getElementById('itemName').value = listing.item_name || '';
+      document.getElementById('description').value = listing.description || '';
+      document.getElementById('postCategory').value = listing.category || '';
+      document.getElementById('originalPrice').value = listing.original_price;
+      document.getElementById('discountedPrice').value = listing.discounted_price;
+      document.getElementById('quantity').value = listing.quantity_total;
+
+      const start = new Date(listing.pickup_start);
+      const end = new Date(listing.pickup_end);
+      const toHHMM = (d) => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      document.getElementById('pickupStart').value = toHHMM(start);
+      document.getElementById('pickupEnd').value = toHHMM(end);
+
+      // File inputs can't be pre-filled by script — leave it empty and
+      // tell the vendor the existing photo stays unless they pick a new one.
+      document.getElementById('listingImage').value = '';
+      listingImagePreviewRow.style.display = listing.image_url ? 'flex' : 'none';
+      if(listing.image_url) listingImageFilename.textContent = 'Current photo (choose a new file to replace it)';
+
+      document.getElementById('postListingBtn').textContent = 'Update listing';
+      Nav.show('post');
+    }catch(err){
+      console.error('[edit listing] failed to load listing into form:', err);
+      alert('Could not load this listing for editing.');
+    }
+  }
+
+  function initPhotoPreview(){
+    try{
+      listingImageInput.addEventListener('change', () => {
+        const file = listingImageInput.files[0];
+        if(file){
+          listingImageFilename.textContent = file.name;
+          listingImagePreviewRow.style.display = 'flex';
+        } else {
+          listingImagePreviewRow.style.display = 'none';
         }
-        if (filter === 'month') {
-            return itemDate.getFullYear() === now.getFullYear() &&
-                   itemDate.getMonth() === now.getMonth();
+      });
+
+      document.getElementById('clearListingImageBtn').addEventListener('click', () => {
+        listingImageInput.value = '';
+        listingImagePreviewRow.style.display = 'none';
+      });
+    }catch(err){
+      console.error('[item photo preview] failed to wire up:', err);
+    }
+  }
+
+  function initListingsTable(){
+    try{
+      document.getElementById('listingsTableBody').addEventListener('click', async (e) => {
+        const up = e.target.closest('[data-qty-up]');
+        const down = e.target.closest('[data-qty-down]');
+        const rm = e.target.closest('[data-remove]');
+        const edit = e.target.closest('[data-edit]');
+        if(edit){
+          const listing = DashboardState.cachedListings.find(x => x.id === edit.dataset.edit);
+          if(!listing) return;
+          loadIntoForm(listing);
+          return;
         }
-        return true;
+        if(up){
+          const l = DashboardState.cachedListings.find(x => x.id === up.dataset.qtyUp);
+          if(l && l.quantity_left < l.quantity_total){
+            await Store.updateListingQty(l.id, l.quantity_left + 1);
+            render();
+          }
+        }
+        if(down){
+          const l = DashboardState.cachedListings.find(x => x.id === down.dataset.qtyDown);
+          if(l && l.quantity_left > 0){
+            await Store.updateListingQty(l.id, l.quantity_left - 1);
+            render();
+          }
+        }
+        if(rm){
+          if(confirm('Remove this listing?')){
+            await Store.removeListing(rm.dataset.remove);
+            render();
+          }
+        }
+      });
+    }catch(err){
+      console.error('[listings table] failed to wire up:', err);
     }
+  }
 
-    async function render() {
-        const [listings, reservations] = await Promise.all([
-            Store.getListingsByVendor(DashboardState.vendor.id),
-            Store.getReservationsByVendor(DashboardState.vendor.id)
-        ]);
-        
-        rawListings = listings || [];
-        rawReservations = reservations || [];
+  function initPostForm(){
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-        ensureFilterControls();
-        updateDashboard();
-    }
+      const originalPrice = Number(document.getElementById('originalPrice').value);
+      const discountedPrice = Number(document.getElementById('discountedPrice').value);
 
-    function ensureFilterControls() {
-        const container = document.getElementById('statActive')?.parentElement?.parentElement;
-        if (!container || document.getElementById('analyticsFilterGroup')) return;
+      if (discountedPrice >= originalPrice) {
+        alert('Discounted price must be lower than the original price.');
+        return;
+      }
 
-        const filterWrapper = document.createElement('div');
-        filterWrapper.id = 'analyticsFilterGroup';
-        filterWrapper.style.cssText = 'display: flex; gap: 8px; margin-bottom: 20px;';
+      const pStart = document.getElementById('pickupStart').value;
+      const pEnd = document.getElementById('pickupEnd').value;
 
-        ['today', 'week', 'month', 'all'].forEach(id => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = `filter-btn ${id === currentFilter ? 'active' : ''}`;
-            btn.textContent = id === 'all' ? 'All Time' : id.charAt(0).toUpperCase() + id.slice(1);
-            btn.onclick = () => {
-                currentFilter = id;
-                document.querySelectorAll('#analyticsFilterGroup .filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                updateDashboard();
-            };
-            filterWrapper.appendChild(btn);
-        });
+      const today = new Date();
 
-        container.parentNode.insertBefore(filterWrapper, container);
-    }
+      function toDate(hhmm,base) {
+        const [h, m] = hhmm.split(':').map(Number);
+        const d = new Date(today);
+        d.setHours(h, m, 0, 0);
+        return d;
+      }
+      const startDate = toDate(pStart, today);
+      let endDate = toDate(pEnd, today);
+      if(endDate <= startDate){
+        endDate.setDate(endDate.getDate() + 1); // pickup window crosses midnight
+      }
 
-    function updateDashboard() {
-        const now = new Date();
+      const quantity = Number(document.getElementById('quantity').value);
+      const imageFile = document.getElementById('listingImage').files[0];
 
-        const filteredListings = rawListings.filter(l => isWithinRange(l.created_at, currentFilter));
-        const filteredReservations = rawReservations.filter(r => isWithinRange(r.created_at, currentFilter));
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
 
-        // Phase 1 definitions
-        const activeListings = filteredListings.filter(l => new Date(l.pickup_end) >= now && l.quantity_left > 0);
-        const expiredListings = filteredListings.filter(l => new Date(l.pickup_end) < now && l.quantity_left > 0);
-        const soldOutListings = filteredListings.filter(l => l.quantity_left <= 0);
+      try {
+        let imageUrl = null;
 
-        const reservedItems = filteredReservations.filter(r => r.status === 'reserved');
-        const collectedItems = filteredReservations.filter(r => r.status === 'collected');
-
-        if (document.getElementById('statActive')) document.getElementById('statActive').textContent = activeListings.length;
-        if (document.getElementById('statSoldOut')) document.getElementById('statSoldOut').textContent = soldOutListings.length;
-        if (document.getElementById('statExpired')) document.getElementById('statExpired').textContent = expiredListings.length;
-        if (document.getElementById('statReserved')) document.getElementById('statReserved').textContent = reservedItems.length;
-        if (document.getElementById('statCollected')) document.getElementById('statCollected').textContent = collectedItems.length;
-
-        // Phase 2 calculations
-        const totalRevenue = collectedItems.reduce((sum, r) => sum + (Number(r.price) * (r.quantity || 1)), 0);
-        const totalReservationsCount = filteredReservations.length;
-        const collectionRate = totalReservationsCount > 0 ? Math.round((collectedItems.length / totalReservationsCount) * 100) : 0;
-        const unsoldFoodItems = expiredListings.reduce((sum, l) => sum + l.quantity_left, 0);
-
-        const listingMap = new Map(rawListings.map(l => [l.id, l]));
-        const moneySaved = collectedItems.reduce((sum, r) => {
-            const original = listingMap.get(r.listing_id);
-            return original ? sum + ((original.original_price - original.discounted_price) * (r.quantity || 1)) : sum;
-        }, 0);
-
-        renderDerivedMetricsRow({
-            revenue: totalRevenue,
-            reservations: totalReservationsCount,
-            collectionRate: collectionRate,
-            unsoldItems: unsoldFoodItems,
-            moneySaved: moneySaved,
-            collectedItems: collectedItems
-        });
-    }
-
-    function renderDerivedMetricsRow(metrics) {
-        let row = document.getElementById('derivedMetricsRow');
-        if (!row) {
-            row = document.createElement('div');
-            row.id = 'derivedMetricsRow';
-            row.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 20px;';
-            const primaryCardContainer = document.getElementById('statActive')?.parentElement?.parentElement;
-            if (primaryCardContainer) primaryCardContainer.parentNode.insertBefore(row, primaryCardContainer.nextSibling);
+        let finalImage = imageFile;
+        if (imageFile){
+          try {
+            const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1200, useWebWorker: true };
+            finalImage = await imageCompression(imageFile, options);
+          } catch (err) {
+            console.error("Compression failed, using original", err);
+            finalImage = imageFile;
+          }
         }
 
-        row.innerHTML = `
-            <div id="metricCardRevenue" style="cursor:pointer; border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
-                <small style="color:#64748b; font-size:12px;">Revenue (${currentFilter})</small>
-                <h3 style="margin:4px 0 0; font-size:18px;">${Fmt.money(metrics.revenue)}</h3>
-            </div>
-            <div style="border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
-                <small style="color:#64748b; font-size:12px;">Reservations</small>
-                <h3 style="margin:4px 0 0; font-size:18px;">${metrics.reservations}</h3>
-            </div>
-            <div style="border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
-                <small style="color:#64748b; font-size:12px;">Collection Rate</small>
-                <h3 style="margin:4px 0 0; font-size:18px;">${metrics.collectionRate}%</h3>
-            </div>
-            <div style="border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
-                <small style="color:#64748b; font-size:12px;">Unsold Food</small>
-                <h3 style="margin:4px 0 0; font-size:18px;">${metrics.unsoldItems} items</h3>
-            </div>
-            <div style="border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
-                <small style="color:#64748b; font-size:12px;">Money Saved</small>
-                <h3 style="margin:4px 0 0; font-size:18px;">${Fmt.money(metrics.moneySaved)}</h3>
-            </div>
-        `;
+        if (imageFile) {
+          imageUrl = await Store.uploadListingImage(DashboardState.vendor.id, imageFile);
+        }
 
-        document.getElementById('metricCardRevenue').onclick = () => {
-            showRevenueBreakdownModal(metrics.collectedItems, metrics.revenue);
+        const payload = {
+            vendor_id: DashboardState.vendor.id,
+            item_name: document.getElementById('itemName').value.trim(),
+            description: document.getElementById('description').value.trim(),
+            category: document.getElementById('postCategory').value,
+            original_price: originalPrice,
+            discounted_price: discountedPrice,
+            quantity_total: quantity,
+            quantity_left: DashboardState.editingListingId ? DashboardState.cachedListings.find(x => x.id === DashboardState.editingListingId).quantity_left : quantity,
+            pickup_start: startDate.toISOString(),
+            pickup_end: endDate.toISOString(),
+            payment_method: 'cash',
+            image_url: imageUrl || (DashboardState.editingListingId ? DashboardState.editingListingImageUrl : null),
+            status: 'active'
         };
-    }
 
-    function showRevenueBreakdownModal(collectedItems, totalRevenue) {
-        let modal = document.getElementById('revenueModal');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'revenueModal';
-            modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:9999;';
-            document.body.appendChild(modal);
+        if (DashboardState.editingListingId) {
+            await Store.updateListing(DashboardState.editingListingId, payload);
+        } else {
+            await Store.createListing(payload);
         }
+        DashboardState.editingListingId = null;
+        DashboardState.editingListingImageUrl = null;
 
-        const itemsListHtml = collectedItems.length === 0
-            ? `<p style="color:#64748b; text-align:center; padding: 12px 0;">No collected orders found for this period.</p>`
-            : collectedItems.map(item => `
-                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f1f5f9;">
-                    <span><strong style="margin-right:8px;">${Fmt.time(item.created_at)}</strong> ${item.item_name} ${item.quantity > 1 ? `(x${item.quantity})` : ''}</span>
-                    <span>${Fmt.money(Number(item.price) * (item.quantity || 1))}</span>
-                </div>
-            `).join('');
+        document.getElementById('postListingBtn').textContent ='Post listing';
 
-        modal.innerHTML = `
-            <div style="background:#fff; border-radius:12px; width:100%; max-width:440px; padding:20px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                    <h3 style="margin:0;">Revenue Breakdown (${currentFilter})</h3>
-                    <button id="closeRevenueModal" style="border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
-                </div>
-                <div style="max-height:300px; overflow-y:auto; margin-bottom:16px;">
-                    ${itemsListHtml}
-                </div>
-                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px; border-top:2px solid #e2e8f0; padding-top:12px;">
-                    <span>TOTAL</span>
-                    <span>${Fmt.money(totalRevenue)}</span>
-                </div>
-            </div>
-        `;
+        submitBtn.disabled = false;
 
-        modal.style.display = 'flex';
-        document.getElementById('closeRevenueModal').onclick = () => { modal.style.display = 'none'; };
-        modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
-    }
+        const msg = document.getElementById('postMsg');
+        msg.textContent = DashboardState.vendor.verification_status === 'verified'
+          ? "Listing posted — it's live on the site now."
+          : "Listing saved. It will go live once your account is verified.";
+
+        msg.className = 'form-msg success show';
+
+        e.target.reset();
+        document.getElementById('listingImage').value = '';
+        listingImagePreviewRow.style.display = 'none';
+
+        setTimeout(() => Nav.show('listings'), 900);
+
+      } catch (err) {
+        alert('Could not post listing: ' + err.message);
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  function init(){
+    initPhotoPreview();
+    initListingsTable();
+    initPostForm();
+  }
+
+  window.Listings = { init, render, loadIntoForm, computeDefaultPickupStart };
 
 })();
