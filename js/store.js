@@ -169,7 +169,7 @@ const Store = (() => {
       description: item.description,
       discounted_price: item.price,
       original_price: item.original_price,
-      quantity_left: item.quantity_available,
+      quantity_left: item.quantity_left,
       quantity_total: item.quantity_available, // or map if total is tracked separately
       pickup_start: item.pickup_start,
       pickup_end: item.pickup_end,
