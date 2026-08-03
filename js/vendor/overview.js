@@ -33,16 +33,16 @@
 
   async function render() {
     try {
-      console.log("DashboardState.vendor:", DashboardState?.vendor);
-      const vendorId = DashboardState?.vendor?.id;
-      if (!vendorId) {
-        console.error("Vendor ID is missing! DashboardState.vendor is not set.");
-        return;
-      }
+      const vendorId = DashboardState.vendor.id;
+      console.log("Fetching data for vendorId:", vendorId);
+     
 
       // Use cached listings if available, otherwise fetch them from the store
       const listings = DashboardState.cachedListings || await Store.getListingsByVendor(vendorId);
       const reservations = Store.getReservationsByVendor ? await Store.getReservationsByVendor(vendorId) : [];
+
+      console.log("Fetched listings:", listings);
+      console.log("Fetched reservations:", reservations);
 
       const now = new Date();
 
