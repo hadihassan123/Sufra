@@ -155,7 +155,6 @@ const Store = (() => {
       user_lng: lng,
       radius_meters: radius
     });
-     console.log('nearby_listings RPC result:', data);
 
     if (error) {
       console.error('Error fetching via RPC:', error);
@@ -178,7 +177,6 @@ const Store = (() => {
       status: item.status,
       category: item.category || 'Restaurant', // Ensure category fallback exists if needed
       created_at: item.created_at,
-      image_url: item.image_url,
       vendors: {
         id: item.vendor_id,
         business_name: item.vendor_name,
@@ -186,6 +184,47 @@ const Store = (() => {
         longitude: item.longitude,
         address: item.address,
         verification_status: item.verification_status
+      }
+    }));
+  }
+
+  // Real server-side radius search via nearby_listings_v2 (ST_DWithin on
+  // vendors.location_geog, indexed) — replaces getActiveListings's RPC,
+  // which filtered `status = 'active'` in SQL and dropped sold-out/expired
+  // listings before they ever reached the customer page, and never
+  // returned image_url or category at all.
+  async function getListings(lat = 25.2854, lng = 51.5310, radius = 500000){
+    const { data, error } = await sb.rpc('nearby_listings_v2', {
+      user_lat: lat,
+      user_lng: lng,
+      radius_meters: radius
+    });
+    if (error) throw error;
+
+    return (data || []).map(item => ({
+      id: item.id,
+      vendor_id: item.vendor_id,
+      item_name: item.item_name,
+      description: item.description,
+      discounted_price: item.discounted_price,
+      original_price: item.original_price,
+      quantity_left: item.quantity_left,
+      quantity_available: item.quantity_total,
+      quantity_total: item.quantity_total,
+      pickup_start: item.pickup_start,
+      pickup_end: item.pickup_end,
+      status: item.status,
+      category: item.category,
+      created_at: item.created_at,
+      image_url: item.image_url,
+      vendors: {
+        id: item.vendor_id,
+        business_name: item.vendor_name,
+        latitude: item.vendor_lat,
+        longitude: item.vendor_lng,
+        address: item.vendor_address,
+        logo_url: item.vendor_logo_url,
+        verification_status: 'verified' // nearby_listings_v2 only ever returns verified vendors
       }
     }));
   }
@@ -347,7 +386,7 @@ const Store = (() => {
     SURPLUS_WINDOWS,
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,updateVendorPin,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
-    getActiveListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
+    getActiveListings, getListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected, getReservationsByVendor,
     getAllVendors, approveVendor, revokeVendor, verifyAdminPasscode, isAdmin
   };

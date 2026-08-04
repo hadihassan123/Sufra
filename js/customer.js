@@ -119,15 +119,14 @@
       console.log("Local End:", new Date(l.pickup_end).toString());
       console.log("Current Time:", now.toString());
 
-
-      const isExpired = new Date(l.pickup_end) < now;
-      const isSoldOut = l.quantity_left <= 0;
+      const isExpired = ListingState.isExpired(l);
+      const soldOut = ListingState.isSoldOut(l);
 
       const matchesCategory = 
-        (activeFilter === 'all' || activeFilter === 'map') ? (!isExpired && !isSoldOut) :
-        (activeFilter === 'expired') ? (isExpired && !isSoldOut) :
-        (activeFilter === 'sold_out') ? isSoldOut :
-        (l.category === activeFilter && !isExpired && !isSoldOut);  
+        (activeFilter === 'all' || activeFilter === 'map') ? (!isExpired && !soldOut) :
+        (activeFilter === 'expired') ? (isExpired && !soldOut) :
+        (activeFilter === 'sold_out') ? soldOut :
+        (l.category === activeFilter && !isExpired && !soldOut);  
       
       return matchesCategory && matchesSearch(l);
     });

@@ -1,3 +1,4 @@
+/* global ListingState */
 (function () {
 
 
@@ -26,9 +27,9 @@
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
-  function statusFor(l){
-    if(l.quantity_left <= 0) return { key: 'sold_out', label: 'Sold out' };
-    if(new Date(l.pickup_end) < new Date()) return { key: 'expired', label: 'Expired' };
+  function statusFor(l) {
+    if (ListingState.isSoldOut(l)) return { key: 'sold_out', label: 'Sold out' };
+    if (ListingState.isExpired(l)) return { key: 'expired', label: 'Expired' };
     return { key: 'active', label: 'Active' };
   }
 
