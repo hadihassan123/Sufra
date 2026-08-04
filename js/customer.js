@@ -223,8 +223,7 @@
         : (vendorAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(vendorAddress)}` : null);
       
       return `
-      console.log("Rendering card:", l);
-      console.log("image_url =", l.image_url);
+
       <div class="ticket-card">
         <div class="ticket-photo">
           ${l.image_url
