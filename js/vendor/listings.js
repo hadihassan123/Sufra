@@ -203,7 +203,7 @@
         }
 
         if (imageFile) {
-          imageUrl = await Store.uploadListingImage(DashboardState.vendor.id, imageFile);
+          imageUrl = await Store.uploadListingImage(DashboardState.vendor.id, finalImage);
         }
 
         const payload = {

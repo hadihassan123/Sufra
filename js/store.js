@@ -155,6 +155,7 @@ const Store = (() => {
       user_lng: lng,
       radius_meters: radius
     });
+     console.log('nearby_listings RPC result:', data);
 
     if (error) {
       console.error('Error fetching via RPC:', error);
@@ -177,6 +178,7 @@ const Store = (() => {
       status: item.status,
       category: item.category || 'Restaurant', // Ensure category fallback exists if needed
       created_at: item.created_at,
+      image_url: item.image_url,
       vendors: {
         id: item.vendor_id,
         business_name: item.vendor_name,
