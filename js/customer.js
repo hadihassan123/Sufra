@@ -208,6 +208,13 @@
     grid.innerHTML = filtered.map(l => {
       const soldOut = l.quantity_left <= 0;
       const isExpired = new Date(l.pickup_end) < new Date();
+      console.log("DEBUG CHECK:", { 
+        id: l.id, 
+        item_name: l.item_name, 
+        image_url: l.image_url, 
+        type: typeof l.image_url,
+        truthy: Boolean(l.image_url) 
+      });
       const vendorName = l.vendors ? l.vendors.business_name : '';
       const vendorAddress = l.vendors ? l.vendors.address : '';
       const vendorLat = l.vendors ? l.vendors.latitude : null;
