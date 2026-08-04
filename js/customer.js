@@ -48,7 +48,7 @@
 
       const businessName = first.vendors?.business_name || 'Vendor';
       const itemsHtml = vendorListings.map(l => {
-        const soldOut = l.quantity_left <= 0;
+        const soldOut = ListingState.isSoldOut(l);
         const price = l.discounted_price;
         const btn = soldOut
           ? `<button class="btn btn-ghost btn-sm" style="width:100%; margin-top:6px;" disabled>Sold out</button>`
@@ -206,8 +206,8 @@
     }
 
     grid.innerHTML = filtered.map(l => {
-      const soldOut = l.quantity_left <= 0;
-      const isExpired = new Date(l.pickup_end) < new Date();
+      const soldOut = ListingState.isSoldOut(l);
+      const isExpired = ListingState.isExpired(l);
       console.log("DEBUG CHECK:", { 
         id: l.id, 
         item_name: l.item_name, 
