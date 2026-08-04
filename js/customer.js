@@ -223,6 +223,8 @@
         : (vendorAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(vendorAddress)}` : null);
       
       return `
+      console.log("Rendering card:", l);
+      console.log("image_url =", l.image_url);
       <div class="ticket-card">
         <div class="ticket-photo">
           ${l.image_url
@@ -231,8 +233,7 @@
           }
           <span class="ticket-photo-fallback" aria-hidden="true">${Fmt.categoryGlyph(l.category)}</span>
           <span class="discount-tag">${discountPct}% off</span>
-          console.log("Rendering card:", l);
-          console.log("image_url =", l.image_url);
+          
         </div>
         <div class="ticket ${soldOut ? 'sold-out' : (isExpired ? 'expired' : '')}">
           <div class="ticket-main">
