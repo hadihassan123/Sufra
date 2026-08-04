@@ -1,3 +1,4 @@
+/* global ListingState */
 (() => {
   let activeFilter = 'all';
   let searchQuery = '';
