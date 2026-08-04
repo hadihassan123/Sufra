@@ -1,5 +1,6 @@
 (function () {
 
+
   const listingImageInput = document.getElementById('listingImage');
   const listingImagePreviewRow = document.getElementById('listingImagePreviewRow');
   const listingImageFilename = document.getElementById('listingImageFilename');
@@ -38,8 +39,17 @@
      
 
       // Use cached listings if available, otherwise fetch them from the store
+
       const listings = DashboardState.cachedListings || await Store.getListingsByVendor(vendorId);
       DashboardState.cachedListings = listings; // update cache
+
+      // Always fetch fresh — DashboardState.cachedListings starts as [],
+      // and [] is truthy in JS, so a naive `cachedListings || fetch()`
+      // here would silently skip the fetch on the dashboard's first
+      // render (before the vendor ever visits the Listings tab) and
+      // leave every listings-derived stat stuck at 0.
+      const listings = await Store.getListingsByVendor(vendorId);
+      DashboardState.cachedListings = listings;
       const reservations = Store.getReservationsByVendor ? await Store.getReservationsByVendor(vendorId) : [];
 
       console.log("DEBUG - Listings fetched:", listings);
@@ -303,6 +313,6 @@
     initPostForm();
   }
 
-  window.Listings = { init, render, loadIntoForm, computeDefaultPickupStart };
+  
 
 })();

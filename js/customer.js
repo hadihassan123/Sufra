@@ -124,6 +124,7 @@
 
       const matchesCategory = 
         (activeFilter === 'all' || activeFilter === 'map') ? (!isExpired && !isSoldOut) :
+        (activeFilter === 'expired') ? (isExpired && !isSoldOut) :
         (activeFilter === 'expired') ? isExpired :
         (activeFilter === 'sold_out') ? isSoldOut :
         (l.category === activeFilter && !isExpired && !isSoldOut);  

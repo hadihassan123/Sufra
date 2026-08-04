@@ -24,8 +24,8 @@
   // dashboard loads immediately after signUp() resolves. Retry briefly
   // before treating it as a real "no profile" case.
   for(let attempt = 0; !DashboardState.vendor && attempt < 3; attempt++){
-    await sleep(700);
-    DashboardState.setvendor = await Store.getVendorProfile(session.user.id);
+      await sleep(700);
+      DashboardState.setVendor(await Store.getVendorProfile(session.user.id));
   }
   if(!DashboardState.vendor){
     // Signed in but no vendor profile row after retrying — genuinely missing.
