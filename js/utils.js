@@ -35,5 +35,14 @@ window.ListingState = {
   },
   isActive(l) {
     return !this.isSoldOut(l) && !this.isExpired(l) && l.status === 'active';
+  },
+  // Combines isSoldOut/isExpired into the single {key, label} shape
+  // overview.js and listings.js each used to build separately with an
+  // identical local statusFor() — sold-out takes priority over expired
+  // so a listing that's both still reads "Sold out", not "Expired".
+  status(l) {
+    if (this.isSoldOut(l)) return { key: 'sold_out', label: 'Sold out' };
+    if (this.isExpired(l)) return { key: 'expired', label: 'Expired' };
+    return { key: 'active', label: 'Active' };
   }
 };

@@ -32,6 +32,8 @@
       <button data-view="documents">Verification documents</button>
       <button data-view="pickup">Verify pickup</button>
       <button data-view="reservations">Reservations</button>
+      <button data-view="analytics">Analytics</button>
+
     </nav>
   </aside>
 
@@ -278,6 +280,112 @@
       </table>
     </section>
 
+    <section class="dash-view" id="view-analytics">
+      <div class="dash-view-header">
+        <h2>Analytics & Insights</h2>
+        <p class="text-muted">Performance metrics and insights for your store.</p>
+      </div>
+
+      <!-- TODAY METRICS -->
+      <div class="analytics-section">
+        <h3>Today</h3>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Revenue</span>
+            <span class="metric-value" id="stat-today-revenue">QAR 0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Meals Saved</span>
+            <span class="metric-value" id="stat-today-meals">0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Listings Posted</span>
+            <span class="metric-value" id="stat-today-listings">0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Sold Out</span>
+            <span class="metric-value" id="stat-today-soldout">0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Expired</span>
+            <span class="metric-value" id="stat-today-expired">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAST 7 DAYS METRICS -->
+      <div class="analytics-section">
+        <h3>Last 7 Days</h3>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Revenue</span>
+            <span class="metric-value" id="stat-7d-revenue">QAR 0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Reservations</span>
+            <span class="metric-value" id="stat-7d-reservations">0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Collected</span>
+            <span class="metric-value" id="stat-7d-collected">0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Sell-through</span>
+            <span class="metric-value" id="stat-7d-sellthrough">0%</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Average Discount</span>
+            <span class="metric-value" id="stat-7d-discount">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAST 30 DAYS -->
+      <div class="analytics-section">
+        <h3>Last 30 Days Trend</h3>
+        <div class="metrics-grid-bars">
+          <div class="metric-card bar-card">
+            <span class="metric-label">Revenue</span>
+            <span class="metric-value" id="stat-30d-revenue">QAR 0</span>
+            <div class="simple-bar-visual">██████████</div>
+          </div>
+          <div class="metric-card bar-card">
+            <span class="metric-label">Reservations</span>
+            <span class="metric-value" id="stat-30d-reservations">0</span>
+            <div class="simple-bar-visual">████████</div>
+          </div>
+          <div class="metric-card bar-card">
+            <span class="metric-label">Collected</span>
+            <span class="metric-value" id="stat-30d-collected">0</span>
+            <div class="simple-bar-visual">███████</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VENDOR INSIGHTS -->
+      <div class="analytics-section">
+        <h3>Vendor Insights</h3>
+        <div class="insights-grid">
+          <div class="insight-card">
+            <span class="metric-label">Top Category</span>
+            <span class="insight-value" id="insight-top-category">-</span>
+          </div>
+          <div class="insight-card">
+            <span class="metric-label">Top Selling Item</span>
+            <span class="insight-value" id="insight-top-item">-</span>
+          </div>
+          <div class="insight-card">
+            <span class="metric-label">Best Pickup Window</span>
+            <span class="insight-value" id="insight-top-window">-</span>
+          </div>
+          <div class="insight-card">
+            <span class="metric-label">Average Sell-through</span>
+            <span class="insight-value" id="insight-avg-sellthrough">-</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <div class="modal-overlay" id="qrScannerOverlay">
       <div class="modal-box">
         <button class="close-x" id="closeQrScanner">
@@ -315,6 +423,8 @@
 <script src="js/vendor/pickup.js"></script>
 <script src="js/vendor/overview.js"></script>
 <script src="js/vendor/listings.js"></script>
+<script src="js/vendor/listing-state.js"></script>
+<script src="js/vendor/analytics.js"></script>
 <script src="js/vendor/navigation.js"></script>
 <script src="js/vendor/sidebar.js"></script>
 <script src="js/vendor.js"></script>

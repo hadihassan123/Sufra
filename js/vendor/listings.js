@@ -26,12 +26,6 @@
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
-  function statusFor(l) {
-    if (ListingState.isSoldOut(l)) return { key: 'sold_out', label: 'Sold out' };
-    if (ListingState.isExpired(l)) return { key: 'expired', label: 'Expired' };
-    return { key: 'active', label: 'Active' };
-  }
-
   async function render(){
     const body = document.getElementById('listingsTableBody');
     body.innerHTML = `<tr><td colspan="5">Loading…</td></tr>`;
@@ -41,7 +35,7 @@
       return;
     }
     body.innerHTML = DashboardState.cachedListings.map(l => {
-      const status = statusFor(l);
+      const status = ListingState.status(l);
       return `
       <tr>
         <td data-label="Item"><strong>${l.item_name}</strong> <span class="status-pill status-${status.key}">${status.label}</span></td>

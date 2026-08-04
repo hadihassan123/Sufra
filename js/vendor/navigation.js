@@ -10,6 +10,7 @@
             if(name === 'overview') Overview.render();
             if(name === 'reservations') Pickup.render();
             if(name === 'documents') Documents.render();
+            if(name === 'analytics') window.Analytics.render(); 
             if(name === 'post'){
             const pickupStartInput = document.getElementById('pickupStart');
             if(!pickupStartInput.value){

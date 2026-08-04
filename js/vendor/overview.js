@@ -27,12 +27,6 @@
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
-  function statusFor(l) {
-    if (ListingState.isSoldOut(l)) return { key: 'sold_out', label: 'Sold out' };
-    if (ListingState.isExpired(l)) return { key: 'expired', label: 'Expired' };
-    return { key: 'active', label: 'Active' };
-  }
-
   async function render() {
     try {
       const vendorId = DashboardState.vendor.id;
@@ -50,19 +44,15 @@
       console.log("DEBUG - Listings fetched:", listings);
       console.log("DEBUG - Reservations fetched:", reservations);
 
-      const now = new Date();
-
       let activeCount = 0;
       let soldOutCount = 0;
       let expiredCount = 0;
 
       listings.forEach(l => {
-        const isSoldOut = l.quantity_left <= 0;
-        const isExpired = new Date(l.pickup_end) < now;
-
-        if (isSoldOut) {
+        const key = ListingState.status(l).key;
+        if (key === 'sold_out') {
           soldOutCount++;
-        } else if (isExpired) {
+        } else if (key === 'expired') {
           expiredCount++;
         } else {
           activeCount++;
