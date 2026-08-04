@@ -37,12 +37,6 @@
       const vendorId = DashboardState.vendor.id;
       console.log("Fetching data for vendorId:", vendorId);
      
-
-      // Use cached listings if available, otherwise fetch them from the store
-
-      const listings = DashboardState.cachedListings || await Store.getListingsByVendor(vendorId);
-      DashboardState.cachedListings = listings; // update cache
-
       // Always fetch fresh — DashboardState.cachedListings starts as [],
       // and [] is truthy in JS, so a naive `cachedListings || fetch()`
       // here would silently skip the fetch on the dashboard's first
