@@ -232,7 +232,7 @@
           <span class="ticket-photo-fallback" aria-hidden="true">${Fmt.categoryGlyph(l.category)}</span>
           <span class="discount-tag">${discountPct}% off</span>
         </div>
-        <div class="ticket ${isExpired ? 'expired' : (soldOut ? 'sold-out' : '')}">
+        <div class="ticket ${soldOut ? 'sold-out' : (isExpired ? 'expired' : '')}">
           <div class="ticket-main">
             <div class="ticket-top">
               <span class="ticket-vendor">
@@ -258,8 +258,8 @@
             </div>
           </div>
           <div class="ticket-stub">
-            <button class="btn ${(isExpired || soldOut) ? 'btn-ghost' : 'btn-teal'}" ${(isExpired || soldOut) ? 'disabled' : ''} data-reserve="${l.id}">
-              ${isExpired ? 'Expired' : (soldOut ? 'Sold out' : 'Reserve')}
+            <button class="btn ${(soldOut || isExpired) ? 'btn-ghost' : 'btn-teal'}" ${(soldOut || isExpired) ? 'disabled' : ''} data-reserve="${l.id}">
+              ${soldOut ? 'Sold out' : (isExpired ? 'Expired' : 'Reserve')}
             </button>
 
             <div class="stock-info">
