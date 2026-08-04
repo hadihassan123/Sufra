@@ -24,6 +24,12 @@ const DashboardState = {
   editingListingId: null,     // set when "Edit" is clicked on a listing; read by the post form's submit handler
   editingListingImageUrl: null, // preserves the existing photo when editing without picking a new one
 
+  // Set when a dashboard stat card is clicked (e.g. "Sold out"); read by
+  // Listings.render() / Pickup.render() to pre-filter their tables. Null
+  // means "show everything", same as before this feature existed.
+  listingsFilter: null,       // 'active' | 'sold_out' | 'expired' | null
+  reservationsFilter: null,   // 'reserved' | 'collected' | null
+
   _readyCallbacks: [],
   // vendor.js populates DashboardState.vendor ASYNCHRONOUSLY (inside an
   // await). A separately-loaded feature file can't just run its init

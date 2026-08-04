@@ -28,13 +28,40 @@
 
   async function render(){
     const body = document.getElementById('listingsTableBody');
+    const banner = document.getElementById('listingsFilterBanner');
     body.innerHTML = `<tr><td colspan="5">Loading…</td></tr>`;
     DashboardState.cachedListings = await Store.getListingsByVendor(DashboardState.vendor.id);
+
+    const filter = DashboardState.listingsFilter;
+    if(banner){
+      if(filter){
+        const labels = { active: 'Active', sold_out: 'Sold out', expired: 'Expired' };
+        banner.style.display = 'flex';
+        banner.className = 'filter-banner';
+        banner.innerHTML = `Showing <span class="status-pill status-${filter}">${labels[filter] || filter}</span> only <button id="clearListingsFilterBtn">Clear filter</button>`;
+        document.getElementById('clearListingsFilterBtn').addEventListener('click', () => {
+          DashboardState.listingsFilter = null;
+          render();
+        });
+      } else {
+        banner.style.display = 'none';
+        banner.innerHTML = '';
+      }
+    }
+
+    const rows = filter
+      ? DashboardState.cachedListings.filter(l => ListingState.status(l).key === filter)
+      : DashboardState.cachedListings;
+
     if(DashboardState.cachedListings.length === 0){
       body.innerHTML = `<tr><td colspan="5">No listings yet — post your first item.</td></tr>`;
       return;
     }
-    body.innerHTML = DashboardState.cachedListings.map(l => {
+    if(rows.length === 0){
+      body.innerHTML = `<tr><td colspan="5">No listings match this filter.</td></tr>`;
+      return;
+    }
+    body.innerHTML = rows.map(l => {
       const status = ListingState.status(l);
       return `
       <tr>

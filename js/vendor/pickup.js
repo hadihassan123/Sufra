@@ -135,10 +135,41 @@
 
   async function render(){
     const body = document.getElementById('reservationsTableBody');
+    const banner = document.getElementById('reservationsFilterBanner');
     body.innerHTML = `<tr><td colspan="5">Loading…</td></tr>`;
-    const reservations = await Store.getReservationsByVendor(DashboardState.vendor.id);
-    if(reservations.length === 0){
+    const allReservations = await Store.getReservationsByVendor(DashboardState.vendor.id);
+
+    const filter = DashboardState.reservationsFilter;
+    if(banner){
+      if(filter){
+        const labels = { reserved: 'Reserved / awaiting pickup', collected: 'Collected' };
+        banner.style.display = 'flex';
+        banner.className = 'filter-banner';
+        banner.innerHTML = `Showing <span class="status-pill status-${filter}">${labels[filter] || filter}</span> only <button id="clearReservationsFilterBtn">Clear filter</button>`;
+        document.getElementById('clearReservationsFilterBtn').addEventListener('click', () => {
+          DashboardState.reservationsFilter = null;
+          render();
+        });
+      } else {
+        banner.style.display = 'none';
+        banner.innerHTML = '';
+      }
+    }
+
+    const matchesFilter = r => {
+      if(!filter) return true;
+      if(filter === 'reserved') return r.status === 'reserved' || r.status === 'pending';
+      if(filter === 'collected') return r.status === 'collected' || r.status === 'completed';
+      return true;
+    };
+    const reservations = allReservations.filter(matchesFilter);
+
+    if(allReservations.length === 0){
       body.innerHTML = `<tr><td colspan="5">No reservations yet.</td></tr>`;
+      return;
+    }
+    if(reservations.length === 0){
+      body.innerHTML = `<tr><td colspan="5">No reservations match this filter.</td></tr>`;
       return;
     }
     body.innerHTML = reservations.map(r => `

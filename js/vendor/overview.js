@@ -95,6 +95,31 @@
     render();
   }
 
+  // Clicking a stat card jumps to the relevant tab pre-filtered to that
+  // status (e.g. "Sold out" → Listings tab showing only sold-out items).
+  // Deliberately does NOT reuse the generic `[data-goto]` delegation in
+  // navigation.js — that listener is attached later, inside vendor.js's
+  // async boot sequence, and firing two separate listeners in whichever
+  // order they happened to be attached risks Listings.render()/
+  // Pickup.render() running before the filter is actually set. Each
+  // card owns its full click behavior (set filter, then navigate) so
+  // there's nothing to race.
+  function initStatCardLinks(){
+    document.querySelectorAll('.stat-card[data-drilldown]').forEach(card => {
+      card.addEventListener('click', () => {
+        const target = card.dataset.drilldown;   // 'listings' | 'reservations'
+        const status = card.dataset.status || null;
+        if(target === 'listings'){
+          DashboardState.listingsFilter = status;
+        } else if(target === 'reservations'){
+          DashboardState.reservationsFilter = status;
+        }
+        if(window.Nav && Nav.show) Nav.show(target, { preserveFilter: true });
+      });
+    });
+  }
+  initStatCardLinks();
+
   window.Overview = { init, render };
 
 

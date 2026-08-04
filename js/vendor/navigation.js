@@ -2,10 +2,17 @@
 
     function init(){
         const navButtons = document.querySelectorAll('.dash-nav button');
-        function showView(name){
+        function showView(name, opts = {}){
             document.querySelectorAll('.dash-view').forEach(v => v.classList.remove('active'));
             document.getElementById('view-' + name).classList.add('active');
             navButtons.forEach(b => b.classList.toggle('active', b.dataset.view === name));
+            // Regular navigation always shows everything — only the dashboard
+            // stat-card drilldown (Overview's initStatCardLinks) wants the
+            // filter to survive the Nav.show() call, via preserveFilter.
+            if(!opts.preserveFilter){
+                if(name === 'listings') DashboardState.listingsFilter = null;
+                if(name === 'reservations') DashboardState.reservationsFilter = null;
+            }
             if(name === 'listings') Listings.render();
             if(name === 'overview') Overview.render();
             if(name === 'reservations') Pickup.render();

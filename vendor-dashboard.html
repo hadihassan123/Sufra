@@ -51,11 +51,11 @@
     </div>
       </div>
       <div class="stat-row">
-        <div class="stat-card"><div class="num" id="statActive">0</div><div class="lbl">Active listings</div></div>
-        <div class="stat-card"><div class="num" id="statReserved">0</div><div class="lbl">Reserved, awaiting pickup</div></div>
-        <div class="stat-card"><div class="num" id="statCollected">0</div><div class="lbl">Collected </div></div>
-        <div class="stat-card"><div class="num" id="statSoldOut">0</div><div class="lbl">Sold-out listings</div></div>
-        <div class="stat-card"><div class="num" id="statExpired">0</div><div class="lbl">Expired Listings</div></div>
+        <div class="stat-card" data-drilldown="listings" data-status="active"><div class="num" id="statActive">0</div><div class="lbl">Active listings</div></div>
+        <div class="stat-card" data-drilldown="reservations" data-status="reserved"><div class="num" id="statReserved">0</div><div class="lbl">Reserved, awaiting pickup</div></div>
+        <div class="stat-card" data-drilldown="reservations" data-status="collected"><div class="num" id="statCollected">0</div><div class="lbl">Collected </div></div>
+        <div class="stat-card" data-drilldown="listings" data-status="sold_out"><div class="num" id="statSoldOut">0</div><div class="lbl">Sold-out listings</div></div>
+        <div class="stat-card" data-drilldown="listings" data-status="expired"><div class="num" id="statExpired">0</div><div class="lbl">Expired Listings</div></div>
       </div>
 
       <div class="doc-card" style="margin-bottom:24px;" id="logoCard">
@@ -113,6 +113,7 @@
         <div><h1>Listings</h1><p>Adjust remaining stock or remove sold-out items.</p></div>
         <button class="btn btn-teal btn-sm" data-goto="post">+ Post new item</button>
       </div>
+      <div id="listingsFilterBanner" style="display:none;"></div>
       <table class="data-table">
         <thead><tr><th>Item</th><th>Price</th><th>Stock</th><th>Pickup window</th><th></th><th></th></tr></thead>
         <tbody id="listingsTableBody"></tbody>
@@ -274,6 +275,7 @@
       <div class="dash-head">
         <div><h1>Reservations</h1><p>All reservations across your listings.</p></div>
       </div>
+      <div id="reservationsFilterBanner" style="display:none;"></div>
       <table class="data-table">
         <thead><tr><th>Code</th><th>Item</th><th>Customer</th><th>Window</th><th>Status</th></tr></thead>
         <tbody id="reservationsTableBody"></tbody>
