@@ -283,95 +283,187 @@
     </section>
 
     <section class="dash-view" id="view-analytics">
-      <div class="dash-view-header">
-        <h2>Analytics & Insights</h2>
-        <p class="text-muted">Performance metrics and insights for your store.</p>
+      <div class="dash-head">
+        <div><h1>Analytics &amp; Insights</h1><p>Performance metrics and insights for your store.</p></div>
+        <button class="btn btn-ghost btn-sm" id="exportAnalyticsBtn">Export Analytics (last 30 days)</button>
       </div>
 
-      <!-- TODAY METRICS -->
-      <div class="analytics-section">
-        <h3>Today</h3>
+      <div class="period-pills" role="tablist">
+        <button class="pill active" data-period="today">Today</button>
+        <button class="pill" data-period="7d">7 Days</button>
+        <button class="pill" data-period="30d">30 Days</button>
+        <button class="pill" data-period="all">All Time</button>
+      </div>
+
+      <!-- TODAY -->
+      <div class="analytics-section" data-period-section="today">
         <div class="metrics-grid">
-          <div class="metric-card">
-            <span class="metric-label">Revenue</span>
-            <span class="metric-value" id="stat-today-revenue">QAR 0</span>
-          </div>
-          <div class="metric-card metric-revenue">
+          <div class="metric-card accent-revenue">
             <div class="metric-icon">💰</div>
-
-            <div class="metric-content">
-                <span class="metric-label">Revenue Today</span>
-
-                <span class="metric-value"
-                      id="stat-today-meals">
-                    QAR 0
-                </span>
-
-                <span class="metric-subtitle">
-                    Today's earnings
-                </span>
+            <div class="metric-body">
+              <span class="metric-label">Revenue Today</span>
+              <span class="metric-value" id="stat-today-revenue">QAR 0</span>
+              <span class="metric-delta" id="stat-today-revenue-delta"></span>
             </div>
-        </div>
-          <div class="metric-card">
-            <span class="metric-label">Listings Posted</span>
-            <span class="metric-value" id="stat-today-listings">0</span>
           </div>
-          <div class="metric-card">
-            <span class="metric-label">Sold Out</span>
-            <span class="metric-value" id="stat-today-soldout">0</span>
+          <div class="metric-card accent-collected">
+            <div class="metric-icon">✅</div>
+            <div class="metric-body">
+              <span class="metric-label">Collected Today</span>
+              <span class="metric-value" id="stat-today-meals">0</span>
+              <span class="metric-delta" id="stat-today-meals-delta"></span>
+            </div>
           </div>
-          <div class="metric-card">
-            <span class="metric-label">Expired</span>
-            <span class="metric-value" id="stat-today-expired">0</span>
+          <div class="metric-card accent-reservations">
+            <div class="metric-icon">🍽</div>
+            <div class="metric-body">
+              <span class="metric-label">Listings Posted</span>
+              <span class="metric-value" id="stat-today-listings">0</span>
+              <span class="metric-delta" id="stat-today-listings-delta"></span>
+            </div>
+          </div>
+          <div class="metric-card accent-soldout">
+            <div class="metric-icon">📦</div>
+            <div class="metric-body">
+              <span class="metric-label">Sold Out</span>
+              <span class="metric-value" id="stat-today-soldout">0</span>
+              <span class="metric-delta" id="stat-today-soldout-delta"></span>
+            </div>
+          </div>
+          <div class="metric-card accent-expired">
+            <div class="metric-icon">⌛</div>
+            <div class="metric-body">
+              <span class="metric-label">Expired</span>
+              <span class="metric-value" id="stat-today-expired">0</span>
+              <span class="metric-delta" id="stat-today-expired-delta"></span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- LAST 7 DAYS METRICS -->
-      <div class="analytics-section">
-        <h3>Last 7 Days</h3>
+      <!-- LAST 7 DAYS -->
+      <div class="analytics-section" data-period-section="7d" hidden>
         <div class="metrics-grid">
-          <div class="metric-card">
-            <span class="metric-label">Revenue</span>
-            <span class="metric-value" id="stat-7d-revenue">QAR 0</span>
+          <div class="metric-card accent-revenue">
+            <div class="metric-icon">💰</div>
+            <div class="metric-body">
+              <span class="metric-label">Revenue</span>
+              <span class="metric-value" id="stat-7d-revenue">QAR 0</span>
+              <span class="metric-delta" id="stat-7d-revenue-delta"></span>
+            </div>
           </div>
-          <div class="metric-card">
-            <span class="metric-label">Reservations</span>
-            <span class="metric-value" id="stat-7d-reservations">0</span>
+          <div class="metric-card accent-reservations">
+            <div class="metric-icon">🔵</div>
+            <div class="metric-body">
+              <span class="metric-label">Reservations</span>
+              <span class="metric-value" id="stat-7d-reservations">0</span>
+            </div>
           </div>
-          <div class="metric-card">
-            <span class="metric-label">Collected</span>
-            <span class="metric-value" id="stat-7d-collected">0</span>
+          <div class="metric-card accent-collected">
+            <div class="metric-icon">✅</div>
+            <div class="metric-body">
+              <span class="metric-label">Collected</span>
+              <span class="metric-value" id="stat-7d-collected">0</span>
+            </div>
           </div>
-          <div class="metric-card">
-            <span class="metric-label">Sell-through</span>
-            <span class="metric-value" id="stat-7d-sellthrough">0%</span>
+          <div class="metric-card accent-revenue metric-card-wide">
+            <div class="metric-icon">📈</div>
+            <div class="metric-body" style="width:100%;">
+              <span class="metric-label">Sell-through</span>
+              <span class="metric-value" id="stat-7d-sellthrough">0%</span>
+              <div class="bar-track"><div class="bar-fill" id="stat-7d-sellthrough-bar" style="width:0%"></div></div>
+            </div>
           </div>
-          <div class="metric-card">
-            <span class="metric-label">Average Discount</span>
-            <span class="metric-value" id="stat-7d-discount">0%</span>
+          <div class="metric-card accent-soldout">
+            <div class="metric-icon">🏷</div>
+            <div class="metric-body">
+              <span class="metric-label">Average Discount</span>
+              <span class="metric-value" id="stat-7d-discount">0%</span>
+              <span class="metric-delta">Customers respond best between 30–40%</span>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- LAST 30 DAYS -->
-      <div class="analytics-section">
-        <h3>Last 30 Days Trend</h3>
-        <div class="metrics-grid-bars">
-          <div class="metric-card bar-card">
-            <span class="metric-label">Revenue</span>
-            <span class="metric-value" id="stat-30d-revenue">QAR 0</span>
-            <div class="simple-bar-visual">██████████</div>
+      <div class="analytics-section" data-period-section="30d" hidden>
+        <div class="metrics-grid">
+          <div class="metric-card accent-revenue">
+            <div class="metric-icon">💰</div>
+            <div class="metric-body">
+              <span class="metric-label">Revenue</span>
+              <span class="metric-value" id="stat-30d-revenue">QAR 0</span>
+              <span class="metric-delta" id="stat-30d-revenue-delta"></span>
+            </div>
           </div>
-          <div class="metric-card bar-card">
-            <span class="metric-label">Reservations</span>
-            <span class="metric-value" id="stat-30d-reservations">0</span>
-            <div class="simple-bar-visual">████████</div>
+          <div class="metric-card accent-reservations">
+            <div class="metric-icon">🔵</div>
+            <div class="metric-body">
+              <span class="metric-label">Reservations</span>
+              <span class="metric-value" id="stat-30d-reservations">0</span>
+            </div>
           </div>
-          <div class="metric-card bar-card">
-            <span class="metric-label">Collected</span>
-            <span class="metric-value" id="stat-30d-collected">0</span>
-            <div class="simple-bar-visual">███████</div>
+          <div class="metric-card accent-collected">
+            <div class="metric-icon">✅</div>
+            <div class="metric-body">
+              <span class="metric-label">Collected</span>
+              <span class="metric-value" id="stat-30d-collected">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="trend-bars">
+          <div class="trend-bar-row">
+            <span class="trend-bar-label">Revenue</span>
+            <div class="bar-track"><div class="bar-fill fill-revenue" id="trend-30d-revenue-bar" style="width:0%"></div></div>
+          </div>
+          <div class="trend-bar-row">
+            <span class="trend-bar-label">Reservations</span>
+            <div class="bar-track"><div class="bar-fill fill-reservations" id="trend-30d-reservations-bar" style="width:0%"></div></div>
+          </div>
+          <div class="trend-bar-row">
+            <span class="trend-bar-label">Collected</span>
+            <div class="bar-track"><div class="bar-fill fill-collected" id="trend-30d-collected-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALL TIME -->
+      <div class="analytics-section" data-period-section="all" hidden>
+        <div class="metrics-grid">
+          <div class="metric-card accent-revenue">
+            <div class="metric-icon">💰</div>
+            <div class="metric-body">
+              <span class="metric-label">Total Revenue</span>
+              <span class="metric-value" id="stat-all-revenue">QAR 0</span>
+            </div>
+          </div>
+          <div class="metric-card accent-reservations">
+            <div class="metric-icon">🔵</div>
+            <div class="metric-body">
+              <span class="metric-label">Total Reservations</span>
+              <span class="metric-value" id="stat-all-reservations">0</span>
+            </div>
+          </div>
+          <div class="metric-card accent-collected">
+            <div class="metric-icon">✅</div>
+            <div class="metric-body">
+              <span class="metric-label">Total Collected</span>
+              <span class="metric-value" id="stat-all-collected">0</span>
+            </div>
+          </div>
+          <div class="metric-card accent-soldout">
+            <div class="metric-icon">📦</div>
+            <div class="metric-body">
+              <span class="metric-label">Sold Out Now</span>
+              <span class="metric-value" id="stat-all-soldout">0</span>
+            </div>
+          </div>
+          <div class="metric-card accent-expired">
+            <div class="metric-icon">⌛</div>
+            <div class="metric-body">
+              <span class="metric-label">Expired Now</span>
+              <span class="metric-value" id="stat-all-expired">0</span>
+            </div>
           </div>
         </div>
       </div>
@@ -381,24 +473,32 @@
         <h3>Vendor Insights</h3>
         <div class="insights-grid">
           <div class="insight-card">
-            <span class="metric-label">Top Category</span>
+            <div class="insight-icon">🏆</div>
+            <span class="metric-label">Best Performing Category</span>
             <span class="insight-value" id="insight-top-category">-</span>
+            <span class="insight-sub" id="insight-top-category-sub"></span>
           </div>
           <div class="insight-card">
-            <span class="metric-label">Top Selling Item</span>
+            <div class="insight-icon">🥐</div>
+            <span class="metric-label">Top Item</span>
             <span class="insight-value" id="insight-top-item">-</span>
+            <span class="insight-sub" id="insight-top-item-sub"></span>
           </div>
           <div class="insight-card">
-            <span class="metric-label">Best Pickup Window</span>
+            <div class="insight-icon">🕖</div>
+            <span class="metric-label">Peak Pickup Time</span>
             <span class="insight-value" id="insight-top-window">-</span>
           </div>
           <div class="insight-card">
+            <div class="insight-icon">📊</div>
             <span class="metric-label">Average Sell-through</span>
             <span class="insight-value" id="insight-avg-sellthrough">-</span>
+            <div class="bar-track"><div class="bar-fill" id="insight-avg-sellthrough-bar" style="width:0%"></div></div>
           </div>
         </div>
       </div>
     </section>
+
 
     <div class="modal-overlay" id="qrScannerOverlay">
       <div class="modal-box">

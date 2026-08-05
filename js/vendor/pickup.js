@@ -158,8 +158,8 @@
 
     const matchesFilter = r => {
       if(!filter) return true;
-      if(filter === 'reserved') return r.status === 'reserved' || r.status === 'pending';
-      if(filter === 'collected') return r.status === 'collected' || r.status === 'completed';
+      if(filter === 'reserved') return r.status === 'reserved';
+      if(filter === 'collected') return r.status === 'collected';
       return true;
     };
     const reservations = allReservations.filter(matchesFilter);
