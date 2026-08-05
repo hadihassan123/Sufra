@@ -27,6 +27,8 @@ export default [
         setTimeout: "readonly",
         setInterval: "readonly",
         self: "readonly",
+        Blob: "readonly",
+        URL: "readonly",
 
         // --- Third-Party Libraries ---
         supabase: "readonly",
@@ -42,6 +44,7 @@ export default [
         Fmt: "writable",
         DashboardState: "writable",
         LocationPicker: "writable",
+        ListingState: "writable",
 
         // --- Sufra Vendor Dashboard Sub-Modules ---
         Documents: "writable",
@@ -49,7 +52,9 @@ export default [
         Listings: "writable",
         Nav: "writable",
         Pickup: "writable",
-        Overview: "writable"
+        Overview: "writable",
+        Analytics: "writable"
+
       }
     },
     rules: {
