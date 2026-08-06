@@ -45,6 +45,11 @@
                 id="markCollectedBtn">
                 Mark as collected
             </button>
+            <button
+              class="btn btn-danger btn-sm"
+              id="markNoShowBtn">
+              No Show
+            </button>
         </div>
       </div>
     `;
@@ -57,6 +62,24 @@
           Marked collected.
         </div>`;
       Overview.render();
+    });
+    document.getElementById('markNoShowBtn').addEventListener('click', async () => {
+        if (!confirm(`Mark ${reservation.customer_name} as a no-show?`)) {
+            return;
+        }
+        try {
+            await Store.markNoShow(reservation.id);
+            verifyInput.value = '';
+            verifyResult.innerHTML = `
+                <div class="form-msg error show">
+                    ${reservation.customer_name} marked as <strong>No Show</strong>.
+                    Customer reputation has been updated.
+                </div>
+            `;
+            Overview.render();
+        } catch (err) {
+            alert(err.message);
+        }
     });
   }
 

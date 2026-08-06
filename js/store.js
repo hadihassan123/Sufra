@@ -337,9 +337,24 @@ const Store = (() => {
     return data;
   }
 
+  async function markNoShow(reservationId) {
+    const { error } = await sb.rpc('mark_no_show', {
+      p_reservation_id: reservationId
+    });
+
+    if (error) throw error;
+  }
+
   async function markCollected(id){
     const { error } = await sb.from('reservations').update({ status: 'collected' }).eq('id', id);
     if(error) throw error;
+  }
+  async function markNoShow(reservationId) {
+    const { error } = await sb.rpc('mark_no_show', {
+      p_reservation_id: reservationId
+    });
+
+    if (error) throw error;
   }
 
   async function getReservationsByVendor(vendorId){
@@ -387,7 +402,7 @@ const Store = (() => {
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,updateVendorPin,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
     getActiveListings, getListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
-    createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected, getReservationsByVendor,
+    createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected,markNoShow, getReservationsByVendor,
     getAllVendors, approveVendor, revokeVendor, verifyAdminPasscode, isAdmin
   };
 })();
