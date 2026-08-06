@@ -320,8 +320,10 @@ const Store = (() => {
 
   async function findReservationByCode(code){
     const { data, error } = await sb
-      .from('reservations').select('*')
-      .eq('pickup_code', code.toUpperCase()).maybeSingle();
+      .rpc('get_reservation_with_flag', {
+        p_pickup_code: code.toUpperCase()
+      });
+
     if(error) throw error;
     return data;
   }
