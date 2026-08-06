@@ -346,7 +346,10 @@ const Store = (() => {
   }
 
   async function markCollected(id){
-    const { error } = await sb.from('reservations').update({ status: 'collected' }).eq('id', id);
+    const { error } = await sb.rpc('mark_collected', {
+      p_reservation_id: id
+    });
+
     if(error) throw error;
   }
   async function markNoShow(reservationId) {
