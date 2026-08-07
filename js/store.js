@@ -292,21 +292,21 @@ const Store = (() => {
     // ---- reservations ----
   async function createReservation(listing, customerName, customerPhone, quantity){
     const qty = Math.max(1, Number(quantity) || 1);
-    const { data, error } = await sb.from('reservations').insert({
-      listing_id: listing.id,
-      vendor_id: listing.vendor_id,
-      vendor_name: listing.vendors ? listing.vendors.business_name : '',
-      item_name: listing.item_name,
-      price: listing.discounted_price * qty,
-      quantity: qty,
-      customer_name: customerName,
-      customer_phone: customerPhone,
-      pickup_code: pickupCode(),
-      pickup_start: listing.pickup_start,
-      pickup_end: listing.pickup_end
-    }).select().single();
+    const { data, error } = await sb.rpc('create_reservation_safe', {
+      p_listing_id: listing.id,
+      p_customer_name: customerName,
+      p_customer_phone: customerPhone,
+      p_quantity: qty
+    });
     if(error) throw error;
-    return data;
+    if(!data.success){
+      if(data.reason === 'restricted'){
+        const until = new Date(data.restricted_until).toLocaleString();
+        throw new Error(`This phone number is temporarily restricted from making reservations until ${until}.`);
+      }
+      throw new Error('Could not create reservation.');
+    }
+    return data.reservation;
   }
 
   async function getReservationsByPhone(phone){
