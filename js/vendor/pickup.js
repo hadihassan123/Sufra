@@ -36,50 +36,29 @@
     const flag = reservation.customer_flag || {};
     const pickups = flag.successful_pickups || 0;
     const noShows = flag.no_show_count || 0;
-    const isNewCustomer = pickups === 0 && noShows === 0;
-    // Weighted so a no-show costs more than a pickup earns — wasting
-    // food is worse than one missing data point.
-    const score = pickups - (noShows * 2);
-    // Being "currently blocked" and being "high risk" are separate
-    // facts — a customer's restriction can lapse while their score
-    // stays low, and vice versa. Previously this only checked whether
-    // reservation_restricted_until was SET, not whether it was still
-    // in the future, so an expired restriction kept showing forever.
-    const restrictedUntil = flag.reservation_restricted_until ? new Date(flag.reservation_restricted_until) : null;
-    const isCurrentlyRestricted = restrictedUntil && restrictedUntil > new Date();
-
-    let tierClass, tierHtml;
-    if (isNewCustomer) {
-      tierClass = 'new';
-      tierHtml = `⚪ <strong>New customer</strong><br>No pickup history yet.`;
-    } else if (noShows === 0) {
-      // A clean record — any number of pickups, zero no-shows — has no
-      // negative signal to weigh, so it can never be anything but
-      // Trusted. Without this, a customer at exactly 1 pickup / 0
-      // no-shows scores 1 (same bucket as e.g. 6 pickups / 3 no-shows,
-      // which also scores... 0, i.e. adjacent) and gets the same amber
-      // "Needs attention" badge as someone with an actual bad pattern —
-      // the same "punished for being new" mistake the New Customer
-      // state was added to fix, just one step over at pickups=1
-      // instead of pickups=0.
-      tierClass = 'trusted';
-      tierHtml = `🟢 <strong>Trusted</strong><br>${pickups} successful pickups • ${noShows} no-shows`;
-    } else if (score >= 2) {
-      tierClass = 'trusted';
-      tierHtml = `🟢 <strong>Trusted</strong><br>${pickups} successful pickups • ${noShows} no-shows`;
-    } else if (score >= 0) {
-      tierClass = 'warning';
-      tierHtml = `🟡 <strong>Needs attention</strong><br>${pickups} successful pickups • ${noShows} no-shows`;
-    } else {
-      tierClass = 'danger';
-      tierHtml = `🔴 <strong>High risk</strong><br>${pickups} successful pickups • ${noShows} no-shows`;
-    }
+    // The tier itself is decided server-side now, in
+    // get_reservation_with_flag — this is presentation only (which
+    // emoji/label/color a tier gets), not the rule for what counts as
+    // trusted vs. high-risk. That rule previously lived here in JS and
+    // had to be fixed twice in one session; now there's exactly one
+    // place that decides it.
+    const TIER_DISPLAY = {
+      new:     { emoji: '⚪', label: 'New customer' },
+      trusted: { emoji: '🟢', label: 'Trusted' },
+      warning: { emoji: '🟡', label: 'Needs attention' },
+      danger:  { emoji: '🔴', label: 'High risk' }
+    };
+    const tierInfo = TIER_DISPLAY[flag.tier] || TIER_DISPLAY.new;
+    const tierClass = flag.tier || 'new';
+    const tierHtml = flag.tier === 'new'
+      ? `${tierInfo.emoji} <strong>${tierInfo.label}</strong><br>No pickup history yet.`
+      : `${tierInfo.emoji} <strong>${tierInfo.label}</strong><br>${pickups} successful pickups • ${noShows} no-shows`;
 
     let reputationHtml = `<div class="customer-reputation ${tierClass}">${tierHtml}</div>`;
-    if (isCurrentlyRestricted) {
+    if (flag.is_currently_restricted) {
       reputationHtml += `
         <div class="customer-reputation danger restriction-notice">
-          🚫 <strong>Currently restricted</strong> until ${restrictedUntil.toLocaleDateString()}
+          🚫 <strong>Currently restricted</strong> until ${new Date(flag.reservation_restricted_until).toLocaleDateString()}
         </div>
       `;
     }
