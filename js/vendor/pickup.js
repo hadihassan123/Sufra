@@ -33,8 +33,46 @@
         </div>`;
       return;
     }
+    const flag = reservation.customer_flag || {};
+
+    let reputationHtml;
+
+    if (flag.reservation_restricted_until) {
+
+      reputationHtml = `
+        <div class="customer-reputation danger">
+          🔴 <strong>Restricted customer</strong><br>
+          ${flag.successful_pickups || 0} successful pickups •
+          ${flag.no_show_count || 0} no-shows<br>
+          Restricted until
+          ${new Date(flag.reservation_restricted_until).toLocaleDateString()}
+        </div>
+      `;
+
+    } else if ((flag.no_show_count || 0) >= 3) {
+
+      reputationHtml = `
+        <div class="customer-reputation warning">
+          🟡 <strong>Frequent no-shows</strong><br>
+          ${flag.successful_pickups || 0} successful pickups •
+          ${flag.no_show_count} no-shows
+        </div>
+      `;
+
+    } else {
+
+      reputationHtml = `
+        <div class="customer-reputation trusted">
+          🟢 <strong>Trusted customer</strong><br>
+          ${flag.successful_pickups || 0} successful pickups •
+          ${flag.no_show_count || 0} no-shows
+        </div>
+      `;
+
+    }
     verifyResult.innerHTML = `
       <div class="form-msg success show">
+        ${reputationHtml}
         <strong>${reservation.customer_name}</strong>
         — ${reservation.item_name}${reservation.quantity > 1 ? ` ×${reservation.quantity}` : ''}
         · ${Fmt.money(reservation.price)} cash due
@@ -112,6 +150,7 @@
       alert(err.message);
       return;
     }
+    console.log(reservation);
     showReservation(reservation);
   }
 
