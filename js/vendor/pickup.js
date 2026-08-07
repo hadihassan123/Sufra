@@ -8,6 +8,41 @@
 
   let qrScanner = null;
 
+  // Session-only log of what's been verified on this screen — never
+  // persisted or fetched, just a running memory of this vendor's
+  // current pickup-window activity so they don't need to leave this
+  // tab to confirm "who did I just check in". Caps at 8 so it stays a
+  // quick glance, not a second reservations table.
+  const sessionLog = [];
+  const recentlyVerifiedEl = document.getElementById('recentlyVerified');
+  const recentlyVerifiedListEl = document.getElementById('recentlyVerifiedList');
+
+  function logSessionAction(reservation, action){
+    sessionLog.unshift({
+      name: reservation.customer_name,
+      item: reservation.item_name,
+      action, // 'Collected' | 'No Show'
+      time: new Date()
+    });
+    if(sessionLog.length > 8) sessionLog.length = 8;
+    renderSessionLog();
+  }
+
+  function renderSessionLog(){
+    if(!recentlyVerifiedEl || !recentlyVerifiedListEl) return;
+    if(sessionLog.length === 0){
+      recentlyVerifiedEl.style.display = 'none';
+      return;
+    }
+    recentlyVerifiedEl.style.display = 'block';
+    recentlyVerifiedListEl.innerHTML = sessionLog.map(entry => `
+      <li class="recently-verified-row ${entry.action === 'No Show' ? 'no-show' : 'collected'}">
+        <span>${entry.action === 'No Show' ? '🚫' : '✅'} <strong>${entry.name}</strong> — ${entry.item}</span>
+        <span class="recently-verified-time">${entry.time.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' })}</span>
+      </li>
+    `).join('');
+  }
+
   async function showReservation(reservation){
     if(!reservation){
       verifyResult.innerHTML =
@@ -92,6 +127,7 @@
         `<div class="form-msg success show">
           Marked collected.
         </div>`;
+      logSessionAction(reservation, 'Collected');
       Overview.render();
     });
     document.getElementById('markNoShowBtn').addEventListener('click', async () => {
@@ -107,6 +143,7 @@
                     Customer reputation has been updated.
                 </div>
             `;
+            logSessionAction(reservation, 'No Show');
             Overview.render();
         } catch (err) {
             alert(err.message);

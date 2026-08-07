@@ -507,6 +507,13 @@ fieldset{ border:none; padding:0; margin:0; }
 .customer-reputation.new{ background:rgba(36,31,26,0.05); color:var(--charcoal); }
 .customer-reputation.restriction-notice{ margin-top:6px; }
 
+.recently-verified{ max-width:480px; margin-top:24px; }
+.recently-verified h3{ font-family:var(--f-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:rgba(36,31,26,0.5); margin:0 0 10px; }
+.recently-verified ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.recently-verified-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 12px; border-radius:8px; background:#fff; border:1px solid var(--line); font-size:0.85rem; }
+.recently-verified-row.no-show{ border-color:rgba(193,84,60,0.3); }
+.recently-verified-time{ font-family:var(--f-mono); font-size:0.72rem; color:rgba(36,31,26,0.45); flex-shrink:0; }
+
 table.data-table{ width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
 table.data-table th{
   text-align:left; font-family:var(--f-mono); font-size:0.68rem; letter-spacing:0.06em; text-transform:uppercase;
