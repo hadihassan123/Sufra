@@ -34,42 +34,44 @@
       return;
     }
     const flag = reservation.customer_flag || {};
+    const pickups = flag.successful_pickups || 0;
+    const noShows = flag.no_show_count || 0;
+    const isNewCustomer = pickups === 0 && noShows === 0;
+    // Weighted so a no-show costs more than a pickup earns — wasting
+    // food is worse than one missing data point.
+    const score = pickups - (noShows * 2);
+    // Being "currently blocked" and being "high risk" are separate
+    // facts — a customer's restriction can lapse while their score
+    // stays low, and vice versa. Previously this only checked whether
+    // reservation_restricted_until was SET, not whether it was still
+    // in the future, so an expired restriction kept showing forever.
+    const restrictedUntil = flag.reservation_restricted_until ? new Date(flag.reservation_restricted_until) : null;
+    const isCurrentlyRestricted = restrictedUntil && restrictedUntil > new Date();
 
-    let reputationHtml;
-
-    if (flag.reservation_restricted_until) {
-
-      reputationHtml = `
-        <div class="customer-reputation danger">
-          🔴 <strong>Restricted customer</strong><br>
-          ${flag.successful_pickups || 0} successful pickups •
-          ${flag.no_show_count || 0} no-shows<br>
-          Restricted until
-          ${new Date(flag.reservation_restricted_until).toLocaleDateString()}
-        </div>
-      `;
-
-    } else if ((flag.no_show_count || 0) >= 3) {
-
-      reputationHtml = `
-        <div class="customer-reputation warning">
-          🟡 <strong>Frequent no-shows</strong><br>
-          ${flag.successful_pickups || 0} successful pickups •
-          ${flag.no_show_count} no-shows
-        </div>
-      `;
-
+    let tierClass, tierHtml;
+    if (isNewCustomer) {
+      tierClass = 'new';
+      tierHtml = `⚪ <strong>New customer</strong><br>No pickup history yet.`;
+    } else if (score >= 2) {
+      tierClass = 'trusted';
+      tierHtml = `🟢 <strong>Trusted</strong><br>${pickups} successful pickups • ${noShows} no-shows`;
+    } else if (score >= 0) {
+      tierClass = 'warning';
+      tierHtml = `🟡 <strong>Needs attention</strong><br>${pickups} successful pickups • ${noShows} no-shows`;
     } else {
+      tierClass = 'danger';
+      tierHtml = `🔴 <strong>High risk</strong><br>${pickups} successful pickups • ${noShows} no-shows`;
+    }
 
-      reputationHtml = `
-        <div class="customer-reputation trusted">
-          🟢 <strong>Trusted customer</strong><br>
-          ${flag.successful_pickups || 0} successful pickups •
-          ${flag.no_show_count || 0} no-shows
+    let reputationHtml = `<div class="customer-reputation ${tierClass}">${tierHtml}</div>`;
+    if (isCurrentlyRestricted) {
+      reputationHtml += `
+        <div class="customer-reputation danger restriction-notice">
+          🚫 <strong>Currently restricted</strong> until ${restrictedUntil.toLocaleDateString()}
         </div>
       `;
-
     }
+
     verifyResult.innerHTML = `
       <div class="form-msg success show">
         ${reputationHtml}

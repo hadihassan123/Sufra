@@ -500,6 +500,13 @@ fieldset{ border:none; padding:0; margin:0; }
 .insight-value{ font-family:var(--f-display); font-size:1.25rem; font-weight:600; }
 .insight-sub{ font-size:0.78rem; color:rgba(36,31,26,0.55); }
 
+.customer-reputation{ margin-top:10px; padding:10px 14px; border-radius:8px; font-size:0.88rem; line-height:1.5; }
+.customer-reputation.trusted{ background:rgba(47,110,103,0.1); color:var(--teal-deep); }
+.customer-reputation.warning{ background:rgba(232,163,61,0.15); color:var(--amber-deep); }
+.customer-reputation.danger{ background:rgba(193,84,60,0.12); color:var(--rust); }
+.customer-reputation.new{ background:rgba(36,31,26,0.05); color:var(--charcoal); }
+.customer-reputation.restriction-notice{ margin-top:6px; }
+
 table.data-table{ width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
 table.data-table th{
   text-align:left; font-family:var(--f-mono); font-size:0.68rem; letter-spacing:0.06em; text-transform:uppercase;
