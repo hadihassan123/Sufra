@@ -52,6 +52,18 @@
     if (isNewCustomer) {
       tierClass = 'new';
       tierHtml = `⚪ <strong>New customer</strong><br>No pickup history yet.`;
+    } else if (noShows === 0) {
+      // A clean record — any number of pickups, zero no-shows — has no
+      // negative signal to weigh, so it can never be anything but
+      // Trusted. Without this, a customer at exactly 1 pickup / 0
+      // no-shows scores 1 (same bucket as e.g. 6 pickups / 3 no-shows,
+      // which also scores... 0, i.e. adjacent) and gets the same amber
+      // "Needs attention" badge as someone with an actual bad pattern —
+      // the same "punished for being new" mistake the New Customer
+      // state was added to fix, just one step over at pickups=1
+      // instead of pickups=0.
+      tierClass = 'trusted';
+      tierHtml = `🟢 <strong>Trusted</strong><br>${pickups} successful pickups • ${noShows} no-shows`;
     } else if (score >= 2) {
       tierClass = 'trusted';
       tierHtml = `🟢 <strong>Trusted</strong><br>${pickups} successful pickups • ${noShows} no-shows`;
