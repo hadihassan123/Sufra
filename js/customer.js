@@ -348,6 +348,10 @@
     if(!pendingListing) return;
     const name = document.getElementById('custName').value.trim();
     const phone = document.getElementById('custPhone').value.trim();
+    if(!Fmt.normalizeQatarPhone(phone)){
+      alert('Please enter a valid Qatar mobile number (8 digits, starting with 3, 5, 6, or 7).');
+      return;
+    }
     const submitBtn = reserveForm.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
 

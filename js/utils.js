@@ -22,6 +22,22 @@ const Fmt = {
   categoryGlyph(category){
     const glyphs = { Bakery: '🥖', 'Café': '☕', Restaurant: '🍽️', Patisserie: '🍰', Grocery: '🧺', Hotel: '🏨' };
     return glyphs[category] || '🍴';
+  },
+
+  // Mirrors normalize_qatar_phone() in Postgres — this copy is for
+  // early UX feedback only (avoids a round-trip for an obviously-wrong
+  // number, lets the form show an inline error instead of a raw
+  // alert()). The database function is the actual enforcement point;
+  // this one is not a security boundary and must stay behaviorally in
+  // sync with it, not replace it.
+  normalizeQatarPhone(input){
+    if(!input) return null;
+    let digits = String(input).replace(/[^0-9]/g, '');
+    if(digits.startsWith('00974')) digits = digits.slice(5);
+    else if(digits.startsWith('974') && digits.length === 11) digits = digits.slice(3);
+    else if(digits.startsWith('0') && digits.length === 9) digits = digits.slice(1);
+    if(digits.length !== 8 || !/^[3567][0-9]{7}$/.test(digits)) return null;
+    return '+974' + digits;
   }
 };
 

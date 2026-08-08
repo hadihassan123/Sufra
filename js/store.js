@@ -310,9 +310,10 @@ const Store = (() => {
   }
 
   async function getReservationsByPhone(phone){
+    const normalized = Fmt.normalizeQatarPhone(phone) || phone;
     const { data, error } = await sb
       .from('reservations').select('*')
-      .eq('customer_phone', phone)
+      .eq('customer_phone', normalized)
       .order('created_at', { ascending: false });
     if(error) throw error;
     return data;
