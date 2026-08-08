@@ -394,24 +394,70 @@
 
   async function renderPickups(phone){
     pickupList.innerHTML = `<div class="empty-state"><h3>Looking…</h3></div>`;
+
     try{
       const reservations = await Store.getReservationsByPhone(phone);
+
       if(reservations.length === 0){
         pickupList.innerHTML = `<div class="empty-state"><h3>No pickups found</h3></div>`;
         return;
       }
+
       pickupList.innerHTML = reservations.map(r => `
         <div class="pickup-row">
           <div class="pickup-row-info">
             <strong>${r.item_name}${r.quantity > 1 ? ` ×${r.quantity}` : ''}</strong>
             <span>${r.vendor_name} · ${Fmt.time(r.pickup_start)}–${Fmt.time(r.pickup_end)}</span>
           </div>
+
           <span class="pickup-code-tag">${r.pickup_code}</span>
+
           <span class="status-pill status-${r.status}">${r.status}</span>
+
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm pickup-show-qr"
+            data-reservation-id="${r.id}"
+            data-pickup-code="${r.pickup_code}"
+            data-pickup-start="${r.pickup_start}"
+            data-pickup-end="${r.pickup_end}">
+            Show QR
+          </button>
         </div>
       `).join('');
+
+      pickupList.querySelectorAll('.pickup-show-qr').forEach(button => {
+        button.addEventListener('click', () => {
+          const reservationId = button.dataset.reservationId;
+          const pickupCode = button.dataset.pickupCode;
+          const pickupStart = button.dataset.pickupStart;
+          const pickupEnd = button.dataset.pickupEnd;
+
+          const confirmQr = document.getElementById('confirmQr');
+          const confirmCode = document.getElementById('confirmCode');
+          const confirmWindow = document.getElementById('confirmWindow');
+          const confirmOverlay = document.getElementById('confirmOverlay');
+
+          confirmQr.innerHTML = '';
+
+          new QRCode(confirmQr, {
+            text: reservationId,
+            width: 160,
+            height: 160
+          });
+
+          confirmCode.textContent = pickupCode;
+
+          confirmWindow.textContent =
+            `Pickup window: ${Fmt.time(pickupStart)}–${Fmt.time(pickupEnd)}`;
+
+          confirmOverlay.classList.add('show');
+        });
+      });
+
     }catch(err){
-      pickupList.innerHTML = `<div class="empty-state"><h3>Error: ${err.message}</h3></div>`;
+      pickupList.innerHTML =
+        `<div class="empty-state"><h3>Error: ${err.message}</h3></div>`;
     }
   }
 
