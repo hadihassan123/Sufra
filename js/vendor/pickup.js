@@ -8,40 +8,32 @@
 
   let qrScanner = null;
 
-  // Session-only log of what's been verified on this screen — never
-  // persisted or fetched, just a running memory of this vendor's
-  // current pickup-window activity so they don't need to leave this
-  // tab to confirm "who did I just check in". Caps at 8 so it stays a
-  // quick glance, not a second reservations table.
-  const sessionLog = [];
+  // Persisted, vendor-wide "recently verified" feed — pulled fresh
+  // from get_recent_vendor_activity() each time, not held in memory.
+  // Survives a page refresh, unlike the old session-only version.
   const recentlyVerifiedEl = document.getElementById('recentlyVerified');
   const recentlyVerifiedListEl = document.getElementById('recentlyVerifiedList');
 
-  function logSessionAction(reservation, action){
-    sessionLog.unshift({
-      name: reservation.customer_name,
-      item: reservation.item_name,
-      action, // 'Collected' | 'No Show'
-      time: new Date()
-    });
-    if(sessionLog.length > 8) sessionLog.length = 8;
-    renderSessionLog();
-  }
-
-  function renderSessionLog(){
+  async function loadRecentActivity(){
     if(!recentlyVerifiedEl || !recentlyVerifiedListEl) return;
-    if(sessionLog.length === 0){
-      recentlyVerifiedEl.style.display = 'none';
-      return;
+    try{
+      const activity = await Store.getRecentVendorActivity(8);
+      if(!activity || activity.length === 0){
+        recentlyVerifiedEl.style.display = 'none';
+        return;
+      }
+      recentlyVerifiedEl.style.display = 'block';
+      recentlyVerifiedListEl.innerHTML = activity.map(entry => `
+        <li class="recently-verified-row ${entry.status === 'no_show' ? 'no-show' : 'collected'}">
+          <span>${entry.status === 'no_show' ? '🚫' : '✅'} <strong>${entry.customer_name}</strong> — ${entry.item_name}${entry.quantity > 1 ? ` ×${entry.quantity}` : ''}</span>
+          <span class="recently-verified-time">${new Date(entry.verified_at).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' })}</span>
+        </li>
+      `).join('');
+    }catch(err){
+      console.error('[pickup] failed to load recent activity:', err);
     }
-    recentlyVerifiedEl.style.display = 'block';
-    recentlyVerifiedListEl.innerHTML = sessionLog.map(entry => `
-      <li class="recently-verified-row ${entry.action === 'No Show' ? 'no-show' : 'collected'}">
-        <span>${entry.action === 'No Show' ? '🚫' : '✅'} <strong>${entry.name}</strong> — ${entry.item}</span>
-        <span class="recently-verified-time">${entry.time.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' })}</span>
-      </li>
-    `).join('');
   }
+  loadRecentActivity();
 
   async function showReservation(reservation){
     if(!reservation){
@@ -98,9 +90,31 @@
       `;
     }
 
+    // This customer's past orders with THIS vendor only — not their
+    // history with other vendors on Sufra.
+    const history = reservation.history_with_you || [];
+    let historyHtml = '';
+    if(history.length > 0){
+      historyHtml = `
+        <div class="customer-history">
+          <span class="customer-history-label">Past orders with you</span>
+          <ul>
+            ${history.map(h => `
+              <li>
+                ${h.status === 'no_show' ? '🚫' : (h.status === 'collected' ? '✅' : '•')}
+                ${h.item_name}${h.quantity > 1 ? ` ×${h.quantity}` : ''}
+                <span class="customer-history-date">${new Date(h.created_at).toLocaleDateString()}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
     verifyResult.innerHTML = `
       <div class="form-msg success show">
         ${reputationHtml}
+        ${historyHtml}
         <strong>${reservation.customer_name}</strong>
         — ${reservation.item_name}${reservation.quantity > 1 ? ` ×${reservation.quantity}` : ''}
         · ${Fmt.money(reservation.price)} cash due
@@ -127,7 +141,7 @@
         `<div class="form-msg success show">
           Marked collected.
         </div>`;
-      logSessionAction(reservation, 'Collected');
+      loadRecentActivity();
       Overview.render();
     });
     document.getElementById('markNoShowBtn').addEventListener('click', async () => {
@@ -143,7 +157,7 @@
                     Customer reputation has been updated.
                 </div>
             `;
-            logSessionAction(reservation, 'No Show');
+            loadRecentActivity();
             Overview.render();
         } catch (err) {
             alert(err.message);

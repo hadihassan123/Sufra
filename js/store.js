@@ -328,6 +328,11 @@ const Store = (() => {
     if(error) throw error;
     return data;
   }
+  async function getRecentVendorActivity(limit){
+    const { data, error } = await sb.rpc('get_recent_vendor_activity', { p_limit: limit || 8 });
+    if(error) throw error;
+    return data || [];
+  }
   async function getReservation(id){
     const { data, error } = await sb
         .from('reservations')
@@ -408,7 +413,7 @@ const Store = (() => {
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,updateVendorPin,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
     getActiveListings, getListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
-    createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected,markNoShow, getReservationsByVendor,
+    createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected,markNoShow, getReservationsByVendor, getRecentVendorActivity,
     getAllVendors, approveVendor, revokeVendor, verifyAdminPasscode, isAdmin
   };
 })();

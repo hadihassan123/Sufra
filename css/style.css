@@ -506,6 +506,11 @@ fieldset{ border:none; padding:0; margin:0; }
 .customer-reputation.danger{ background:rgba(193,84,60,0.12); color:var(--rust); }
 .customer-reputation.new{ background:rgba(36,31,26,0.05); color:var(--charcoal); }
 .customer-reputation.restriction-notice{ margin-top:6px; }
+.customer-history{ margin-top:10px; padding:10px 14px; border-radius:8px; background:rgba(36,31,26,0.04); font-size:0.85rem; }
+.customer-history-label{ display:block; font-family:var(--f-mono); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:rgba(36,31,26,0.5); margin-bottom:6px; }
+.customer-history ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px; }
+.customer-history li{ display:flex; justify-content:space-between; gap:10px; }
+.customer-history-date{ font-family:var(--f-mono); font-size:0.72rem; color:rgba(36,31,26,0.45); flex-shrink:0; }
 
 .recently-verified{ max-width:480px; margin-top:24px; }
 .recently-verified h3{ font-family:var(--f-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:rgba(36,31,26,0.5); margin:0 0 10px; }
