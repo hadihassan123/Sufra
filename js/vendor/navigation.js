@@ -5,7 +5,11 @@
         function showView(name, opts = {}){
             document.querySelectorAll('.dash-view').forEach(v => v.classList.remove('active'));
             document.getElementById('view-' + name).classList.add('active');
-            navButtons.forEach(b => b.classList.toggle('active', b.dataset.view === name));
+            navButtons.forEach(b => {
+                const isActive = b.dataset.view === name;
+                b.classList.toggle('active', isActive);
+                b.setAttribute('aria-selected', String(isActive));
+            });
             // Regular navigation always shows everything — only the dashboard
             // stat-card drilldown (Overview's initStatCardLinks) wants the
             // filter to survive the Nav.show() call, via preserveFilter.

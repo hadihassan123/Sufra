@@ -24,15 +24,15 @@
   <aside class="dash-side">
     <p class="vendor-name" id="sideVendorName">—</p>
     <p class="vendor-status" id="sideVendorStatus">—</p>
-    <nav class="dash-nav">
-      <button data-view="overview" class="active">Overview</button>
-      <button data-view="listings">Listings</button>
-      <button data-view="post">Post new item</button>
-      <button data-view="payment">Payment settings</button>
-      <button data-view="documents">Verification documents</button>
-      <button data-view="pickup">Verify pickup</button>
-      <button data-view="reservations">Reservations</button>
-      <button data-view="analytics">Analytics</button>
+    <nav class="dash-nav" role="tablist" aria-label="Dashboard sections">
+      <button data-view="overview" class="active" role="tab" aria-selected="true">Overview</button>
+      <button data-view="listings" role="tab" aria-selected="false">Listings</button>
+      <button data-view="post" role="tab" aria-selected="false">Post new item</button>
+      <button data-view="payment" role="tab" aria-selected="false">Payment settings</button>
+      <button data-view="documents" role="tab" aria-selected="false">Verification documents</button>
+      <button data-view="pickup" role="tab" aria-selected="false">Verify pickup</button>
+      <button data-view="reservations" role="tab" aria-selected="false">Reservations</button>
+      <button data-view="analytics" role="tab" aria-selected="false">Analytics</button>
 
     </nav>
   </aside>
@@ -505,11 +505,11 @@
 
 
     <div class="modal-overlay" id="qrScannerOverlay">
-      <div class="modal-box">
-        <button class="close-x" id="closeQrScanner">
+      <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="qrScannerHeading">
+        <button class="close-x" id="closeQrScanner" aria-label="Close">
           &times;
         </button>
-        <h2>Scan Pickup QR</h2>
+        <h2 id="qrScannerHeading">Scan Pickup QR</h2>
         <div id="qr-reader"></div>
       </div>
     </div>

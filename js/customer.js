@@ -285,8 +285,12 @@
   filterBar.addEventListener('click', (e) => {
     const btn = e.target.closest('.filter-chip');
     if(!btn) return;
-    filterBar.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+    filterBar.querySelectorAll('.filter-chip').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+    });
     btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
     activeFilter = btn.dataset.filter;
     applyFiltersAndRender();
   });

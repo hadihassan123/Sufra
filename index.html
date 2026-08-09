@@ -93,17 +93,18 @@
         </div>
       </div>
       <div class="search-bar">
+        <label for="searchInput" class="sr-only">Search listings</label>
         <input type="search" id="searchInput" placeholder="Search by item, vendor, or category…">
       </div>
-      <div class="filter-bar" id="filterBar">
-        <button class="filter-chip active" data-filter="all">All</button>
-        <button class="filter-chip" data-filter="Bakery">🥖 Bakery</button>
-        <button class="filter-chip" data-filter="Café">☕ Café</button>
-        <button class="filter-chip" data-filter="Restaurant">🍽️ Restaurant</button>
-        <button class="filter-chip" data-filter="Patisserie">🍰 Patisserie</button>
-        <button class="filter-chip" data-filter="sold_out">Sold Out</button>
-        <button class="filter-chip" data-filter="expired">⌛ Expired</button>
-        <button class="filter-chip" data-filter="map">📍 Map View</button>
+      <div class="filter-bar" id="filterBar" role="tablist" aria-label="Filter listings">
+        <button class="filter-chip active" data-filter="all" role="tab" aria-selected="true">All</button>
+        <button class="filter-chip" data-filter="Bakery" role="tab" aria-selected="false">🥖 Bakery</button>
+        <button class="filter-chip" data-filter="Café" role="tab" aria-selected="false">☕ Café</button>
+        <button class="filter-chip" data-filter="Restaurant" role="tab" aria-selected="false">🍽️ Restaurant</button>
+        <button class="filter-chip" data-filter="Patisserie" role="tab" aria-selected="false">🍰 Patisserie</button>
+        <button class="filter-chip" data-filter="sold_out" role="tab" aria-selected="false">Sold Out</button>
+        <button class="filter-chip" data-filter="expired" role="tab" aria-selected="false">⌛ Expired</button>
+        <button class="filter-chip" data-filter="map" role="tab" aria-selected="false">📍 Map View</button>
       </div>
       <div class="listing-grid" id="listingGrid"></div>
       <div id="mapView" style="display:none; height: 500px; width: 100%; border-radius: 12px; margin-top: 20px; border: 1px solid var(--line); position: relative; overflow: hidden; z-index: 1;"></div>
@@ -143,6 +144,7 @@
       </div>
       <div class="pickups-panel">
         <div class="pickup-lookup">
+          <label for="lookupPhone" class="sr-only">Your phone number</label>
           <input type="tel" id="lookupPhone" placeholder="Enter your phone number, e.g. 5512 3456">
           <button class="btn btn-ink" id="lookupBtn">Find my pickups</button>
         </div>
@@ -166,8 +168,8 @@
  
 <!-- Reserve modal -->
 <div class="modal-overlay" id="reserveOverlay">
-  <div class="modal-box form-modal" id="reserveModal">
-    <button class="close-x" data-close>&times;</button>
+  <div class="modal-box form-modal" id="reserveModal" role="dialog" aria-modal="true" aria-labelledby="reserveItemName">
+    <button class="close-x" data-close aria-label="Close">&times;</button>
     <p class="hero-eyebrow" style="color:var(--teal-deep);">Reserve for pickup</p>
     <h2 id="reserveItemName">Item name</h2>
     <p class="ticket-desc" id="reserveItemMeta" style="margin-bottom:20px;"></p>
@@ -197,12 +199,12 @@
  
 <!-- Confirmation modal -->
 <div class="modal-overlay" id="confirmOverlay">
-  <div class="modal-box confirm" id="confirmModal">
-    <button class="close-x" data-close>&times;</button>
+  <div class="modal-box confirm" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmModalHeading">
+    <button class="close-x" data-close aria-label="Close">&times;</button>
 
     <div class="stamp">✓</div>
 
-    <h2>Reservation Confirmed</h2>
+    <h2 id="confirmModalHeading">Reservation Confirmed</h2>
 
     <p class="code-note">
       Show either your <strong>QR code</strong> or your
