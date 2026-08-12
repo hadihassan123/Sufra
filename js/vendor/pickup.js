@@ -1,3 +1,4 @@
+/* global esc */
 (function () {
 
   const verifyInput = document.getElementById('verifyCodeInput');
@@ -25,7 +26,7 @@
       recentlyVerifiedEl.style.display = 'block';
       recentlyVerifiedListEl.innerHTML = activity.map(entry => `
         <li class="recently-verified-row ${entry.status === 'no_show' ? 'no-show' : 'collected'}">
-          <span>${entry.status === 'no_show' ? '🚫' : '✅'} <strong>${entry.customer_name}</strong> — ${entry.item_name}${entry.quantity > 1 ? ` ×${entry.quantity}` : ''}</span>
+          <span>${entry.status === 'no_show' ? '🚫' : '✅'} <strong>${esc(entry.customer_name)}</strong> — ${esc(entry.item_name)}${esc(entry.quantity) > 1 ? ` ×${esc(entry.quantity)}` : ''}</span>
           <span class="recently-verified-time">${new Date(entry.verified_at).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' })}</span>
         </li>
       `).join('');
@@ -55,8 +56,8 @@
         `<div class="form-msg success show"
           style="background:rgba(47,110,103,0.1); color:#204C47;">
           Already marked collected for
-          <strong>${reservation.customer_name}</strong>
-          — ${reservation.item_name}.
+          <strong>${esc(reservation.customer_name)}</strong>
+          — ${esc(reservation.item_name)}.
         </div>`;
       return;
     }
@@ -102,7 +103,7 @@
             ${history.map(h => `
               <li>
                 ${h.status === 'no_show' ? '🚫' : (h.status === 'collected' ? '✅' : '•')}
-                ${h.item_name}${h.quantity > 1 ? ` ×${h.quantity}` : ''}
+                ${esc(h.item_name)}${esc(h.quantity) > 1 ? ` ×${esc(h.quantity)}` : ''}
                 <span class="customer-history-date">${new Date(h.created_at).toLocaleDateString()}</span>
               </li>
             `).join('')}
@@ -210,7 +211,7 @@
         }catch(err){
           verifyResult.innerHTML =
             `<div class="form-msg error show">
-              Lookup failed: ${err.message}
+              Lookup failed: ${esc(err.message)}
             </div>`;
           return;
         }
@@ -251,7 +252,7 @@
         const labels = { reserved: 'Reserved / awaiting pickup', collected: 'Collected' };
         banner.style.display = 'flex';
         banner.className = 'filter-banner';
-        banner.innerHTML = `Showing <span class="status-pill status-${filter}">${labels[filter] || filter}</span> only <button id="clearReservationsFilterBtn">Clear filter</button>`;
+        banner.innerHTML = `Showing <span class="status-pill status-${esc(filter)}">${esc(labels[filter] || filter)}</span> only <button id="clearReservationsFilterBtn">Clear filter</button>`;
         document.getElementById('clearReservationsFilterBtn').addEventListener('click', () => {
           DashboardState.reservationsFilter = null;
           render();
@@ -280,11 +281,11 @@
     }
     body.innerHTML = reservations.map(r => `
       <tr>
-        <td data-label="Code"><span class="pickup-code-tag">${r.pickup_code}</span></td>
-        <td data-label="Item">${r.item_name}${r.quantity > 1 ? ` ×${r.quantity}` : ''}</td>
-        <td data-label="Customer">${r.customer_name}<br><span style="opacity:.55; font-size:.8em;">${r.customer_phone}</span></td>
-        <td data-label="Pickup">${Fmt.time(r.pickup_start)}–${Fmt.time(r.pickup_end)}</td>
-        <td data-label="Status"><span class="status-pill status-${r.status}">${r.status}</span></td>
+        <td data-label="Code"><span class="pickup-code-tag">${esc(r.pickup_code)}</span></td>
+        <td data-label="Item">${esc(r.item_name)}${esc(r.quantity) > 1 ? ` ×${esc(r.quantity)}` : ''}</td>
+        <td data-label="Customer">${esc(r.customer_name)}<br><span style="opacity:.55; font-size:.8em;">${esc(r.customer_phone)}</span></td>
+        <td data-label="Pickup">${Fmt.time(esc(r.pickup_start))}–${Fmt.time(esc(r.pickup_end))}</td>
+        <td data-label="Status"><span class="status-pill status-${esc(r.status)}">${esc(r.status)}</span></td>
       </tr>
     `).join('');
   }

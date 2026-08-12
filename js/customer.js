@@ -1,4 +1,4 @@
-/* global ListingState */
+/* global ListingState, esc, escUrl */
 (() => {
   let activeFilter = 'all';
   let searchQuery = '';
@@ -53,12 +53,12 @@
         const price = l.discounted_price;
         const btn = soldOut
           ? `<button class="btn btn-ghost btn-sm" style="width:100%; margin-top:6px;" disabled>Sold out</button>`
-          : `<button class="btn btn-teal btn-sm" style="width:100%; margin-top:6px;" onclick="window.openReserveModal('${l.id}')">Reserve</button>`;
+          : `<button class="btn btn-teal btn-sm" style="width:100%; margin-top:6px;" onclick="window.openReserveModal('${l.id}')" reserve="${esc(l.id)}>Reserve</button>`;
         return `
           <div style="padding:8px 0; border-top:1px solid #eee;">
-            <strong style="display:block;">${l.item_name}</strong>
-            <span style="font-weight:bold; color:#2F6E67;">QAR ${price}</span>
-            <span style="font-size:0.85em; color:#666;"> · ${l.quantity_left} left</span>
+            <strong style="display:block;">${esc(l.item_name)}</strong>
+            <span style="font-weight:bold; color:#2F6E67;">QAR ${esc(price)}</span>
+            <span style="font-size:0.85em; color:#666;"> · ${esc(l.quantity_left)} left</span>
             ${btn}
           </div>`;
       }).join('');
@@ -66,7 +66,7 @@
       const marker = L.marker(coords).addTo(map);
       marker.bindPopup(`
         <div class="map-popup">
-          <div class="map-popup-title">${businessName}</div>
+          <div class="map-popup-title">${esc(businessName)}.</div>
           <div class="map-popup-meta">${vendorListings.length} item${vendorListings.length > 1 ? 's' : ''}</div>
           ${itemsHtml}
         </div>
@@ -78,7 +78,7 @@
     }, 100);
   }
 
-  window.openReserveModal = openReserveModal;
+  
   // === END MAP VIEW ===
 
   const grid = document.getElementById('listingGrid');
@@ -139,6 +139,10 @@
       },200); 
     } else {
       grid.style.display = 'grid';
+      document.getElementById('mapView')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-reserve]');
+        if(btn) openReserveModal(btn.dataset.reserve);
+      });
       document.getElementById('mapView').style.display = 'none';
       renderListingGrid(filtered);
     }  
@@ -234,45 +238,45 @@
       <div class="ticket-card">
         <div class="ticket-photo">
           ${l.image_url
-            ? `<img class="ticket-image" src="${l.image_url}" alt="${l.item_name}" loading="lazy">`
+            ? `<img class="ticket-image" src="${escUrl(l.image_url)}" alt="${esc(l.item_name)}" loading="lazy">`
             : ''
           }
           <span class="ticket-photo-fallback" aria-hidden="true">${Fmt.categoryGlyph(l.category)}</span>
-          <span class="discount-tag">${discountPct}% off</span>
+          <span class="discount-tag">${esc(discountPct)}% off</span>
           
         </div>
         <div class="ticket ${soldOut ? 'sold-out' : (isExpired ? 'expired' : '')}">
           <div class="ticket-main">
             <div class="ticket-top">
               <span class="ticket-vendor">
-                ${logoUrl ? `<img class="ticket-vendor-logo" src="${logoUrl}" alt="">` : ''}
-                <span class="ticket-vendor-name">${vendorName}</span>
+                ${logoUrl ? `<img class="ticket-vendor-logo" src="${escUrl(logoUrl)}" alt="${esc(vendorName)} logo">` : ''}
+                <span class="ticket-vendor-name">${esc(vendorName)}</span>
                 ${isVerified ? `<span class="verified-check">✓</span>` : ''}
               </span>
               ${vendorAddress ? (mapsUrl
-                ? `<a class="ticket-vendor-address" href="${mapsUrl}" target="_blank" rel="noopener">📍 ${vendorAddress}</a>`
-                : `<span class="ticket-vendor-address">📍 ${vendorAddress}</span>`
+                ? `<a class="ticket-vendor-address" href="${escUrl(mapsUrl)}" target="_blank" rel="noopener">📍 ${esc(vendorAddress)}</a>`
+                : `<span class="ticket-vendor-address">📍 ${esc(vendorAddress)}</span>`
               ) : ''}
             </div>
-            <h3 class="ticket-item">${l.item_name}</h3>
-            <p class="ticket-desc">${l.description || ''}</p>
+            <h3 class="ticket-item">${esc(l.item_name)}</h3>
+            <p class="ticket-desc">${esc(l.description || '')}</p>
             <div class="ticket-prices">
               <span class="price-old">${Fmt.money(l.original_price)}</span>
               <span class="price-new">${Fmt.money(l.discounted_price)}</span>
             </div>
             <div class="ticket-meta">
-              <span>📍 <strong>${l.category}</strong></span>
+              <span>📍 <strong>${esc(l.category)}</strong></span>
               <span>🕐 Pickup <strong>${Fmt.time(l.pickup_start)}–${Fmt.time(l.pickup_end)}</strong></span>
               <span class="ticket-posted">Posted ${timeAgo(l.created_at)}</span>
             </div>
           </div>
           <div class="ticket-stub">
-            <button class="btn ${(soldOut || isExpired) ? 'btn-ghost' : 'btn-teal'}" ${(soldOut || isExpired) ? 'disabled' : ''} data-reserve="${l.id}">
+            <button class="btn ${(soldOut || isExpired) ? 'btn-ghost' : 'btn-teal'}" ${(soldOut || isExpired) ? 'disabled' : ''} data-reserve="${esc(l.id)}">
               ${soldOut ? 'Sold out' : (isExpired ? 'Expired' : 'Reserve')}
             </button>
 
             <div class="stock-info">
-              <span>${l.quantity_left}/${l.quantity_total}</span>
+              <span>${esc(l.quantity_left)}/${esc(l.quantity_total)}</span>
               <span></span>
               <small>available</small>
             </div>
@@ -410,21 +414,21 @@
       pickupList.innerHTML = reservations.map(r => `
         <div class="pickup-row">
           <div class="pickup-row-info">
-            <strong>${r.item_name}${r.quantity > 1 ? ` ×${r.quantity}` : ''}</strong>
-            <span>${r.vendor_name} · ${Fmt.time(r.pickup_start)}–${Fmt.time(r.pickup_end)}</span>
+            <strong>${esc(r.item_name)}${esc(r.quantity) > 1 ? ` ×${esc(r.quantity)}` : ''}</strong>
+            <span>${esc(r.vendor_name)} · ${Fmt.time(r.pickup_start)}–${Fmt.time(r.pickup_end)}</span>
           </div>
 
-          <span class="pickup-code-tag">${r.pickup_code}</span>
+          <span class="pickup-code-tag">${esc(r.pickup_code)}</span>
 
-          <span class="status-pill status-${r.status}">${r.status}</span>
+          <span class="status-pill status-${esc(r.status)}">${esc(r.status)}</span>
 
           <button
             type="button"
             class="btn btn-ghost btn-sm pickup-show-qr"
-            data-reservation-id="${r.id}"
-            data-pickup-code="${r.pickup_code}"
-            data-pickup-start="${r.pickup_start}"
-            data-pickup-end="${r.pickup_end}">
+            data-reservation-id="${esc(r.id)}"
+            data-pickup-code="${esc(r.pickup_code)}"
+            data-pickup-start="${esc(r.pickup_start)}"
+            data-pickup-end="${esc(r.pickup_end)}">
             Show QR
           </button>
         </div>

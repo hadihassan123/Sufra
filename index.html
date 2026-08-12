@@ -31,7 +31,7 @@
       <a href="vendor-signup.html" class="nav-cta guest-only" id="vendorNavLink">List your surplus</a>
       <a href="vendor-login.html" id="vendorLoginNavLink" class="guest-only">Log in</a>
       <a href="#" id="vendorLogoutNavLink" class="auth-only">Log out</a>
-      <a href="admin.html" id="adminLogoutNavLink" style="display:none;">Log out (admin)</a>
+      <a href="admin.html" id="adminNavLink" style="display:none;">Log out (admin)</a>
     </nav>
   </div>
 </header>
@@ -240,6 +240,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/supabase-client.js"></script>
+<script src="js/escape.js"></script>
 <script src="js/store.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/customer.js"></script>
@@ -258,9 +259,16 @@
     }
   }
 
-  function updateAdminNav(){
-    const isAdmin = !!sessionStorage.getItem('sufra_admin_passcode');
-    document.getElementById('adminLogoutNavLink').style.display = isAdmin ? 'inline-block' : 'none';
+  async function updateAdminNav(){
+    const link = document.getElementById('adminNavLink');
+    let admin = false;
+    try{
+      const session = await Store.getSession();
+      if(session) admin = await Store.isAdmin(session.user.id);
+    }catch{
+      admin = false; // never reveal the admin entry point on an error
+    }
+    link.style.display = admin ? 'inline-block' : 'none';
   }
 
   document.getElementById('vendorLogoutNavLink').addEventListener('click', async (e) => {

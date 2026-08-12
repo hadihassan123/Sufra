@@ -1,4 +1,4 @@
-/* global ListingState */ 
+/* global ListingState,esc,escUrl */ 
 (function () {
 
   const listingImageInput = document.getElementById('listingImage');
@@ -38,7 +38,7 @@
         const labels = { active: 'Active', sold_out: 'Sold out', expired: 'Expired' };
         banner.style.display = 'flex';
         banner.className = 'filter-banner';
-        banner.innerHTML = `Showing <span class="status-pill status-${filter}">${labels[filter] || filter}</span> only <button id="clearListingsFilterBtn">Clear filter</button>`;
+        banner.innerHTML = `Showing <span class="status-pill status-${esc(filter)}">${esc(labels[filter] || filter)}</span> only <button id="clearListingsFilterBtn">Clear filter</button>`;
         document.getElementById('clearListingsFilterBtn').addEventListener('click', () => {
           DashboardState.listingsFilter = null;
           render();
@@ -65,18 +65,18 @@
       const status = ListingState.status(l);
       return `
       <tr>
-        <td data-label="Item"><strong>${l.item_name}</strong> <span class="status-pill status-${status.key}">${status.label}</span></td>
+        <td data-label="Item"><strong>${esc(l.item_name)}</strong> <span class="status-pill status-${status.key}">${esc(status.label)}</span></td>
         <td data-label="Price">${Fmt.money(l.discounted_price)} <span style="opacity:.5; text-decoration:line-through;">${Fmt.money(l.original_price)}</span></td>
         <td data-label="Stock">
           <div class="qty-editor">
-            <button data-qty-down="${l.id}">−</button>
-            <span>${l.quantity_left}</span>
-            <button data-qty-up="${l.id}">+</button>
+            <button data-qty-down="${esc(l.id)}">−</button>
+            <span>${esc(l.quantity_left)}</span>
+            <button data-qty-up="${esc(l.id)}">+</button>
           </div>
         </td>
         <td data-label="Pickup">${Fmt.time(l.pickup_start)}–${Fmt.time(l.pickup_end)}</td>
-        <td data-label=""><button class="icon-btn" data-edit="${l.id}">Edit</button></td>
-        <td data-label=""><button class="icon-btn" data-remove="${l.id}">Remove</button></td>
+        <td data-label=""><button class="icon-btn" data-edit="${esc(l.id)}">Edit</button></td>
+        <td data-label=""><button class="icon-btn" data-remove="${esc(l.id)}">Remove</button></td>
       </tr>
     `;
     }).join('');

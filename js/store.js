@@ -57,10 +57,10 @@ const Store = (() => {
     return data.session;
   }
 
-  async function getVendorProfile(userId){
-    const { data, error } = await sb.from('vendors').select('*').eq('id', userId).maybeSingle();
+  async function getVendorProfile(){
+    const { data, error } = await sb.rpc('get_my_vendor_profile');
     if(error) throw error;
-    return data;
+    return (data && data[0]) || null;
   }
 
   // Saves address + coordinates together, always as one write — a vendor's
@@ -379,25 +379,17 @@ const Store = (() => {
 
   // ---- admin ----
   async function getAllVendors(){
-    const { data, error } = await sb.from('vendors').select('*').order('created_at', { ascending: false });
+    const { data, error } = await sb.rpc('admin_list_vendors');
+    if(error) throw error;
+    return data || [];
+  }
+  async function approveVendor(vendorId){
+    const { data, error } = await sb.rpc('approve_vendor', { target_id: vendorId });
     if(error) throw error;
     return data;
   }
-
-  async function approveVendor(vendorId, passcode){
-    const { data, error } = await sb.rpc('approve_vendor', { target_id: vendorId, given_passcode: passcode });
-    if(error) throw error;
-    return data;
-  }
-
-  async function revokeVendor(vendorId, passcode){
-    const { data, error } = await sb.rpc('revoke_vendor', { target_id: vendorId, given_passcode: passcode });
-    if(error) throw error;
-    return data;
-  }
-
-  async function verifyAdminPasscode(passcode){
-    const { data, error } = await sb.rpc('verify_admin_passcode', { given_passcode: passcode });
+  async function revokeVendor(vendorId){
+    const { data, error } = await sb.rpc('revoke_vendor', { target_id: vendorId });
     if(error) throw error;
     return data;
   }
@@ -414,6 +406,6 @@ const Store = (() => {
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
     getActiveListings, getListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected,markNoShow, getReservationsByVendor, getRecentVendorActivity,
-    getAllVendors, approveVendor, revokeVendor, verifyAdminPasscode, isAdmin
+    getAllVendors, approveVendor, revokeVendor, isAdmin
   };
 })();
