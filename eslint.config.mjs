@@ -45,6 +45,8 @@ export default [
         DashboardState: "writable",
         LocationPicker: "writable",
         ListingState: "writable",
+        esc: "readonly",
+        escUrl: "readonly",
 
         // --- Sufra Vendor Dashboard Sub-Modules ---
         Documents: "writable",
