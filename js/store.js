@@ -11,12 +11,9 @@ const Store = (() => {
     { startHour: 22, endHour: 24, label: 'Closing-time surplus' }
   ];
 
-  function pickupCode(){
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
-    let out = '';
-    for(let i=0;i<6;i++) out += chars[Math.floor(Math.random()*chars.length)];
-    return out;
-  }
+  // Phase 0: removed the client-side pickupCode() generator. It was dead
+  // code — create_reservation_safe generates the code in the database —
+  // and leaving it here implied the client still had a say in it.
 
   // ---- auth / vendor identity ----
   async function signUpVendor({ email, password, businessName, category, area, address, latitude, longitude }){
@@ -149,44 +146,14 @@ const Store = (() => {
     return data.publicUrl;
   }
 
-  async function getActiveListings(lat = 25.2854, lng = 51.5310, radius = 500000) {
-    const { data, error } = await sb.rpc('nearby_listings', {
-      user_lat: lat,
-      user_lng: lng,
-      radius_meters: radius
-    });
-
-    if (error) {
-      console.error('Error fetching via RPC:', error);
-      throw error;
-    }
-
-    // Map RPC return fields to match what your existing cards and map expect
-    return (data || []).map(item => ({
-      id: item.listing_id,
-      vendor_id: item.vendor_id,
-      item_name: item.title,
-      description: item.description,
-      discounted_price: item.price,
-      original_price: item.original_price,
-      quantity_left: item.quantity_left,
-      quantity_available: item.quantity_available,
-      quantity_total: item.quantity_available, // or map if total is tracked separately
-      pickup_start: item.pickup_start,
-      pickup_end: item.pickup_end,
-      status: item.status,
-      category: item.category || 'Restaurant', // Ensure category fallback exists if needed
-      created_at: item.created_at,
-      vendors: {
-        id: item.vendor_id,
-        business_name: item.vendor_name,
-        latitude: item.latitude,
-        longitude: item.longitude,
-        address: item.address,
-        verification_status: item.verification_status
-      }
-    }));
-  }
+  // Phase 0: deleted getActiveListings() and its nearby_listings RPC
+  // mapping. It was superseded by getListings()/nearby_listings_v2 but
+  // left in place, so two mapping layers described the same concept —
+  // and the old one still carried the bug the new one was written to fix
+  // (it filtered status='active' in SQL and silently dropped sold-out
+  // and expired listings, and never returned image_url or category).
+  // js/customer.js had a `typeof Store.getListings === 'function'`
+  // fallback to it; that fallback is now removed too.
 
   // Real server-side radius search via nearby_listings_v2 (ST_DWithin on
   // vendors.location_geog, indexed) — replaces getActiveListings's RPC,
@@ -237,14 +204,13 @@ const Store = (() => {
   }
 
   async function getListingsByVendor(vendorId){
-    console.log("Querying listings for vendorId:", vendorId); // <--- Add this
+    // Phase 0: removed three debug console.log/console.error calls that
+    // printed the vendor id and the full raw query result into every
+    // user's browser console in production.
     const { data, error } = await sb
       .from('listings').select('*')
       .eq('vendor_id', vendorId).neq('status', 'removed')
       .order('created_at', { ascending: false });
-
-      if(error) console.error("Supabase Error:", error); // <--- Check for errors
-      console.log("Raw query result data:", data); // <--- See what comes back
     if(error) throw error;
     return data;
   }
@@ -309,14 +275,20 @@ const Store = (() => {
     return data.reservation;
   }
 
+  // Phase 0: was a direct `select('*') from reservations` filtered by
+  // phone. That depended on the permissive `using (true)` SELECT policy
+  // which no longer exists on the live database, so this silently
+  // returned an empty array for every real customer — "Your pickups"
+  // always said "No pickups found". Now goes through a SECURITY DEFINER
+  // function scoped to one phone number, which also normalizes the
+  // number in the database instead of trusting the JS copy, and returns
+  // only the columns the pickup list renders.
   async function getReservationsByPhone(phone){
-    const normalized = Fmt.normalizeQatarPhone(phone) || phone;
-    const { data, error } = await sb
-      .from('reservations').select('*')
-      .eq('customer_phone', normalized)
-      .order('created_at', { ascending: false });
+    const { data, error } = await sb.rpc('get_reservations_by_phone', {
+      p_phone: phone
+    });
     if(error) throw error;
-    return data;
+    return data || [];
   }
 
   async function findReservationByCode(code){
@@ -345,14 +317,6 @@ const Store = (() => {
     return data;
   }
 
-  async function markNoShow(reservationId) {
-    const { error } = await sb.rpc('mark_no_show', {
-      p_reservation_id: reservationId
-    });
-
-    if (error) throw error;
-  }
-
   async function markCollected(id){
     const { error } = await sb.rpc('mark_collected', {
       p_reservation_id: id
@@ -360,6 +324,11 @@ const Store = (() => {
 
     if(error) throw error;
   }
+
+  // Phase 0: markNoShow was declared TWICE, identically, inside this same
+  // IIFE. The second declaration silently overwrote the first — harmless
+  // by luck, since they were identical, but it means a future edit to one
+  // copy would have had no effect. One copy now.
   async function markNoShow(reservationId) {
     const { error } = await sb.rpc('mark_no_show', {
       p_reservation_id: reservationId
@@ -404,7 +373,7 @@ const Store = (() => {
     SURPLUS_WINDOWS,
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,updateVendorPin,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
-    getActiveListings, getListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
+    getListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected,markNoShow, getReservationsByVendor, getRecentVendorActivity,
     getAllVendors, approveVendor, revokeVendor, isAdmin
   };

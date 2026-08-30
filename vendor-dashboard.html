@@ -220,11 +220,11 @@
           </div>
           <div class="field">
             <label for="skipcashKeySecret">SkipCash Key Secret</label>
-            <input type="password" id="skipcashKeySecret" placeholder="Kept write-only — you won't be able to view this again">
+            <input type="password" id="skipcashKeySecret" autocomplete="new-password" placeholder="Kept write-only — you won't be able to view this again">
           </div>
           <div class="field">
             <label for="skipcashWebhookSecret">SkipCash Webhook Secret</label>
-            <input type="password" id="skipcashWebhookSecret" placeholder="From your SkipCash Sandbox/Production credentials page">
+            <input type="password" id="skipcashWebhookSecret" autocomplete="new-password" placeholder="From your SkipCash Sandbox/Production credentials page">
           </div>
           <button type="submit" class="btn btn-teal btn-block">Save and enable card payment</button>
           <p class="hint" style="margin-top:12px;">These are stored so only Sufra's server-side payment function can read them — never visible in your dashboard again, and never sent to the browser.</p>

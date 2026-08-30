@@ -152,12 +152,12 @@
   const DEFAULT_LAT = 25.2854;
   const DEFAULT_LNG = 51.5310;
 
+  // Phase 0: removed the typeof Store.getListings === 'function' fallback
+  // to Store.getActiveListings(), which has been deleted from store.js
+  // (see store.js for why). getListings() has been the real implementation
+  // all along; the fallback branch was unreachable dead code.
   async function fetchListingsByLocation(lat, lng, radiusMeters = 500000) {
-    // Fall back to a general listing fetch if available so sold-out items aren't omitted
-    if (typeof Store.getListings === 'function') {
-      return await Store.getListings(lat, lng, radiusMeters);
-    }
-    return await Store.getActiveListings(lat, lng, radiusMeters);
+    return await Store.getListings(lat, lng, radiusMeters);
   }
 
   async function renderListings() {
