@@ -277,11 +277,20 @@
     updateNav(false);
   });
 
-  document.getElementById('adminLogoutNavLink').addEventListener('click', (e) => {
-    e.preventDefault();
-    sessionStorage.removeItem('sufra_admin_passcode');
-    updateAdminNav();
-  });
+  // Note: there is no separate "admin session" to log out of — is_admin()
+  // checks the same auth.uid() as everything else, so signing out via
+  // vendorLogoutNavLink above already covers admins too. adminNavLink
+  // (the "Log out (admin)" link, shown/hidden by updateAdminNav below)
+  // is a plain <a href="admin.html"> and needs no click handler of its
+  // own. This used to also clear a sessionStorage admin passcode, from
+  // before admin.html moved to session-based auth (see admin.html) —
+  // that passcode system no longer exists, so there was nothing left
+  // for this handler to correctly do, and the element it targeted
+  // (#adminLogoutNavLink) doesn't even exist in this page's HTML. That
+  // mismatch threw on every page load, which silently killed everything
+  // below it in this script block — including the auth-state listener,
+  // which is why the nav never updated to show "Dashboard"/"Log out"
+  // for a logged-in vendor.
 
   // Listen for auth state changes and update the nav
   sb.auth.onAuthStateChange((event, session) => {
