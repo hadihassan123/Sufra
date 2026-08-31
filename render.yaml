@@ -1,0 +1,41 @@
+# Render Blueprint. Captures configuration that has, until now, only
+# ever existed as manual clicks in the Render Dashboard - invisible to
+# git, to code review, and to anyone reading this repo trying to
+# understand what's actually protecting the deployed site.
+#
+# The `headers` block below is a byte-for-byte copy of the real,
+# already-live Content-Security-Policy, pulled directly from the
+# response headers of https://sufra-fanr.onrender.com on 2026-08-30
+# (via securityheaders.com, not guessed or reconstructed) - it does not
+# change site behavior, it just makes the existing behavior reviewable.
+#
+# For this file to take effect, the service needs to be connected as a
+# Render Blueprint (Dashboard -> New -> Blueprint, point it at this
+# repo) - see supabase/README.md-style note: until that's done, this
+# file is documentation only and the dashboard-configured header is
+# still the one actually in effect. Once connected, Render will ADD
+# this header rule alongside whatever's already set in the dashboard
+# rather than replacing it (its own docs: "Render preserves any
+# existing header rules that are not included in the Blueprint file"),
+# so the old dashboard-configured CSP rule must be deleted manually
+# after connecting, or the site will send two Content-Security-Policy
+# headers at once.
+#
+# index.html's old <meta> CSP tag has been removed as part of this same
+# change - it only ever covered script-src/style-src, was missing
+# default-src, font-src, img-src, connect-src, frame-ancestors,
+# base-uri, and form-action entirely, and additionally allowed
+# https://unpkg.com, which nothing in this codebase has ever actually
+# loaded from and which the real header never allowed either -
+# reconciled by deleting the incomplete/misleading copy and keeping
+# the one real policy, defined once, here.
+
+services:
+  - type: web
+    name: sufra
+    runtime: static
+    staticPublishPath: .
+    headers:
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data: https://yplswfpbcssfmgeejcpy.supabase.co https://cdn.jsdelivr.net https://*.tile.openstreetmap.org; connect-src 'self' https://yplswfpbcssfmgeejcpy.supabase.co https://nominatim.openstreetmap.org; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
