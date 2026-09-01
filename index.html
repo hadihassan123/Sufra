@@ -10,8 +10,8 @@
       claimed to allow https://unpkg.com, which the real header never
       allowed and which nothing in this codebase has ever loaded from.
       One real policy, defined once, in render.yaml. -->
- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
- <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+ <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <title>Sufra — Doha's End-of-Day Food Marketplace</title>
  <meta name="description" content="Reserve guaranteed surplus food from Doha restaurants, bakeries, and cafés at a real discount. Pick up before closing.">
@@ -236,15 +236,14 @@
   </div>
 </div>
  
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" integrity="REPLACE_WITH_SRIHASH_ORG_HASH_qrcodejs-1.0.0" crossorigin="anonymous"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js" integrity="REPLACE_WITH_SRIHASH_ORG_HASH_supabase-js-2.112.4" crossorigin="anonymous"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/escape.js"></script>
 <script src="js/store.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/customer.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 <script>
   function updateNav(isLoggedIn){
