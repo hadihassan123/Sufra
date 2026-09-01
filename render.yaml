@@ -32,7 +32,7 @@
 
 services:
   - type: web
-    name: sufra
+    name: Sufra-Spread
     runtime: static
     staticPublishPath: .
     headers:
