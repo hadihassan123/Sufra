@@ -567,4 +567,4 @@ One reservation at a time.
 - Expand across GCC countries.
 - Reduce food waste through technology.
 - Help businesses recover revenue from unsold food.
-- Provide affordable meals while promoting sustainability.
+- Provide affordable meals while promoting sustainability.# CI test
