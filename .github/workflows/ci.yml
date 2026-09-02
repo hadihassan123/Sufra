@@ -1,0 +1,73 @@
+name: CI
+
+# Runs on every push and PR targeting main. On its own this doesn't
+# block anything - Husky's pre-commit hook (npm run test:all) is
+# bypassable with --no-verify, and only ever runs on whoever's own
+# machine did the committing. For this to actually be "required to
+# merge" rather than just "exists," GitHub's branch protection needs
+# to require these three job names to pass before a PR can merge - see
+# supabase/README.md-style note below and the repo README for the exact
+# one-time dashboard steps, since that setting isn't something a
+# workflow file can turn on for itself.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run test:all
+
+  # Compares js/utils.js's normalizeQatarPhone() against the real live
+  # normalize_qatar_phone() Postgres RPC. Uses only the already-public
+  # anon key committed in js/supabase-client.js - no secrets needed.
+  phone-normalization:
+    runs-on: ubuntu-latest
+    needs: lint-and-integrity
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/test-phone-normalization.mjs
+
+  # Runs supabase/tests/rls.test.sql directly against the LIVE
+  # database - there is no separate staging project (deferred, see
+  # supabase/README.md: no free tier available, real ongoing cost).
+  # This is safe because the entire test file is one transaction that
+  # always ends in ROLLBACK - see that file's own header for the full
+  # explanation and for what's actually being asserted.
+  #
+  # Needs a repo secret named SUPABASE_DB_URL - a direct Postgres
+  # connection string (NOT the anon key), from the Supabase dashboard:
+  # Project Settings -> Database -> Connection string -> URI. This is
+  # sensitive - it's real database credentials, not a public key like
+  # the ones in js/supabase-client.js - and must only ever live in
+  # GitHub's encrypted repo secrets, never committed to a file.
+  rls-tests:
+    runs-on: ubuntu-latest
+    needs: lint-and-integrity
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Run pgTAP RLS suite (transaction always rolled back)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          OUTPUT=$(psql "$SUPABASE_DB_URL" -X -q -t -A -f supabase/tests/rls.test.sql)
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -q "^not ok"; then
+            echo ""
+            echo "One or more pgTAP assertions failed - see 'not ok' lines above."
+            exit 1
+          fi
