@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vendor login — Sufra</title>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
 
@@ -12,59 +13,38 @@
   <div class="wrap">
     <a href="index.html" class="brand">Sufra <small>The Spread</small></a>
     <nav class="nav-links">
-      <a href="index.html">Browse</a>
+      <a href="index.html">View site</a>
+      <a href="vendor-signup.html">List your surplus</a>
     </nav>
   </div>
 </header>
 
 <div class="auth-shell">
   <div class="auth-card">
-    <p class="eyebrow">Vendor access</p>
+    <p class="eyebrow">Vendor portal</p>
     <h1>Log in</h1>
-    <p class="sub">Manage your listings, stock, and pickup codes.</p>
-
-    <div class="form-msg error" id="formMsg"></div>
-
+    <p class="sub">Access your dashboard to post surplus and verify pickups.</p>
+    <div class="form-msg error" id="loginMsg"></div>
     <form id="loginForm">
       <div class="field">
         <label for="email">Email</label>
-        <input type="email" id="email" required placeholder="you@business.qa">
+        <input type="email" id="email" required placeholder="you@business.com" autocomplete="email">
       </div>
       <div class="field">
         <label for="password">Password</label>
-        <input type="password" id="password" required placeholder="Your password">
+        <input type="password" id="password" required placeholder="Your password" autocomplete="current-password">
       </div>
-      <button type="submit" class="btn btn-teal btn-block" id="submitBtn">Log in</button>
+      <button type="submit" class="btn btn-ink btn-block">Log in</button>
     </form>
+    <p class="auth-switch"><a href="vendor-forgot-password.html">Forgot password?</a></p>
     <p class="auth-switch">New here? <a href="vendor-signup.html">Create a vendor account</a></p>
-    <p class="auth-switch"> <a href="vendor-forgot-password.html">Forgot your password?</a>
-    </p>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js" integrity="sha384-ysv13JVP3fufiEXfjML9OdCa/rRbMJvUBOWyor82wfuK8INNZAvmbxHgKIHi+oqz" crossorigin="anonymous"></script>
 <script src="js/supabase-client.js"></script>
+<script src="js/escape.js"></script>
 <script src="js/store.js"></script>
-<script>
-  const form = document.getElementById('loginForm');
-  const msg = document.getElementById('formMsg');
-  const submitBtn = document.getElementById('submitBtn');
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    submitBtn.disabled = true;
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-
-    try{
-      await Store.signInVendor({ email, password });
-      window.location.href = 'vendor-dashboard.html';
-    }catch(err){
-      msg.textContent = err.message || 'Incorrect email or password.';
-      msg.className = 'form-msg error show';
-      submitBtn.disabled = false;
-    }
-  });
-</script>
+<script src="js/vendor.js"></script>
 </body>
 </html>
