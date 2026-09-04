@@ -1,0 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  /* color */
+  --ink:        #171B33;
+  --ink-deep:   #0E1122;
+  --amber:      #E8A33D;
+  --amber-deep: #C97F1E;
+  --teal:       #2F6E67;
+  --teal-deep:  #204C47;
+  --paper:      #F6F1E3;
+  --paper-dim:  #EBE2C9;
+  --charcoal:   #241F1A;
+  --rust:       #C1543C;
+  --line:       rgba(36,31,26,0.16);
+  --line-light: rgba(246,241,227,0.22);
+
+  /* type */
+  --f-display: 'Fraunces', serif;
+  --f-body:    'Inter', sans-serif;
+  --f-mono:    'IBM Plex Mono', monospace;
+
+  --radius: 3px;
+}
+
+*{ box-sizing:border-box; }
+html{ scroll-behavior:smooth; }
+body{
+  margin:0;
+  font-family:var(--f-body);
+  color:var(--charcoal);
+  background:var(--paper);
+  -webkit-font-smoothing:antialiased;
+}
+img{ max-width:100%; display:block; }
+a{ color:inherit; }
+button{ font-family:inherit; cursor:pointer; }
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important; }
+}
+
+@keyframes pulse{
+  0%, 100%{ opacity:1; }
+  50%{ opacity:0.35; }
+}
+
+/* ---------- layout shell ---------- */
+.wrap{ max-width:1120px; margin:0 auto; padding:0 28px; }
+
+.site-header{
+  position:sticky; top:0; z-index:40;
+  background:var(--paper);
+  border-bottom:1px solid var(--line);
+}
+.site-header .wrap{
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:8px 16px;
+  min-height:72px; padding-top:10px; padding-bottom:10px;
+}
+.brand{
+  display:flex; align-items:baseline; gap:9px;
+  font-family:var(--f-display); font-weight:700; font-size:1.5rem;
+  letter-spacing:0.01em;
+  text-decoration:none; color:var(--ink);
+}
+.brand small{
+  font-family:var(--f-mono); font-weight:400; font-size:0.62rem;
+  letter-spacing:0.14em; text-transform:uppercase; color:var(--teal);
+}
+.nav-links{ display:flex; align-items:center; gap:28px; font-size:0.92rem; font-weight:500; flex-wrap:wrap; }
+.nav-links a{ text-decoration:none; color:var(--charcoal); opacity:0.75; transition:opacity .15s; }
+.nav-links a:hover{ opacity:1; }
+.nav-cta{
+  padding:9px 18px; border-radius:999px; background:var(--ink); color:var(--paper) !important;
+  opacity:1 !important; font-weight:600;
+}
+.nav-links.nav-loading{
+    visibility: hidden;
+}
+/* Auth-state nav visibility — driven by a single class on <body> instead
+   of four separate JS style.display writes. The initial-load flicker
+   itself is already handled by .nav-loading above (hides the whole nav
+   until the session check resolves); this just makes the ongoing
+   logged-in/logged-out toggling a single class swap instead of four
+   individual element writes. */
+.auth-only, .guest-only{ display:none; }
+body.logged-in .auth-only{ display:inline-block; }
+body:not(.logged-in) .guest-only{ display:inline-block; }
+.nav-cta:hover{ background:var(--ink-deep); }
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  border:none; border-radius:999px; font-weight:600; font-size:0.92rem;
+  padding:12px 22px; transition:transform .12s ease, background .15s ease, box-shadow .15s ease;
+}
+.btn:active{ transform:scale(0.97); }
+.btn-amber{ background:var(--amber); color:var(--ink-deep); }
+.btn-amber:hover{ background:var(--amber-deep); }
+
+.btn-blue {
+  background: #2563eb;
+  color: #ffffff;
+  border: 1px solid #2563eb;
+}
+.btn-blue:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+.btn-ink{ background:var(--ink); color:var(--paper); }
+.btn-ink:hover{ background:var(--ink-deep); }
+.btn-teal{ background:var(--teal); color:var(--paper); }
+.btn-teal:hover{ background:var(--teal-deep); }
+.btn-ghost{ background:transparent; color:var(--ink); border:1.5px solid var(--line); }
+.btn-ghost:hover{ border-color:var(--ink); }
+.btn-block{ width:100%; }
+.btn[disabled]{ opacity:0.45; cursor:not-allowed; }
+.btn-sm{ padding:8px 14px; font-size:0.8rem; }
+
+/* ---------- forms ---------- */
+.field{ margin-bottom:18px; }
+.field label{ display:block; font-size:0.85rem; font-weight:600; margin-bottom:7px; }
+.field .hint{ font-size:0.78rem; color:rgba(36,31,26,0.5); margin-top:5px; }
+input, select, textarea{
+  width:100%; font-family:inherit; font-size:0.94rem; padding:11px 13px;
+  border:1.5px solid var(--line); border-radius:7px; background:#fff; color:var(--charcoal);
+}
+input:focus, select:focus, textarea:focus{
+  outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(47,110,103,0.14);
+}
+:focus-visible{ outline:2px solid var(--teal); outline-offset:2px; }
+.field-row{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+fieldset{ border:none; padding:0; margin:0; }
+
+/* ---------- modal ---------- */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(14,17,34,0.6); backdrop-filter:blur(2px);
+  display:none; align-items:center; justify-content:center; z-index:100; padding:20px;
+}
+.modal-overlay.show{ display:flex; }
+.modal-box{
+  background:#fff; border-radius:14px; max-width:440px; width:100%; padding:32px;
+  position:relative; text-align:center;
+}
+.modal-box .close-x{ position:absolute; top:14px; right:16px; background:none; border:none; font-size:1.3rem; color:rgba(36,31,26,0.4); }
+.modal-box.confirm .stamp{
+  width:70px; height:70px; margin:0 auto 18px; border-radius:50%; background:var(--teal);
+  display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.8rem;
+}
+.modal-box h2{ font-family:var(--f-display); font-size:1.4rem; margin:0 0 8px; }
+.modal-box .code-display{
+  font-family:var(--f-mono); font-size:2.1rem; font-weight:600; letter-spacing:0.18em;
+  background:var(--paper-dim); border:1.5px dashed var(--line); border-radius:10px;
+  padding:18px; margin:18px 0; color:var(--ink);
+}
+.modal-box .code-note{ font-size:0.85rem; color:rgba(36,31,26,0.6); margin-bottom:22px; line-height:1.5; }
+.modal-box.form-modal{ text-align:left; }
+
+.footer{ border-top:1px solid var(--line); padding:32px 0; margin-top:40px; }
+.footer .wrap{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+.footer p{ font-size:0.8rem; color:rgba(36,31,26,0.5); margin:0; }
+.footer .brand{ font-size:1.1rem; }
+
+
+/* ---------- shared responsive ---------- */
+@media (max-width: 860px){
+  .field-row{ grid-template-columns:1fr; }
+  .nav-links{ gap:14px; }
+}
+@media (max-width: 560px){
+  .wrap{ padding:0 18px; }
+  .modal-box{ padding:24px 20px; }
+  .doc-card{ flex-direction:column; align-items:flex-start; }
+  .doc-card .doc-actions{ width:100%; justify-content:space-between; }
+}
+/* ---- Accessibility utility ---- */
+.sr-only{
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}

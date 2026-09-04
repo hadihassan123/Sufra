@@ -1,0 +1,288 @@
+/* ---------- hero w/ time dial ---------- */
+.hero{
+  background:radial-gradient(120% 140% at 15% -10%, #232A52 0%, var(--ink) 45%, var(--ink-deep) 100%);
+  color:var(--paper);
+  padding:64px 0 76px;
+  position:relative;
+  overflow:hidden;
+}
+.hero .wrap{ display:grid; grid-template-columns:1.15fr 0.85fr; gap:48px; align-items:center; }
+.hero-eyebrow{
+  font-family:var(--f-mono); font-size:0.7rem; letter-spacing:0.16em; text-transform:uppercase;
+  color:var(--amber); margin:0 0 18px;
+}
+.hero h1{
+  font-family:var(--f-display); font-weight:600; font-size:clamp(2.3rem, 4vw, 3.4rem);
+  line-height:1.05; margin:0 0 20px; letter-spacing:-0.01em;
+}
+.hero h1 em{ font-style:italic; color:var(--amber); font-weight:500; }
+.hero p.lede{
+  font-size:1.08rem; line-height:1.6; color:rgba(246,241,227,0.78); max-width:46ch; margin:0 0 30px;
+}
+.hero-actions{ display:flex; gap:14px; flex-wrap:wrap; }
+
+.hero-motif{ position:absolute; inset:0; pointer-events:none; color:rgba(246,241,227,0.09); }
+.motif-icon{ position:absolute; width:64px; height:64px; }
+.motif-cup{ top:10%; right:8%; width:56px; transform:rotate(-6deg); }
+.motif-bread{ bottom:8%; right:28%; width:80px; transform:rotate(4deg); }
+.motif-plate{ top:58%; right:2%; width:70px; transform:rotate(-3deg); }
+.motif-pot{ top:6%; left:42%; width:50px; transform:rotate(8deg); }
+@media (max-width: 860px){ .motif-plate, .motif-pot{ display:none; } }
+
+.dial-card{
+  background:rgba(246,241,227,0.05);
+  border:1px solid var(--line-light);
+  border-radius:16px;
+  padding:26px;
+  backdrop-filter:blur(6px);
+  position:relative;
+}
+.dial-card .dial-label{
+  font-family:var(--f-mono); font-size:0.68rem; letter-spacing:0.14em; text-transform:uppercase;
+  color:rgba(246,241,227,0.55); display:flex; justify-content:space-between; margin-bottom:14px;
+}
+
+.steam{
+  position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+  width:70px; height:34px; color:var(--amber); opacity:0; pointer-events:none;
+  transition:opacity .6s ease;
+}
+.steam.steam-active{ opacity:0.55; }
+.steam-wisp{ transform-origin:center bottom; animation:steam-rise 3.4s ease-in-out infinite; }
+.steam-wisp-2{ animation-delay:.5s; }
+.steam-wisp-3{ animation-delay:1s; }
+@keyframes steam-rise{
+  0%{ transform:translateY(4px) scaleY(0.9); opacity:0.3; }
+  50%{ transform:translateY(-3px) scaleY(1.05); opacity:0.9; }
+  100%{ transform:translateY(4px) scaleY(0.9); opacity:0.3; }
+}
+.dial-svg{ width:100%; height:auto; }
+.dial-status{
+  margin-top:16px; text-align:center;
+  font-family:var(--f-display); font-style:italic; font-size:1.05rem; color:var(--amber);
+}
+.dial-status span{ display:block; font-family:var(--f-mono); font-style:normal; font-size:0.72rem; color:rgba(246,241,227,0.6); margin-top:4px; letter-spacing:0.04em; }
+
+/* ---------- section headers ---------- */
+.section{ padding:54px 0; }
+.section-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:28px; flex-wrap:wrap; }
+.section-head h2{ font-family:var(--f-display); font-size:1.7rem; font-weight:600; margin:0; }
+.section-head p{ margin:6px 0 0; color:rgba(36,31,26,0.6); max-width:52ch; }
+
+/* ---------- search bar ---------- */
+.search-bar{ margin-bottom:18px; }
+.search-bar input{
+  padding:13px 16px; font-size:0.98rem;
+  background:#fff;
+  max-width:900px;
+}
+.search-bar input::-webkit-search-cancel-button{ cursor:pointer; }
+
+/* ---------- filter bar ---------- */
+.filter-bar{
+  display:flex; gap:10px; flex-wrap:wrap; margin-bottom:30px;
+}
+.filter-chip{
+  padding:8px 16px; border-radius:999px; border:1.5px solid var(--line);
+  background:transparent; font-size:0.86rem; font-weight:500; color:var(--charcoal);
+  transition:all .15s;
+}
+.filter-chip.active, .filter-chip:hover{ border-color:var(--ink); background:var(--ink); color:var(--paper); }
+
+/* ---------- ticket stub card ---------- */
+.listing-grid{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:26px;
+}
+.ticket-card{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 1px 2px rgba(23,27,51,0.04);
+  transition:box-shadow .18s ease, transform .18s ease;
+}
+.ticket-card:hover{ box-shadow:0 10px 24px rgba(23,27,51,0.10); transform:translateY(-2px); }
+.ticket-photo{
+  position:relative;
+  height:170px;
+  background:linear-gradient(150deg, #EFE6D0 0%, var(--paper-dim) 100%);
+  border-bottom:1px solid var(--line);
+  overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+}
+.ticket-image{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover;
+}
+.ticket-photo-fallback{
+  font-size:2.6rem; opacity:0.5; filter:grayscale(0.15);
+}
+.ticket-photo:has(.ticket-image) .ticket-photo-fallback{ display:none; }
+.discount-tag{
+  position:absolute; top:10px; right:10px;
+  background:var(--rust); color:#fff; font-family:var(--f-mono); font-weight:600;
+  font-size:0.72rem; padding:4px 10px; border-radius:999px; white-space:nowrap;
+  box-shadow:0 2px 6px rgba(0,0,0,0.18);
+}
+.ticket{ display:flex; }
+.ticket-main{ flex:1; padding:20px 20px 18px; min-width:0; }
+.ticket-top{ margin-bottom:10px; }
+.ticket-vendor{
+  display:flex; align-items:center; gap:6px; min-width:0;
+  font-family:var(--f-mono); font-size:0.68rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--teal-deep);
+}
+.ticket-vendor-logo{ width:16px; height:16px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.ticket-vendor-name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ticket-vendor-address{
+  display:block; margin-top:2px;
+  font-family:var(--f-body); font-size:0.72rem; text-transform:none; letter-spacing:normal;
+  color:var(--charcoal); opacity:0.65;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  text-decoration:none;
+}
+.ticket-vendor-address:hover{ opacity:0.9; text-decoration:underline; }
+.verified-check{
+  flex-shrink:0; width:14px; height:14px; border-radius:50%;
+  background:var(--teal); color:#fff; font-size:0.6rem; font-family:var(--f-body);
+  display:inline-flex; align-items:center; justify-content:center; line-height:1;
+}
+.ticket-item{ font-family:var(--f-display); font-weight:600; font-size:1.22rem; line-height:1.2; margin:0 0 6px; }
+.ticket-desc{ font-size:0.86rem; color:rgba(36,31,26,0.62); line-height:1.45; margin:0 0 14px; }
+.ticket-prices{ display:flex; align-items:baseline; gap:9px; margin-bottom:12px; }
+.price-old{ text-decoration:line-through; color:rgba(36,31,26,0.4); font-size:0.92rem; }
+.price-new{ font-family:var(--f-mono); font-weight:600; font-size:1.15rem; color:var(--ink); }
+.ticket-meta{ display:flex; flex-wrap:wrap; gap:14px; font-size:0.78rem; color:rgba(36,31,26,0.58); }
+.ticket-meta strong{ color:var(--charcoal); font-weight:600; }
+.ticket-stub{
+  width:128px; flex-shrink:0;
+  background:var(--paper);
+  border-left:2px dashed rgba(36,31,26,0.28);
+  position:relative;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:16px 12px;
+  text-align:center;
+}
+.ticket-stub::before, .ticket-stub::after{
+  content:''; position:absolute; left:-9px; width:18px; height:18px; border-radius:50%;
+  background:var(--paper); border:1px solid var(--line);
+}
+.ticket-stub::before{ top:-9px; }
+.ticket-stub::after{ bottom:-9px; }
+.ticket-stub .stub-label{ font-family:var(--f-mono); font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; color:rgba(36,31,26,0.5); margin-bottom:10px; }
+.ticket-stub .stub-qty {
+  font-family: var(--f-body);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: rgba(36,31,26,0.55);
+  line-height: 1.2;
+  margin-top: 10px;
+}
+.ticket-stub .stub-qty small {
+  display: block;
+  font-family: var(--f-body);
+  font-size: 0.62rem;
+  font-weight: 400;
+  color: rgba(36,31,26,0.38);
+  margin-top: 2px;
+}
+.ticket-stub .btn{
+  width:100%;
+  padding:12px 8px;
+  font-size:0.85rem;
+  font-weight:600;
+}
+.ticket.sold-out .ticket-main,
+.ticket.expired .ticket-main{ opacity:0.5; }
+.ticket.sold-out .ticket-stub .btn,
+.ticket.expired .ticket-stub .btn{
+  background:rgba(36,31,26,0.15);
+  color:rgba(36,31,26,0.5);
+}
+.ticket.sold-out .ticket-stub .stub-qty,
+.ticket.expired .ticket-stub .stub-qty{ opacity:0.45; }
+
+/* ---------- empty state ---------- */
+.empty-state{
+  text-align:center; padding:60px 20px; border:1.5px dashed var(--line); border-radius:12px;
+  color:rgba(36,31,26,0.55);
+}
+.empty-state h3{ font-family:var(--f-display); font-size:1.2rem; color:var(--charcoal); margin:0 0 8px; }
+
+/* ---------- how it works ---------- */
+.how-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; }
+.how-card{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:22px; }
+.how-card .how-mark{ font-family:var(--f-mono); font-size:0.72rem; color:var(--teal-deep); letter-spacing:0.08em; margin-bottom:10px; }
+.how-card h3{ font-family:var(--f-display); font-size:1.1rem; margin:0 0 8px; }
+.how-card p{ font-size:0.9rem; color:rgba(36,31,26,0.62); line-height:1.55; margin:0; }
+
+/* ---------- your pickups ---------- */
+.pickups-panel{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:24px; }
+.pickup-lookup{ display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+.pickup-lookup input{ flex:1; min-width:180px; }
+.pickup-row{
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  padding:14px 0; border-top:1px solid var(--line);
+}
+.pickup-row:first-of-type{ border-top:none; }
+.pickup-row-info strong{ display:block; font-family:var(--f-display); font-size:1rem; }
+.pickup-row-info span{ font-size:0.8rem; color:rgba(36,31,26,0.55); }
+.pickup-code-tag{
+  font-family:var(--f-mono); font-weight:600; background:var(--paper-dim); border:1px dashed var(--line);
+  padding:6px 12px; border-radius:6px; letter-spacing:0.08em;
+}
+.status-pill{ font-size:0.7rem; font-weight:600; padding:4px 10px; border-radius:999px; text-transform:uppercase; letter-spacing:0.04em; }
+.status-reserved{ background:rgba(232,163,61,0.18); color:var(--amber-deep); }
+.status-collected{ background:rgba(47,110,103,0.15); color:var(--teal-deep); }
+.status-active{ background:rgba(47,110,103,0.15); color:var(--teal-deep); }
+.status-sold_out{ background:rgba(193,84,60,0.14); color:var(--rust); }
+.status-expired{ background:rgba(120,120,120,0.15); color:#666; }
+.status-cancelled{ background:rgba(193,84,60,0.14); color:var(--rust); }
+
+/* ---------- home responsive ---------- */
+@media (max-width: 860px){
+  .hero .wrap{ grid-template-columns:1fr; }
+  .how-grid{ grid-template-columns:1fr; }
+}
+@media (max-width: 560px){
+  .ticket{ flex-direction:column; }
+  .ticket-stub{ width:auto; border-left:none; border-top:2px dashed rgba(36,31,26,0.28); flex-direction:row; justify-content:space-between; padding:14px 18px; }
+  .ticket-stub::before, .ticket-stub::after{ display:none; }
+  .ticket-stub .btn{ width:auto; padding:9px 18px; }
+  .hero{ padding:44px 0 56px; }
+}
+
+/* ---------- QR / pickup confirmation ---------- */
+.qr-box{
+  width:180px; height:180px; margin:20px auto; padding:12px;
+  background:#fff; border:1px solid var(--line); border-radius:12px;
+  display:flex; justify-content:center; align-items:center;
+}
+.pickup-code-section{ margin-top:18px; }
+.pickup-label{
+  display:block; margin-bottom:8px;
+  font-family:var(--f-mono); font-size:.75rem; letter-spacing:.08em;
+  text-transform:uppercase; color:rgba(36,31,26,.6);
+}
+#copyPickupCodeBtn{ margin-top:12px; }
+
+/* Customer map view */
+#mapView {
+  height: 500px !important; min-height: 500px !important;
+  width: 100% !important; display: none;
+  border-radius: 12px; margin-top: 20px;
+  border: 1px solid var(--line); position: relative; z-index: 1;
+  overflow: hidden; background-color: #f8f8f8;
+}
+.leaflet-container { height: 100%; width: 100%; font-family: inherit; }
+#mapView { position: relative; z-index: 1; overflow: hidden; }
+
+.map-popup { min-width: 200px; max-width: 240px; padding: 2px 4px; font-size: 12px; line-height: 1.3; }
+.map-popup-title { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+.map-popup-meta { font-size: 11px; color: #666; margin-bottom: 4px; }
+.map-popup-row { display: flex; align-items: center; gap: 6px; padding: 6px 0; border-top: 1px solid #eee; }
+.map-popup-row-info { flex: 1; min-width: 0; }
+.map-popup-item-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-popup-item-price { color: #2F6E67; font-weight: 600; }
+.map-popup-item-price span { color: #888; font-weight: 400; }
+.map-popup-row .btn { flex-shrink: 0; padding: 4px 8px; font-size: 11px; margin: 0; }
