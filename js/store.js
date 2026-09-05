@@ -54,6 +54,12 @@ const Store = (() => {
     return data.session;
   }
 
+  // Thin wrapper so pages never touch sb.auth directly.
+  // Returns the same subscription handle as supabase-js.
+  function onAuthStateChange(callback){
+    return sb.auth.onAuthStateChange(callback);
+  }
+
   async function getVendorProfile(){
     const { data, error } = await sb.rpc('get_my_vendor_profile');
     if(error) throw error;
@@ -371,7 +377,7 @@ const Store = (() => {
 
   return {
     SURPLUS_WINDOWS,
-    signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, getVendorProfile,updateVendorPin,
+    signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, onAuthStateChange, getVendorProfile,updateVendorPin,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
     getListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected,markNoShow, getReservationsByVendor, getRecentVendorActivity,
