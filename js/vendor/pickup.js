@@ -136,14 +136,22 @@
     `;
 
     document.getElementById('markCollectedBtn').addEventListener('click', async () => {
-      await Store.markCollected(reservation.id);
-      verifyInput.value = '';
-      verifyResult.innerHTML =
-        `<div class="form-msg success show">
-          Marked collected.
-        </div>`;
-      loadRecentActivity();
-      Overview.render();
+      try {
+        await Store.markCollected(reservation.id);
+        verifyInput.value = '';
+        verifyResult.innerHTML =
+          `<div class="form-msg success show">
+            Marked collected.
+          </div>`;
+        loadRecentActivity();
+        Overview.render();
+      } catch (err) {
+        // e.g. DB: "Pickup window has closed. Mark as no-show instead of collected."
+        verifyResult.innerHTML =
+          `<div class="form-msg error show">
+            ${esc(err.message || 'Could not mark collected.')}
+          </div>`;
+      }
     });
     document.getElementById('markNoShowBtn').addEventListener('click', async () => {
         if (!confirm(`Mark ${reservation.customer_name} as a no-show?`)) {
