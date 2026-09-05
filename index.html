@@ -116,7 +116,7 @@
       <div class="section-head"><div><h2>How pickup works</h2></div></div>
       <div class="how-grid">
         <div class="how-card">
-          <p class="how-mark">Browse &amp; reserve</p>
+          <p class="how-mark">Browse & reserve</p>
           <h3>Pick a listing, reserve a slot</h3>
           <p>Every item is exact — no surprise boxes. Enter your name and phone to hold it for the pickup window.</p>
         </div>
@@ -126,7 +126,7 @@
           <p>Your reservation is confirmed instantly with a code the vendor scans or checks at the counter.</p>
         </div>
         <div class="how-card">
-          <p class="how-mark">Collect &amp; pay</p>
+          <p class="how-mark">Collect & pay</p>
           <h3>Show up, pay cash, take your food</h3>
           <p>Arrive during the pickup window, hand over your code, and pay the vendor directly in cash.</p>
         </div>
@@ -292,12 +292,12 @@
   // for a logged-in vendor.
 
   // Listen for auth state changes and update the nav
-  sb.auth.onAuthStateChange((event, session) => {
+  Store.onAuthStateChange((event, session) => {
     updateNav(!!session);
   });
 
   // Also check on page load
-  sb.auth.getSession().then(({ data: { session } }) => {
+  Store.getSession().then((session) => {
     updateNav(!!session);
     document.getElementById('mainNav').classList.remove('nav-loading');
   });
