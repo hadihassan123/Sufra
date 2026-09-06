@@ -239,70 +239,7 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js" integrity="sha384-ysv13JVP3fufiEXfjML9OdCa/rRbMJvUBOWyor82wfuK8INNZAvmbxHgKIHi+oqz" crossorigin="anonymous"></script>
-<script src="js/supabase-client.js"></script>
-<script src="js/escape.js"></script>
-<script src="js/store.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/customer.js"></script>
-
-<script>
-  function updateNav(isLoggedIn){
-    document.body.classList.toggle('logged-in', isLoggedIn);
-    const heroLink = document.getElementById('heroVendorLink');
-    if(isLoggedIn){
-      heroLink.textContent = 'Go to dashboard';
-      heroLink.href = 'vendor-dashboard.html';
-    } else {
-      heroLink.textContent = 'I run a food business';
-      heroLink.href = 'vendor-signup.html';
-    }
-  }
-
-  async function updateAdminNav(){
-    const link = document.getElementById('adminNavLink');
-    let admin = false;
-    try{
-      const session = await Store.getSession();
-      if(session) admin = await Store.isAdmin(session.user.id);
-    }catch{
-      admin = false; // never reveal the admin entry point on an error
-    }
-    link.style.display = admin ? 'inline-block' : 'none';
-  }
-
-  document.getElementById('vendorLogoutNavLink').addEventListener('click', async (e) => {
-    e.preventDefault();
-    await Store.signOutVendor();
-    updateNav(false);
-  });
-
-  // Note: there is no separate "admin session" to log out of — is_admin()
-  // checks the same auth.uid() as everything else, so signing out via
-  // vendorLogoutNavLink above already covers admins too. adminNavLink
-  // (the "Log out (admin)" link, shown/hidden by updateAdminNav below)
-  // is a plain <a href="admin.html"> and needs no click handler of its
-  // own. This used to also clear a sessionStorage admin passcode, from
-  // before admin.html moved to session-based auth (see admin.html) —
-  // that passcode system no longer exists, so there was nothing left
-  // for this handler to correctly do, and the element it targeted
-  // (#adminLogoutNavLink) doesn't even exist in this page's HTML. That
-  // mismatch threw on every page load, which silently killed everything
-  // below it in this script block — including the auth-state listener,
-  // which is why the nav never updated to show "Dashboard"/"Log out"
-  // for a logged-in vendor.
-
-  // Listen for auth state changes and update the nav
-  Store.onAuthStateChange((event, session) => {
-    updateNav(!!session);
-  });
-
-  // Also check on page load
-  Store.getSession().then((session) => {
-    updateNav(!!session);
-    document.getElementById('mainNav').classList.remove('nav-loading');
-  });
-  updateAdminNav();
-</script>
+<script type="module" src="/js/entries/index.js"></script>
 
 </body>
 </html>

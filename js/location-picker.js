@@ -8,7 +8,7 @@
 // behavior ever needs tuning again (as it did on 2026-07-29), it only
 // needs to change here.
 
-const LocationPicker = (() => {
+export const LocationPicker = (() => {
 
   // Leaflet was previously loaded via a blocking <script> tag in <head> on
   // every page that might show a map, delaying initial render even when
@@ -16,6 +16,16 @@ const LocationPicker = (() => {
   // where signup fails before the map is touched). Loading it on-demand,
   // right when init() is actually called, means pages no longer pay that
   // cost upfront. Cached so multiple init() calls only load it once.
+  //
+  // integrity/crossorigin added alongside the Vite migration - this was
+  // the one CDN load in the whole app the earlier SRI pass (Phase 1 #10)
+  // missed, because it only scanned static <script src> tags in HTML,
+  // never a runtime-constructed one like this. vendor-dashboard.html and
+  // vendor-signup.html have no static Leaflet tag at all - they load it
+  // exclusively through here, so this was a real, silent gap: the one
+  // external script on those two pages running with zero integrity check.
+  // Same hashes as index.html's static tag (leafletjs.com/download.html,
+  // version 1.9.4, matching the pin already in use).
   let leafletLoadPromise = null;
   function loadLeaflet(){
     if(window.L) return Promise.resolve();
@@ -24,10 +34,14 @@ const LocationPicker = (() => {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.href = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
+      link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+      link.crossOrigin = 'anonymous';
       document.head.appendChild(link);
 
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
+      script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+      script.crossOrigin = 'anonymous';
       script.onload = () => resolve();
       script.onerror = () => reject(new Error('Failed to load the map library.'));
       document.head.appendChild(script);

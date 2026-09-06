@@ -13,11 +13,11 @@
 // (`DashboardState.xxx`) and is a prerequisite for ever safely
 // splitting vendor.js into multiple files.
 //
-// Plain object, not an ES module — matches the rest of the project's
-// classic-script pattern (no build step, plain <script> tags). Load
-// this before vendor.js.
+// Plain exported object - a prerequisite for ever safely splitting
+// vendor.js into multiple files, now realized via real ES modules
+// rather than shared classic-script global scope.
 
-const DashboardState = {
+export const DashboardState = {
   vendor: null,               // signed-in vendor's profile row (from Store.getVendorProfile)
   currentVendor: null,        // refreshed copy after logo/document uploads, so status badges reflect latest values
   cachedListings: [],         // last-rendered listings — the post form reads this when editing (e.g. to look up quantity_left)

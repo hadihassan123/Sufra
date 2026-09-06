@@ -1,5 +1,8 @@
 // js/vendor/analytics.js
-const Analytics = (() => {
+import { Store } from '../store.js';
+import { DashboardState } from '../dashboard-state.js';
+import { ListingState } from '../utils.js';
+export const Analytics = (() => {
   let lastListings = [];
   let lastReservations = [];
 

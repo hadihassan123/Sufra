@@ -1,6 +1,8 @@
 // Sidebar identity — split from js/vendor.js on 2026-07-30.
 // Runs after DashboardState.vendor has been loaded.
 
+import { DashboardState } from '../dashboard-state.js';
+
 DashboardState.onReady(function () {
 
     try {

@@ -1,4 +1,8 @@
-/* global esc */
+import { Store } from '../store.js';
+import { DashboardState } from '../dashboard-state.js';
+import { Fmt } from '../utils.js';
+import { esc } from '../escape.js';
+import { Overview } from './overview.js';
 (function () {
 
   const verifyInput = document.getElementById('verifyCodeInput');
@@ -319,3 +323,5 @@
   window.Pickup = { init, render };
 
 })();
+
+export const Pickup = window.Pickup;

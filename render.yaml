@@ -9,6 +9,31 @@
 # (via securityheaders.com, not guessed or reconstructed) - it does not
 # change site behavior, it just makes the existing behavior reviewable.
 #
+# ****************************************************************
+# KNOWN RISK, CONFIRMED ONCE ALREADY: when this Blueprint was first
+# connected to adopt the existing Sufra-Spread service, its sync
+# SILENTLY did not apply the `headers` block at all - no error, no log
+# entry, just skipped (confirmed by inspecting the sync's own event
+# log, which listed only the service-association and
+# staticPublishPath changes, nothing about headers). The CSP had to be
+# re-added manually in the dashboard as a result.
+#
+# The buildCommand/staticPublishPath change in this same file, below,
+# is a HIGHER-STAKES version of exactly that same risk: if Render
+# silently fails to pick up buildCommand the way it silently failed to
+# pick up headers, the site will keep serving raw unbuilt files while
+# index.html and every other page now expect hashed /assets/*.js
+# bundles that only exist after `npm run build` actually runs - this
+# would break the live site outright, not just misconfigure a header.
+#
+# DO NOT trust this file alone for this change. After merging, open
+# Sufra-Spread -> Settings -> Build & Deploy in the Render dashboard
+# directly and CONFIRM Build Command reads "npm ci && npm run build"
+# and Publish Directory reads "dist" - set them by hand there if a
+# Blueprint sync hasn't already done it, the same way the CSP header
+# needed a manual add after its own silent sync failure.
+# ****************************************************************
+#
 # For this file to take effect, the service needs to be connected as a
 # Render Blueprint (Dashboard -> New -> Blueprint, point it at this
 # repo) - see supabase/README.md-style note: until that's done, this
@@ -34,7 +59,12 @@ services:
   - type: web
     name: Sufra-Spread
     runtime: static
-    staticPublishPath: .
+    # Added alongside the Vite/ES-modules migration (Phase 2 #11) -
+    # this repo now has a REAL build step for the first time. Every
+    # HTML page's script tags now point at content-hashed bundles
+    # under dist/assets/ that only exist after this command runs.
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
     headers:
       - path: /*
         name: Content-Security-Policy

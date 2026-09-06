@@ -1,8 +1,8 @@
-/* Sufra data layer — backed by Supabase (Postgres + Auth).
-   Requires js/supabase-client.js loaded first (defines `sb`). */
+/* Sufra data layer — backed by Supabase (Postgres + Auth). */
 
+import { sb } from './supabase-client.js';
 
-const Store = (() => {
+export const Store = (() => {
   // Shared surplus windows — used by the homepage time dial (customer.js)
   // and to auto-fill the vendor's pickup start time (vendor.js).
   const SURPLUS_WINDOWS = [

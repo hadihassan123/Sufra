@@ -12,6 +12,10 @@
 // all loaded before this file. Actual map/geocoding logic lives in
 // location-picker.js, shared with vendor-signup.html.
 
+import { Store } from './store.js';
+import { DashboardState } from './dashboard-state.js';
+import { LocationPicker } from './location-picker.js';
+
 DashboardState.onReady(async function(){
   const addressInput = document.getElementById('vendorAddressInput');
   const statusText = document.getElementById('locationStatusText');

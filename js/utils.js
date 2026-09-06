@@ -6,7 +6,7 @@
 // Pure functions only — no DOM access, no Supabase calls, no shared
 // mutable state. Safe to load anywhere, in any order, on any page.
 
-const Fmt = {
+export const Fmt = {
   money(n){
     return 'QAR ' + Number(n).toFixed(0);
   },
@@ -42,7 +42,7 @@ const Fmt = {
 };
 
 // js/utils.js
-window.ListingState = {
+export const ListingState = {
   isSoldOut(l) {
     return (l.quantity_left !== undefined ? l.quantity_left : l.quantity_available) <= 0;
   },

@@ -1,3 +1,6 @@
+import { Store } from '../store.js';
+import { DashboardState } from '../dashboard-state.js';
+
 (function () {
 
   const DOC_TYPES = [
@@ -128,3 +131,5 @@
   };
 
 })();
+
+export const Documents = window.Documents;

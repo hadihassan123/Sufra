@@ -1,3 +1,13 @@
+import { Store } from './store.js';
+import { DashboardState } from './dashboard-state.js';
+import { Documents } from './vendor/documents.js';
+import { Logo } from './vendor/logo.js';
+import { Listings } from './vendor/listings.js';
+import { Nav } from './vendor/navigation.js';
+import { Pickup } from './vendor/pickup.js';
+import { Overview } from './vendor/overview.js';
+import './vendor/sidebar.js';
+
 (async () => {
   const session = await Store.getSession();
   if(!session){ window.location.href = 'vendor-login.html'; return; }

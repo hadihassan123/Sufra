@@ -44,28 +44,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js" integrity="sha384-ysv13JVP3fufiEXfjML9OdCa/rRbMJvUBOWyor82wfuK8INNZAvmbxHgKIHi+oqz" crossorigin="anonymous"></script>
-<script src="js/supabase-client.js"></script>
-<script src="js/store.js"></script>
-<script>
-  const form = document.getElementById('loginForm');
-  const msg = document.getElementById('formMsg');
-  const submitBtn = document.getElementById('submitBtn');
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    submitBtn.disabled = true;
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-
-    try{
-      await Store.signInVendor({ email, password });
-      window.location.href = 'vendor-dashboard.html';
-    }catch(err){
-      msg.textContent = err.message || 'Incorrect email or password.';
-      msg.className = 'form-msg error show';
-      submitBtn.disabled = false;
-    }
-  });
-</script>
+<script type="module" src="/js/entries/vendor-login.js"></script>
 </body>
 </html>

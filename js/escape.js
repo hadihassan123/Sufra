@@ -1,19 +1,19 @@
-// HTML-escaping helpers. Loaded as a classic script, same pattern as
-// js/utils.js — a separate file rather than an addition to Fmt because
-// admin.html loads store.js but not utils.js.
+// HTML-escaping helpers. Real ES module now (was a classic script
+// relying on window.esc/window.escUrl for cross-file access - see
+// git history before the Vite migration for that version).
 //
 // esc() covers text content and attribute values. escUrl() is separate
 // and required for href/src — escaping alone does not stop a
 // javascript: URL from executing; only a scheme allowlist does.
 
-window.esc = function esc(value){
+export function esc(value){
   if(value === null || value === undefined) return '';
   return String(value).replace(/[&<>"']/g, ch => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[ch]);
-};
+}
 
-window.escUrl = function escUrl(value){
+export function escUrl(value){
   if(!value) return '';
   const raw = String(value).trim();
   // Strip control chars so scheme checks can't be fooled by embedded nulls, etc.
@@ -24,5 +24,5 @@ window.escUrl = function escUrl(value){
     || scheme.startsWith('data:image/') || scheme.startsWith('/')
     || scheme.startsWith('./');
   if(!allowed) return '';
-  return window.esc(raw);
-};
+  return esc(raw);
+}

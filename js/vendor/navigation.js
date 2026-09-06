@@ -1,3 +1,9 @@
+import { DashboardState } from '../dashboard-state.js';
+import { Listings } from './listings.js';
+import { Overview } from './overview.js';
+import { Pickup } from './pickup.js';
+import { Documents } from './documents.js';
+import './analytics.js';
 (function(){
 
     function init(){
@@ -46,3 +52,5 @@
     window.Nav = { init };
 
 })();
+
+export const Nav = window.Nav;

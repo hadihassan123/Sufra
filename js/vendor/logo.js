@@ -1,3 +1,5 @@
+import { Store } from '../store.js';
+import { DashboardState } from '../dashboard-state.js';
 (function () {
 
   function render() {
@@ -64,3 +66,5 @@
   window.Logo = { init, render };
 
 })();
+
+export const Logo = window.Logo;

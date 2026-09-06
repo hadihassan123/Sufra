@@ -519,32 +519,21 @@
 
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous"></script>
 <!--
-  Vendor dashboard script order (do not reorder casually):
-  1. CDN libs (html5-qrcode, supabase-js) — third-party, no project deps
-  2. Foundation: supabase-client → store → utils → location-picker → dashboard-state
-  3. Shared helpers: vendor-location, doha-clock
-  4. Feature modules: documents, logo, pickup, overview, listings, navigation, sidebar
-     (these may read DashboardState / Store / each other's public APIs)
-  5. vendor.js LAST — session gate, runReady(), and Xxx.init() sequence
-  A missing or empty file in this list has already broken the dashboard in production.
+  Vendor dashboard script loading — as of the Vite migration, real
+  import/export in js/entries/vendor-dashboard.js and the files it
+  imports now enforces this dependency order structurally (a wrong
+  import order fails the build, rather than silently breaking at
+  runtime the way a wrong <script> tag order used to). This is
+  what previously lived here as a manually-maintained comment:
+    1. CDN libs (html5-qrcode, supabase-js) — third-party, no project deps
+    2. Foundation: supabase-client → store → utils → location-picker → dashboard-state
+    3. Shared helpers: vendor-location, doha-clock
+    4. Feature modules: documents, logo, pickup, overview, listings, navigation, sidebar
+    5. vendor.js LAST — session gate, runReady(), and Xxx.init() sequence
+  Kept for history — the actual order is now js/entries/vendor-dashboard.js
+  itself and each file's own import statements, not this comment.
 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js" integrity="sha384-ysv13JVP3fufiEXfjML9OdCa/rRbMJvUBOWyor82wfuK8INNZAvmbxHgKIHi+oqz" crossorigin="anonymous"></script>
-<script src="js/supabase-client.js"></script>
-<script src="js/escape.js"></script>
-<script src="js/store.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/location-picker.js"></script>
-<script src="js/dashboard-state.js"></script>
-<script src="js/vendor-location.js"></script>
-<script src="js/doha-clock.js"></script>
-<script src="js/vendor/documents.js"></script>
-<script src="js/vendor/logo.js"></script>
-<script src="js/vendor/pickup.js"></script>
-<script src="js/vendor/overview.js"></script>
-<script src="js/vendor/listings.js"></script>
-<script src="js/vendor/analytics.js"></script>
-<script src="js/vendor/navigation.js"></script>
-<script src="js/vendor/sidebar.js"></script>
-<script src="js/vendor.js"></script>
+<script type="module" src="/js/entries/vendor-dashboard.js"></script>
 </body>
 </html>

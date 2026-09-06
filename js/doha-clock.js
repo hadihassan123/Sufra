@@ -14,6 +14,8 @@
 // an empty <p>, not one with a text node), it just skips that update
 // instead of throwing.
 
+import { Store } from './store.js';
+
 (function(){
   const dialSvg = document.getElementById('vendorDialSvg');
   const clockText = document.getElementById('vendorClockText');
