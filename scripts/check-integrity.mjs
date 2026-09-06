@@ -167,6 +167,45 @@ htmlFiles.forEach(file => {
     const combinedRenderedIds = idsRenderedByJs(combinedSource);
     checkSource(combinedSource, `${entryPath} (including everything it imports)`, combinedRenderedIds);
   });
+
+  // E. AUTOMATED: Check for inline event-handler attributes
+  // (onclick="...", onload="...", etc.) anywhere this page's HTML
+  // could produce them - both in the static markup itself, and in any
+  // JS template-literal HTML this page's reachable script graph
+  // renders via innerHTML/insertAdjacentHTML/etc.
+  //
+  // Added 2026-09-06 after exactly this shipped as a live regression:
+  // "Drop unsafe-inline from script-src" was audited against static
+  // HTML files only, and missed an onclick="..." attribute embedded in
+  // a JS template literal in customer.js, rendered into Leaflet map
+  // popups at runtime - invisible to a plain grep of *.html. Once
+  // script-src has no unsafe-inline, ANY inline event handler anywhere
+  // - static or dynamically rendered - silently fails at runtime with
+  // no build error and no console warning a casual glance would catch;
+  // this check exists so a mistake like that fails CI instead of
+  // shipping.
+  //
+  // Scans the same known HTML event-attribute names used to audit the
+  // CSP change itself (not a loose `on[a-z]*=` pattern - that
+  // false-positives on ordinary words like "content=" and "section=",
+  // both of which contain "on" immediately before "="). If a
+  // legitimate event attribute name isn't in this list, add it here.
+  const eventAttrNames = 'click|load|error|change|submit|input|focus|blur|mouseover|mouseout|mouseenter|mouseleave|keydown|keyup|keypress|dblclick|contextmenu|drag|dragstart|dragend|drop|touchstart|touchend|touchmove|scroll|resize|toggle';
+  const inlineHandlerRegex = new RegExp(`\\bon(?:${eventAttrNames})\\s*=\\s*["']`, 'g');
+
+  const checkForInlineHandlers = (source, label) => {
+    if (inlineHandlerRegex.test(source)) {
+      console.error(`❌ CSP ERROR in ${file}: ${label} contains an inline event-handler attribute (onclick=, onload=, etc.) - this will silently fail at runtime now that script-src has no 'unsafe-inline'. Convert it to a real addEventListener call.`);
+      hasErrors = true;
+    }
+    inlineHandlerRegex.lastIndex = 0; // reset for next .test() call, since the regex has the 'g' flag
+  };
+
+  checkForInlineHandlers(content, 'this page\'s static HTML');
+  scriptPaths.forEach(entryPath => {
+    const allSources = collectReachableSources(entryPath);
+    checkForInlineHandlers(allSources.join('\n'), `${entryPath} (including everything it imports)`);
+  });
 });
 
 if (!hasErrors) {
