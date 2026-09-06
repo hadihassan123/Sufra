@@ -257,7 +257,7 @@
     try{
       closeQrScanner.addEventListener('click', async () => {
         if(qrScanner){
-          try{ await qrScanner.stop(); }catch(err){ /* already stopped — fine */ }
+          try{ await qrScanner.stop(); }catch{ /* already stopped — fine */ }
         }
         qrScannerOverlay.classList.remove('show');
       });
