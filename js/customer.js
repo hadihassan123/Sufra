@@ -55,7 +55,7 @@ import { esc, escUrl } from './escape.js';
         const price = l.discounted_price;
         const btn = soldOut
           ? `<button class="btn btn-ghost btn-sm" style="width:100%; margin-top:6px;" disabled>Sold out</button>`
-          : `<button class="btn btn-teal btn-sm" style="width:100%; margin-top:6px;" onclick="window.openReserveModal('${l.id}')" reserve="${esc(l.id)}>Reserve</button>`;
+          : `<button class="btn btn-teal btn-sm" style="width:100%; margin-top:6px;" onclick="window.openReserveModal('${l.id}')" reserve="${esc(l.id)}">Reserve</button>`;
         return `
           <div style="padding:8px 0; border-top:1px solid #eee;">
             <strong style="display:block;">${esc(l.item_name)}</strong>
