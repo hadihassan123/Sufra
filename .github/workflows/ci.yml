@@ -5,7 +5,7 @@ name: CI
 # bypassable with --no-verify, and only ever runs on whoever's own
 # machine did the committing. For this to actually be "required to
 # merge" rather than just "exists," GitHub's branch protection needs
-# to require these three job names to pass before a PR can merge - see
+# to require these job names to pass before a PR can merge - see
 # supabase/README.md-style note below and the repo README for the exact
 # one-time dashboard steps, since that setting isn't something a
 # workflow file can turn on for itself.
@@ -26,6 +26,17 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run test:all
+
+  # Keeps render.yaml reviewable: valid YAML + expected static service
+  # shape (including CSP header). Does not call Render's API.
+  validate-render-yaml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Validate render.yaml
+        run: python3 scripts/check-render-yaml.py
 
   # Compares js/utils.js's normalizeQatarPhone() against the real live
   # normalize_qatar_phone() Postgres RPC. Uses only the already-public
