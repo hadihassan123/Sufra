@@ -78,6 +78,7 @@
 create extension if not exists "uuid-ossp";
 create extension if not exists pgcrypto;
 create extension if not exists postgis;
+create extension if not exists pg_cron;
 -- pg_stat_statements, supabase_vault: Supabase-managed, not app-specific.
 
 -- ============================================================
@@ -918,6 +919,78 @@ $$;
 -- the function exists but verify the event trigger itself is actually
 -- attached (`select * from pg_event_trigger`) before assuming new
 -- tables get this automatically.
+
+-- ============================================================
+-- SCHEDULED JOBS
+-- Added 2026-09-06, live before it was ever written down here - see
+-- supabase/migrations/20260906_document_expire_stale_reservations_cron.sql
+-- for the full review notes (two known non-blocking gaps: duplicated
+-- escalation logic vs mark_no_show(), and no per-row exception
+-- handling in the loop).
+-- ============================================================
+create or replace function expire_stale_reservations()
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r record;
+  v_count integer;
+  v_done integer := 0;
+begin
+  for r in
+    select id, customer_phone
+    from public.reservations
+    where status = 'reserved'
+      and pickup_end is not null
+      and now() > (pickup_end + interval '30 minutes')
+    for update skip locked
+  loop
+    update public.reservations
+    set status = 'no_show', verified_at = now()
+    where id = r.id;
+
+    insert into public.customer_flags (phone_number, no_show_count, last_no_show_at)
+    values (r.customer_phone, 1, now())
+    on conflict (phone_number)
+    do update
+    set no_show_count = customer_flags.no_show_count + 1,
+        last_no_show_at = now(),
+        updated_at = now();
+
+    select no_show_count into v_count
+    from public.customer_flags
+    where phone_number = r.customer_phone;
+
+    if v_count = 3 then
+      update public.customer_flags
+      set reservation_restricted_until = now() + interval '1 day'
+      where phone_number = r.customer_phone;
+    elsif v_count = 4 then
+      update public.customer_flags
+      set reservation_restricted_until = now() + interval '3 days'
+      where phone_number = r.customer_phone;
+    elsif v_count >= 5 then
+      update public.customer_flags
+      set reservation_restricted_until = now() + interval '7 days'
+      where phone_number = r.customer_phone;
+    end if;
+
+    v_done := v_done + 1;
+  end loop;
+
+  return v_done;
+end;
+$$;
+-- execute intentionally NOT granted to anon/authenticated - cron-only,
+-- confirmed live (only `postgres` has execute).
+
+select cron.schedule(
+  'expire-stale-reservations',
+  '*/15 * * * *',
+  $$select public.expire_stale_reservations()$$
+);
 
 -- ============================================================
 -- COLUMN-LEVEL GRANTS
