@@ -523,7 +523,7 @@
   import/export in js/entries/vendor-dashboard.js and the files it
   imports now enforces this dependency order structurally (a wrong
   import order fails the build, rather than silently breaking at
-  runtime the way a wrong <script> tag order used to). This is
+  runtime the way a wrong manual script-tag order used to). This is
   what previously lived here as a manually-maintained comment:
     1. CDN libs (html5-qrcode, supabase-js) — third-party, no project deps
     2. Foundation: supabase-client → store → utils → location-picker → dashboard-state
