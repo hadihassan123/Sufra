@@ -61,6 +61,24 @@
         </div>`;
       return;
     }
+    if(reservation.status === 'no_show'){
+      verifyResult.innerHTML =
+        `<div class="form-msg error show">
+          Already marked <strong>no-show</strong> for
+          <strong>${esc(reservation.customer_name)}</strong>
+          — ${esc(reservation.item_name)}.
+        </div>`;
+      return;
+    }
+    if(reservation.status === 'cancelled'){
+      verifyResult.innerHTML =
+        `<div class="form-msg error show">
+          This reservation was cancelled
+          (<strong>${esc(reservation.customer_name)}</strong>
+          — ${esc(reservation.item_name)}).
+        </div>`;
+      return;
+    }
     const flag = reservation.customer_flag || {};
     const pickups = flag.successful_pickups || 0;
     const noShows = flag.no_show_count || 0;
@@ -136,14 +154,22 @@
     `;
 
     document.getElementById('markCollectedBtn').addEventListener('click', async () => {
-      await Store.markCollected(reservation.id);
-      verifyInput.value = '';
-      verifyResult.innerHTML =
-        `<div class="form-msg success show">
-          Marked collected.
-        </div>`;
-      loadRecentActivity();
-      Overview.render();
+      try {
+        await Store.markCollected(reservation.id);
+        verifyInput.value = '';
+        verifyResult.innerHTML =
+          `<div class="form-msg success show">
+            Marked collected.
+          </div>`;
+        loadRecentActivity();
+        Overview.render();
+      } catch (err) {
+        // e.g. DB: "Pickup window has closed. Mark as no-show instead of collected."
+        verifyResult.innerHTML =
+          `<div class="form-msg error show">
+            ${esc(err.message || 'Could not mark collected.')}
+          </div>`;
+      }
     });
     document.getElementById('markNoShowBtn').addEventListener('click', async () => {
         if (!confirm(`Mark ${reservation.customer_name} as a no-show?`)) {
@@ -231,7 +257,7 @@
     try{
       closeQrScanner.addEventListener('click', async () => {
         if(qrScanner){
-          try{ await qrScanner.stop(); }catch(err){ /* already stopped — fine */ }
+          try{ await qrScanner.stop(); }catch{ /* already stopped — fine */ }
         }
         qrScannerOverlay.classList.remove('show');
       });
