@@ -61,6 +61,24 @@
         </div>`;
       return;
     }
+    if(reservation.status === 'no_show'){
+      verifyResult.innerHTML =
+        `<div class="form-msg error show">
+          Already marked <strong>no-show</strong> for
+          <strong>${esc(reservation.customer_name)}</strong>
+          — ${esc(reservation.item_name)}.
+        </div>`;
+      return;
+    }
+    if(reservation.status === 'cancelled'){
+      verifyResult.innerHTML =
+        `<div class="form-msg error show">
+          This reservation was cancelled
+          (<strong>${esc(reservation.customer_name)}</strong>
+          — ${esc(reservation.item_name)}).
+        </div>`;
+      return;
+    }
     const flag = reservation.customer_flag || {};
     const pickups = flag.successful_pickups || 0;
     const noShows = flag.no_show_count || 0;
