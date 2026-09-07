@@ -1,6 +1,7 @@
 // Entry point for index.html (Vite build). Replaces the old chain of
 // individual <script src="js/..."> tags - real import order below
 // replaces what used to be enforced purely by <script> tag order.
+import '../sentry.js';
 import { Store } from '../store.js';
 import '../customer.js';
 

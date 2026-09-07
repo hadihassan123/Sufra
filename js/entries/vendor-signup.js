@@ -1,4 +1,5 @@
 // Entry point for vendor-signup.html (Vite build).
+import '../sentry.js';
 import { Store } from '../store.js';
 import { LocationPicker } from '../location-picker.js';
 

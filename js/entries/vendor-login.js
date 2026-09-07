@@ -1,4 +1,5 @@
 // Entry point for vendor-login.html (Vite build).
+import '../sentry.js';
 import { Store } from '../store.js';
 
 const form = document.getElementById('loginForm');

@@ -1,4 +1,5 @@
 // Entry point for admin.html (Vite build).
+import '../sentry.js';
 import { Store } from '../store.js';
 import { esc } from '../escape.js';
 import '../doha-clock.js';

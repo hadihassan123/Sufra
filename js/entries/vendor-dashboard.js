@@ -7,6 +7,7 @@
 // import exactly what they need from those directly. Only the
 // side-effect-only files nothing else imports (vendor-location.js,
 // doha-clock.js) plus the actual bootstrap (vendor.js) need listing.
+import '../sentry.js';
 import '../vendor-location.js';
 import '../doha-clock.js';
 import '../vendor.js';

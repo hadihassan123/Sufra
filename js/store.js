@@ -1,6 +1,7 @@
 /* Sufra data layer — backed by Supabase (Postgres + Auth). */
 
 import { sb } from './supabase-client.js';
+import { Sentry } from './sentry.js';
 
 export const Store = (() => {
   // Shared surplus windows — used by the homepage time dial (customer.js)
@@ -270,12 +271,34 @@ export const Store = (() => {
       p_customer_phone: customerPhone,
       p_quantity: qty
     });
-    if(error) throw error;
+    if(error){
+      // A genuine RPC-level failure (not enough quantity, listing not
+      // found, invalid phone format, etc.) - this is the real signal
+      // for a "reservation-creation failure rate" dashboard, so it's
+      // tagged distinctly from ordinary caught errors elsewhere.
+      Sentry.captureException(error, {
+        tags: { flow: 'reservation_creation' },
+        extra: { listingId: listing.id, quantity: qty }
+      });
+      throw error;
+    }
     if(!data.success){
       if(data.reason === 'restricted'){
+        // Deliberately NOT sent to Sentry - this is the no-show
+        // restriction working exactly as designed, not a failure. It
+        // would otherwise pollute a failure-rate metric with expected,
+        // correctly-functioning business behavior rather than bugs.
         const until = new Date(data.restricted_until).toLocaleString();
         throw new Error(`This phone number is temporarily restricted from making reservations until ${until}.`);
       }
+      // Anything else here means create_reservation_safe returned
+      // success:false for a reason this client doesn't recognize -
+      // genuinely unexpected, so it IS worth flagging.
+      Sentry.captureMessage('create_reservation_safe returned unrecognized failure shape', {
+        level: 'warning',
+        tags: { flow: 'reservation_creation' },
+        extra: { listingId: listing.id, quantity: qty, data }
+      });
       throw new Error('Could not create reservation.');
     }
     return data.reservation;
