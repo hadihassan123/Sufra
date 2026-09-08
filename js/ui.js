@@ -32,7 +32,7 @@ export function toast(message, opts = {}) {
   el.setAttribute('role', type === 'error' ? 'alert' : 'status');
   el.textContent = message == null ? '' : String(message);
   host.appendChild(el);
-  requestAnimationFrame(() => el.classList.add('sufra-toast--show'));
+  window.requestAnimationFrame(() => el.classList.add('sufra-toast--show'));
   window.setTimeout(() => {
     el.classList.remove('sufra-toast--show');
     window.setTimeout(() => el.remove(), 200);
