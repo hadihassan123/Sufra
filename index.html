@@ -1,1 +1,305 @@
-WILL_UPDATE
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+ <!-- The real, complete Content-Security-Policy is set as an HTTP
+      response header (see render.yaml) - a <meta> tag here used to
+      duplicate part of it, but only covered script-src/style-src,
+      never covered default-src/font-src/img-src/connect-src/
+      frame-ancestors/base-uri/form-action at all, and additionally
+      claimed to allow https://unpkg.com, which the real header never
+      allowed and which nothing in this codebase has ever loaded from.
+      One real policy, defined once, in render.yaml. -->
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+ <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Sufra — Doha's End-of-Day Food Marketplace</title>
+ <meta name="description" content="Reserve guaranteed surplus food from Doha restaurants, bakeries, and cafés at a real discount. Pick up before closing.">
+ <link rel="canonical" href="https://sufra-fanr.onrender.com/">
+ <meta name="theme-color" content="#2F6E67">
+ <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+ <link rel="apple-touch-icon" href="/favicon.svg">
+
+ <!-- Open Graph -->
+ <meta property="og:type" content="website">
+ <meta property="og:site_name" content="Sufra">
+ <meta property="og:locale" content="en_QA">
+ <meta property="og:url" content="https://sufra-fanr.onrender.com/">
+ <meta property="og:title" content="Sufra — Doha's End-of-Day Food Marketplace">
+ <meta property="og:description" content="Reserve guaranteed surplus food from Doha restaurants, bakeries, and cafés at a real discount. Pick up before closing.">
+ <meta property="og:image" content="https://sufra-fanr.onrender.com/images/og-share.jpg">
+
+ <!-- Twitter Card -->
+ <meta name="twitter:card" content="summary_large_image">
+ <meta name="twitter:title" content="Sufra — Doha's End-of-Day Food Marketplace">
+ <meta name="twitter:description" content="Reserve guaranteed surplus food from Doha restaurants, bakeries, and cafés at a real discount. Pick up before closing.">
+ <meta name="twitter:image" content="https://sufra-fanr.onrender.com/images/og-share.jpg">
+
+ <!-- JSON-LD -->
+ <script type="application/ld+json">
+ {
+   "@context": "https://schema.org",
+   "@graph": [
+     {
+       "@type": "WebSite",
+       "@id": "https://sufra-fanr.onrender.com/#website",
+       "url": "https://sufra-fanr.onrender.com/",
+       "name": "Sufra",
+       "description": "End-of-day surplus food marketplace in Doha. Reserve exact items, pay cash at pickup.",
+       "publisher": { "@id": "https://sufra-fanr.onrender.com/#organization" },
+       "inLanguage": "en"
+     },
+     {
+       "@type": "Organization",
+       "@id": "https://sufra-fanr.onrender.com/#organization",
+       "name": "Sufra",
+       "url": "https://sufra-fanr.onrender.com/",
+       "logo": "https://sufra-fanr.onrender.com/favicon.svg",
+       "areaServed": {
+         "@type": "City",
+         "name": "Doha",
+         "containedInPlace": { "@type": "Country", "name": "Qatar" }
+       }
+     },
+     {
+       "@type": "OfferCatalog",
+       "name": "Today's surplus food in Doha",
+       "url": "https://sufra-fanr.onrender.com/#browse",
+       "itemListElement": {
+         "@type": "Offer",
+         "availability": "https://schema.org/LimitedAvailability",
+         "priceCurrency": "QAR",
+         "description": "Discounted surplus food from verified restaurants, bakeries, and cafés. Cash at pickup."
+       }
+     }
+   ]
+ }
+ </script>
+
+ <link rel="stylesheet" href="css/style.css">
+
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a href="index.html" class="brand">Sufra <small>The Spread</small></a>
+    <nav class="nav-links" nav-loading id="mainNav">
+      <a href="#browse">Browse</a>
+      <a href="vendor-dashboard.html" id="vendorDashboardLink" class="nav-cta auth-only">Dashboard</a>
+      <a href="#pickups">Your pickups</a>
+      <a href="vendor-signup.html" class="nav-cta guest-only" id="vendorNavLink">List your surplus</a>
+      <a href="vendor-login.html" id="vendorLoginNavLink" class="guest-only">Log in</a>
+      <a href="#" id="vendorLogoutNavLink" class="auth-only">Log out</a>
+      <a href="admin.html" id="adminNavLink" style="display:none;">Log out (admin)</a>
+    </nav>
+  </div>
+</header>
+
+
+<section class="hero">
+  <div class="hero-motif" aria-hidden="true">
+    <svg class="motif-icon motif-cup" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4">
+      <path d="M10 16h22v14a8 8 0 0 1-8 8H18a8 8 0 0 1-8-8V16z"/>
+      <path d="M32 19h4a5 5 0 0 1 0 10h-4"/>
+      <path d="M14 9c1-2 1-3-.5-5M20 9c1-2 1-3-.5-5M26 9c1-2 1-3-.5-5" stroke-linecap="round"/>
+    </svg>
+    <svg class="motif-icon motif-bread" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4">
+      <path d="M8 26c0-9 7-17 16-17s16 8 16 17-4 12-16 12S8 35 8 26z"/>
+      <path d="M17 22c1 3 1 7 0 10M24 20c1 4 1 8 0 12M31 22c1 3 1 7 0 10" stroke-linecap="round"/>
+    </svg>
+    <svg class="motif-icon motif-plate" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4">
+      <circle cx="24" cy="24" r="17"/>
+      <circle cx="24" cy="24" r="10"/>
+      <path d="M8 12v9M8 12c-2 0-2 3 0 3M12 10v11" stroke-linecap="round"/>
+      <path d="M40 10c-3 1-4 4-2 7l1 1v14" stroke-linecap="round"/>
+    </svg>
+    <svg class="motif-icon motif-pot" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4">
+      <path d="M10 20h24v8a10 10 0 0 1-10 10h-4a10 10 0 0 1-10-10v-8z"/>
+      <path d="M34 22h4a4 4 0 0 1 0 8h-4" />
+      <path d="M14 20l3-8h14l3 8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="wrap">
+    <div>
+      <p class="hero-eyebrow">Doha · Guaranteed items, real discounts</p>
+      <h1>What's left on the pass<br>doesn't have to go <em>to waste.</em></h1>
+      <p class="lede">Restaurants, bakeries, and cafés across Doha list their end-of-day surplus here — exact items, exact price, no surprise bags. Reserve online, pay cash at pickup.</p>
+      <div class="hero-actions">
+        <a href="#browse" class="btn btn-amber">Browse tonight's listings</a>
+        <a href="vendor-signup.html" class="btn btn-ghost" id="heroVendorLink" style="color:#F6F1E3; border-color:rgba(246,241,227,0.3);">I run a food business</a>
+      </div>
+    </div>
+    <div class="dial-card">
+      <div class="dial-label"><span>Doha time</span><span id="clockText">--:--</span></div>
+      <svg class="steam" id="steamSvg" viewBox="0 0 60 40" aria-hidden="true">
+        <path class="steam-wisp steam-wisp-1" d="M18 38c-4-6 4-8 0-14s4-8 0-14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path class="steam-wisp steam-wisp-2" d="M30 38c-4-7 4-9 0-16s4-9 0-16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path class="steam-wisp steam-wisp-3" d="M42 38c-4-6 4-8 0-14s4-8 0-14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <svg class="dial-svg" id="dialSvg" viewBox="0 0 240 240"></svg>
+      <p class="dial-status" id="dialStatus">Checking the pass…<span id="dialSub"></span></p>
+    </div>
+  </div>
+</section>
+ 
+<main>
+  <section class="section" id="browse">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>Tonight's surplus</h2>
+          <p>Every listing shows the real item and a guaranteed discount — what you see is what you collect.</p>
+        </div>
+      </div>
+      <div class="search-bar">
+        <label for="searchInput" class="sr-only">Search listings</label>
+        <input type="search" id="searchInput" placeholder="Search by item, vendor, or category…">
+      </div>
+      <div class="filter-bar" id="filterBar" role="tablist" aria-label="Filter listings">
+        <button class="filter-chip active" data-filter="all" role="tab" aria-selected="true">All</button>
+        <button class="filter-chip" data-filter="Bakery" role="tab" aria-selected="false">🥖 Bakery</button>
+        <button class="filter-chip" data-filter="Café" role="tab" aria-selected="false">☕ Café</button>
+        <button class="filter-chip" data-filter="Restaurant" role="tab" aria-selected="false">🍽️ Restaurant</button>
+        <button class="filter-chip" data-filter="Patisserie" role="tab" aria-selected="false">🍰 Patisserie</button>
+        <button class="filter-chip" data-filter="sold_out" role="tab" aria-selected="false">Sold Out</button>
+        <button class="filter-chip" data-filter="expired" role="tab" aria-selected="false">⌛ Expired</button>
+        <button class="filter-chip" data-filter="map" role="tab" aria-selected="false">📍 Map View</button>
+      </div>
+      <div class="listing-grid" id="listingGrid"></div>
+      <div id="mapView" style="display:none; height: 500px; width: 100%; border-radius: 12px; margin-top: 20px; border: 1px solid var(--line); position: relative; overflow: hidden; z-index: 1;"></div>
+    </div>
+  </section>
+ 
+  <section class="section" id="how" style="background:#fff; border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+    <div class="wrap">
+      <div class="section-head"><div><h2>How pickup works</h2></div></div>
+      <div class="how-grid">
+        <div class="how-card">
+          <p class="how-mark">Browse & reserve</p>
+          <h3>Pick a listing, reserve a slot</h3>
+          <p>Every item is exact — no surprise boxes. Enter your name and phone to hold it for the pickup window.</p>
+        </div>
+        <div class="how-card">
+          <p class="how-mark">Get your code</p>
+          <h3>Save your Qr Code or 6-character pickup code</h3>
+          <p>Your reservation is confirmed instantly with a code the vendor scans or checks at the counter.</p>
+        </div>
+        <div class="how-card">
+          <p class="how-mark">Collect & pay</p>
+          <h3>Show up, pay cash, take your food</h3>
+          <p>Arrive during the pickup window, hand over your code, and pay the vendor directly in cash.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <section class="section" id="pickups">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>Your pickups</h2>
+          <p>Look up reservations tied to your phone number on this device.</p>
+        </div>
+      </div>
+      <div class="pickups-panel">
+        <div class="pickup-lookup">
+          <label for="lookupPhone" class="sr-only">Your phone number</label>
+          <input type="tel" id="lookupPhone" placeholder="Enter your phone number, e.g. 5512 3456">
+          <button class="btn btn-ink" id="lookupBtn">Find my pickups</button>
+        </div>
+        <div id="liveIndicator" style="display:none; font-size:0.78rem; color:var(--teal-deep); margin-bottom:12px; align-items:center; gap:6px;">
+          <span style="width:7px; height:7px; border-radius:50%; background:var(--teal); display:inline-block; animation:pulse 1.6s infinite;"></span>
+          Live — this list updates automatically while this page is open
+        </div>
+        <div id="pickupList"></div>
+      </div>
+    </div>
+  </section>
+</main>
+ 
+<footer class="footer">
+  <div class="wrap">
+    <a href="index.html" class="brand">Sufra <small>The Spread</small></a>
+    <p>Sufra facilitates reservations between customers and independent food vendors in Doha. Payment for cash orders happens directly between you and the vendor.</p>
+    <a href="admin.html" style="font-size:0.75rem; color:rgba(36,31,26,0.35); text-decoration:none;">Admin</a>
+  </div>
+</footer>
+ 
+<!-- Reserve modal -->
+<div class="modal-overlay" id="reserveOverlay">
+  <div class="modal-box form-modal" id="reserveModal" role="dialog" aria-modal="true" aria-labelledby="reserveItemName">
+    <button class="close-x" data-close aria-label="Close">&times;</button>
+    <p class="hero-eyebrow" style="color:var(--teal-deep);">Reserve for pickup</p>
+    <h2 id="reserveItemName">Item name</h2>
+    <p class="ticket-desc" id="reserveItemMeta" style="margin-bottom:20px;"></p>
+    <form id="reserveForm">
+      <div class="field">
+        <label for="custName">Your name</label>
+        <input type="text" id="custName" required placeholder="Full name">
+      </div>
+      <div class="field">
+        <label for="custPhone">Phone number</label>
+        <input type="tel" id="custPhone" required placeholder="5512 3456">
+        <p class="hint">Used only to look up your pickups later and confirm at collection.</p>
+      </div>
+      <div class="field">
+          <label>Quantity</label>
+          <div class="qty-editor" id="reserveQtyEditor">
+            <button type="button" id="reserveQtyDown">−</button>
+            <span id="reserveQtyValue">1</span>
+            <button type="button" id="reserveQtyUp">+</button>
+          </div>
+          <p class="hint" id="reserveQtyHint"></p>
+      </div>
+      <button type="submit" class="btn btn-amber btn-block">Reserve — pay cash at pickup</button>
+    </form>
+  </div>
+</div>
+ 
+<!-- Confirmation modal -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal-box confirm" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmModalHeading">
+    <button class="close-x" data-close aria-label="Close">&times;</button>
+
+    <div class="stamp">✓</div>
+
+    <h2 id="confirmModalHeading">Reservation Confirmed</h2>
+
+    <p class="code-note">
+      Show either your <strong>QR code</strong> or your
+      <strong>pickup code</strong> when collecting your order.
+    </p>
+
+    <div id="confirmQr" class="qr-box"></div>
+
+    <div class="pickup-code-section">
+      <span class="pickup-label">Pickup Code</span>
+
+      <div class="code-display" id="confirmCode">
+        ------
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm"
+        id="copyPickupCodeBtn">
+        Copy Code
+      </button>
+    </div>
+
+    <p class="code-note" id="confirmWindow"></p>
+
+    <button class="btn btn-ink btn-block" data-close>
+      Done
+    </button>
+  </div>
+</div>
+ 
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js" integrity="sha384-ysv13JVP3fufiEXfjML9OdCa/rRbMJvUBOWyor82wfuK8INNZAvmbxHgKIHi+oqz" crossorigin="anonymous"></script>
+<script type="module" src="/js/entries/index.js"></script>
+
+</body>
+</html>
