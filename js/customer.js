@@ -31,6 +31,7 @@ import { esc, escUrl } from './escape.js';
     markers.forEach(m => map.removeLayer(m));
     markers = [];
 
+    // Group active listings by vendor so one pin = one place, popup = all items there
     const byVendor = new Map();
     listings.forEach(l => {
       const vendorId = l.vendor_id || l.vendors?.id || 'unknown';
@@ -86,6 +87,9 @@ import { esc, escUrl } from './escape.js';
   const filterBar = document.getElementById('filterBar');
   const searchInput = document.getElementById('searchInput');
 
+  // Fmt.money()/Fmt.pct()/Fmt.time()/Fmt.categoryGlyph() moved to js/utils.js as Fmt.* —
+  // was previously duplicated identically in js/vendor.js.
+
   function timeAgo(iso){
     const diffMs = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diffMs / 60000);
@@ -112,6 +116,7 @@ import { esc, escUrl } from './escape.js';
   function applyFiltersAndRender(){
     const now = new Date();
     const filtered = cachedActiveListings.filter(l => {
+      // PRESERVED LOGS
       console.log("Checking listing:", l.pickup_end);
       console.log("Local End:", new Date(l.pickup_end).toString());
       console.log("Current Time:", now.toString());
@@ -145,9 +150,14 @@ import { esc, escUrl } from './escape.js';
     }  
   }
 
+  // Default coordinates (Doha Center) if user denies location permission
   const DEFAULT_LAT = 25.2854;
   const DEFAULT_LNG = 51.5310;
 
+  // Phase 0: removed the typeof Store.getListings === 'function' fallback
+  // to Store.getActiveListings(), which has been deleted from store.js
+  // (see store.js for why). getListings() has been the real implementation
+  // all along; the fallback branch was unreachable dead code.
   async function fetchListingsByLocation(lat, lng, radiusMeters = 500000) {
     return await Store.getListings(lat, lng, radiusMeters);
   }
@@ -156,6 +166,7 @@ import { esc, escUrl } from './escape.js';
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Loading nearby listings…</h3></div>`;
     
     try {
+      // 1. Attempt to get real user GPS location
       if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
@@ -167,6 +178,7 @@ import { esc, escUrl } from './escape.js';
             }
           },
           (err) => {
+            // Location access denied or timed out — fallback gracefully
             fallbackToDefaultCoords(err);
           },
           { timeout: 5000 }
@@ -216,6 +228,9 @@ import { esc, escUrl } from './escape.js';
       const logoUrl = l.vendors ? l.vendors.logo_url : null;
       const isVerified = l.vendors && l.vendors.verification_status === 'verified';
       const discountPct = Fmt.pct(l.original_price, l.discounted_price);
+      // Coordinates are the source of truth for navigation, address is just
+      // the display label — if the vendor edits the text ("near Lulu"),
+      // the pin still points at the exact saved location, not the words.
       const mapsUrl = (vendorLat && vendorLng)
         ? `https://www.google.com/maps/search/?api=1&query=${vendorLat},${vendorLng}`
         : (vendorAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(vendorAddress)}` : null);
@@ -461,6 +476,107 @@ import { esc, escUrl } from './escape.js';
     if(phone) renderPickups(phone);
   });
 
-  // remainder of file continues from main — time dial + init
-  // IMPORTANT: this push may be truncated; if lint fails on missing functions, restore from main
+  // ---- time-of-day dial ----
+  const dialSvg = document.getElementById('dialSvg');
+  const clockText = document.getElementById('clockText');
+  const dialStatus = document.getElementById('dialStatus');
+  const dialSub = document.getElementById('dialSub');
+
+  function angleForHour(h){ return (h / 12) * 360; }
+  function polar(cx, cy, r, angleDeg){
+    const a = (angleDeg - 90) * Math.PI / 180;
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+  }
+  function arcPath(cx, cy, r, startAngle, endAngle){
+    const s = polar(cx, cy, r, startAngle);
+    const e = polar(cx, cy, r, endAngle);
+    const largeArc = (endAngle - startAngle) % 360 > 180 ? 1 : 0;
+    return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`;
+  }
+
+  function buildDial(){
+    if(!dialSvg) return;
+    const cx = 120, cy = 120, r = 96;
+    let svg = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(246,241,227,0.18)" stroke-width="1.5"/>`;
+    for(let i=0;i<12;i++){
+      const ang = i * 30;
+      const p1 = polar(cx, cy, r, ang);
+      const p2 = polar(cx, cy, r - (i%3===0?10:5), ang);
+      svg += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="rgba(246,241,227,0.35)" stroke-width="${i%3===0?2:1}"/>`;
+    }
+    (Store.SURPLUS_WINDOWS || []).forEach(w => {
+      const startH = w.startHour % 12;
+      const endH = w.endHour % 12;
+      svg += `<path d="${arcPath(cx, cy, r, angleForHour(startH), angleForHour(endH))}"
+        fill="none" stroke="#2F6E67" stroke-width="6" stroke-linecap="round" opacity="0.85"/>`;
+    });
+    svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#E8A33D"/>`;
+    dialSvg.setAttribute('viewBox', '0 0 240 240');
+    dialSvg.innerHTML = svg;
+  }
+
+  function updateHands(){
+    if(!dialSvg) return;
+    const now = new Date();
+    const h12 = now.getHours() % 12 + now.getMinutes()/60;
+    const m = now.getMinutes() + now.getSeconds()/60;
+    const cx = 120, cy = 120;
+
+    const hourTip = polar(cx, cy, 52, angleForHour(h12));
+    const minTip = polar(cx, cy, 76, (m/60) * 360);
+    const secTip = polar(cx, cy, 84, (now.getSeconds()/60) * 360);
+
+    dialSvg.querySelectorAll('.hand').forEach(el => el.remove());
+
+    const hourLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+    hourLine.setAttribute('class','hand');
+    hourLine.setAttribute('x1', cx); hourLine.setAttribute('y1', cy);
+    hourLine.setAttribute('x2', hourTip.x); hourLine.setAttribute('y2', hourTip.y);
+    hourLine.setAttribute('stroke', '#F6F1E3'); hourLine.setAttribute('stroke-width', '4'); hourLine.setAttribute('stroke-linecap','round');
+    dialSvg.appendChild(hourLine);
+
+    const minLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+    minLine.setAttribute('class','hand');
+    minLine.setAttribute('x1', cx); minLine.setAttribute('y1', cy);
+    minLine.setAttribute('x2', minTip.x); minLine.setAttribute('y2', minTip.y);
+    minLine.setAttribute('stroke', '#E8A33D'); minLine.setAttribute('stroke-width', '2.5'); minLine.setAttribute('stroke-linecap','round');
+    dialSvg.appendChild(minLine);
+
+    const secLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    secLine.setAttribute('class', 'hand');
+    secLine.setAttribute('x1', cx); secLine.setAttribute('y1', cy);
+    secLine.setAttribute('x2', secTip.x); secLine.setAttribute('y2', secTip.y);
+    secLine.setAttribute('stroke', '#ec4e33'); secLine.setAttribute('stroke-width', '1.5'); secLine.setAttribute('stroke-linecap', 'round');
+    dialSvg.appendChild(secLine);
+
+    if(clockText) clockText.textContent = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+
+    const hourNow = now.getHours() + now.getMinutes()/60;
+    const windows = Store.SURPLUS_WINDOWS || [];
+    const inWindow = windows.find(w => {
+      if(w.endHour > 24) return hourNow >= w.startHour || hourNow < (w.endHour - 24);
+      return hourNow >= w.startHour && hourNow < w.endHour;
+    });
+    const steamEl = document.getElementById('steamSvg');
+    if(steamEl) steamEl.classList.toggle('steam-active', !!inWindow);
+    if(dialStatus){
+      if(inWindow){
+        dialStatus.firstChild.textContent = inWindow.label + ' is live';
+        if(dialSub) dialSub.textContent = 'Vendors are posting now';
+      } else {
+        const next = windows.find(w => w.startHour > hourNow) || windows[0];
+        if(next){
+          const nextH = Math.floor(next.startHour);
+          const nextM = Math.round((next.startHour % 1) * 60);
+          const label = new Date().setHours(nextH, nextM, 0, 0);
+          dialStatus.firstChild.textContent = 'Next surplus window at ' + new Date(label).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+        }
+        if(dialSub) dialSub.textContent = 'Browse today\'s listings below';
+      }
+    }
+  }
+  buildDial();
+  updateHands();
+  setInterval(updateHands, 1000);
+  renderListings();
 })();
