@@ -3,15 +3,19 @@
 
 import { esc } from './escape.js';
 
+// Module-level host — created on first toast (no static placeholder in HTML).
+let toastHostEl = null;
+
 function ensureToastHost() {
-  let host = document.getElementById('sufra-toast-host');
-  if (host) return host;
-  host = document.createElement('div');
-  host.id = 'sufra-toast-host';
+  if (toastHostEl && document.body.contains(toastHostEl)) {
+    return toastHostEl;
+  }
+  const host = document.createElement('div');
   host.className = 'sufra-toast-host';
   host.setAttribute('aria-live', 'polite');
   host.setAttribute('aria-relevant', 'additions');
   document.body.appendChild(host);
+  toastHostEl = host;
   return host;
 }
 
