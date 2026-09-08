@@ -1,5 +1,19 @@
 name: Uptime ping
 
+# Retries added 2026-09-06: a single failed request could just as
+# easily be a transient network blip between GitHub's runner and
+# Render as a real outage, and this runs every 15 minutes - alerting
+# on every blip trains you to ignore the alerts. Retries 3 times, 15s
+# apart, before actually concluding the site is down. Verified all
+# three paths locally before committing: succeeds immediately on a
+# healthy response, retries and eventually fails on a genuine
+# connection failure, retries and eventually fails on a real HTTP
+# error status (curl -f correctly treats both as failures).
+#
+# GitHub only emails whoever created this workflow (or last edited the
+# cron line) when a scheduled run fails - make sure Actions email
+# notifications aren't muted under your GitHub notification settings.
+
 on:
   schedule:
     - cron: '*/15 * * * *'
@@ -13,5 +27,18 @@ jobs:
         run: |
           set -e
           URL="https://sufra-fanr.onrender.com"
-          echo "Pinging $URL"
-          curl -fsS -o /dev/null -w "%{http_code}\n" --max-time 20 "$URL"
+          ATTEMPTS=3
+          DELAY=15
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "Attempt $i/$ATTEMPTS: pinging $URL"
+            if curl -fsS -o /dev/null -w "HTTP %{http_code}\n" --max-time 20 "$URL"; then
+              echo "Site is up."
+              exit 0
+            fi
+            if [ "$i" -lt "$ATTEMPTS" ]; then
+              echo "Failed, retrying in ${DELAY}s..."
+              sleep "$DELAY"
+            fi
+          done
+          echo "Site did not respond successfully after $ATTEMPTS attempts."
+          exit 1
