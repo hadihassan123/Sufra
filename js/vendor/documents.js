@@ -1,5 +1,6 @@
 import { Store } from '../store.js';
 import { DashboardState } from '../dashboard-state.js';
+import { toast } from '../ui.js';
 
 (function () {
 
@@ -56,7 +57,7 @@ import { DashboardState } from '../dashboard-state.js';
         const file = input.files[0];
 
         if (file.size > 10 * 1024 * 1024) {
-          alert('That file is over 10MB — please upload a smaller file.');
+          toast('That file is over 10MB — please upload a smaller file.', { type: 'error' });
           return;
         }
 
@@ -82,7 +83,7 @@ import { DashboardState } from '../dashboard-state.js';
 
         } catch (err) {
 
-          alert('Upload failed: ' + err.message);
+          toast('Upload failed: ' + err.message, { type: 'error' });
           label.firstChild.textContent = originalText;
 
         }
@@ -109,7 +110,7 @@ import { DashboardState } from '../dashboard-state.js';
 
         } catch (err) {
 
-          alert('Could not open document: ' + err.message);
+          toast('Could not open document: ' + err.message, { type: 'error' });
 
         }
 

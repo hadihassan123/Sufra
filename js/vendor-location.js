@@ -15,6 +15,7 @@
 import { Store } from './store.js';
 import { DashboardState } from './dashboard-state.js';
 import { LocationPicker } from './location-picker.js';
+import { toast } from './ui.js';
 
 DashboardState.onReady(async function(){
   const addressInput = document.getElementById('vendorAddressInput');
@@ -28,16 +29,11 @@ DashboardState.onReady(async function(){
     statusText.textContent = 'Location saved — customers can find you on the map.';
   }
 
-  // Leaflet now loads on-demand (see location-picker.js), so init() is
-  // async and takes a moment. Register the save button FIRST, before
-  // awaiting it — saving the address should never depend on a still-
-  // loading map library. If clicked before the map's ready, this falls
-  // back to whatever coordinates were already saved.
   let picker = null;
 
   saveBtn.addEventListener('click', async () => {
     const address = addressInput.value.trim();
-    if(!address){ alert('Enter an address first.'); return; }
+    if(!address){ toast('Enter an address first.', { type: 'error' }); return; }
     const pin = picker
       ? picker.getPin()
       : { lat: DashboardState.vendor.latitude ?? null, lng: DashboardState.vendor.longitude ?? null };
@@ -48,7 +44,7 @@ DashboardState.onReady(async function(){
             DashboardState.setVendor(await Store.getVendorProfile(DashboardState.vendor.id));
             statusText.textContent = 'Location saved — customers can find you on the map.';
     }catch(err){
-      alert('Could not save location: ' + err.message);
+      toast('Could not save location: ' + err.message, { type: 'error' });
     }
     saveBtn.disabled = false;
     saveBtn.textContent = 'Save location';

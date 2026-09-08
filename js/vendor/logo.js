@@ -1,5 +1,6 @@
 import { Store } from '../store.js';
 import { DashboardState } from '../dashboard-state.js';
+import { toast, confirmDialog } from '../ui.js';
 (function () {
 
   function render() {
@@ -26,7 +27,7 @@ import { DashboardState } from '../dashboard-state.js';
       render();
 
       document.getElementById('removeLogoBtn').addEventListener('click', async () => {
-        if(!confirm('Remove your store logo?')) return;
+        if(!(await confirmDialog('Remove your store logo?', { title: 'Remove logo', confirmText: 'Remove', danger: true }))) return;
         const removeBtn = document.getElementById('removeLogoBtn');
         removeBtn.disabled = true;
         try{
@@ -34,7 +35,7 @@ import { DashboardState } from '../dashboard-state.js';
           DashboardState.setVendor(await Store.getVendorProfile(DashboardState.vendor.id));
           render();
         }catch(err){
-          alert('Could not remove logo: ' + err.message);
+          toast('Could not remove logo: ' + err.message, { type: 'error' });
         }
         removeBtn.disabled = false;
       });
@@ -43,7 +44,7 @@ import { DashboardState } from '../dashboard-state.js';
         const file = e.target.files[0];
         if(!file) return;
         if(file.size > 2 * 1024 * 1024){
-          alert('That file is over 2MB — please upload a smaller image.');
+          toast('That file is over 2MB — please upload a smaller image.', { type: 'error' });
           return;
         }
         const btnText = document.getElementById('logoBtnText');
@@ -54,7 +55,7 @@ import { DashboardState } from '../dashboard-state.js';
           DashboardState.setVendor(await Store.getVendorProfile(DashboardState.vendor.id));
           render();
         }catch(err){
-          alert('Logo upload failed: ' + err.message);
+          toast('Logo upload failed: ' + err.message, { type: 'error' });
           btnText.textContent = original;
         }
       });
