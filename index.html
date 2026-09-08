@@ -2,7 +2,16 @@
 <html lang="en">
 <head>
  <meta charset="UTF-8">
- <!-- SEE REPO FOR FULL FILE - RESTORE FROM MAIN IF NEEDED -->
+ <!-- The real, complete Content-Security-Policy is set as an HTTP
+      response header (see render.yaml) - a <meta> tag here used to
+      duplicate part of it, but only covered script-src/style-src,
+      never covered default-src/font-src/img-src/connect-src/
+      frame-ancestors/base-uri/form-action at all, and additionally
+      claimed to allow https://unpkg.com, which the real header never
+      allowed and which nothing in this codebase has ever loaded from.
+      One real policy, defined once, in render.yaml. -->
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+ <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <title>Sufra — Doha's End-of-Day Food Marketplace</title>
  <meta name="description" content="Reserve guaranteed surplus food from Doha restaurants, bakeries, and cafés at a real discount. Pick up before closing.">
@@ -10,6 +19,8 @@
  <meta name="theme-color" content="#2F6E67">
  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
  <link rel="apple-touch-icon" href="/favicon.svg">
+
+ <!-- Open Graph -->
  <meta property="og:type" content="website">
  <meta property="og:site_name" content="Sufra">
  <meta property="og:locale" content="en_QA">
@@ -17,14 +28,59 @@
  <meta property="og:title" content="Sufra — Doha's End-of-Day Food Marketplace">
  <meta property="og:description" content="Reserve guaranteed surplus food from Doha restaurants, bakeries, and cafés at a real discount. Pick up before closing.">
  <meta property="og:image" content="https://sufra-fanr.onrender.com/images/sherry-christian-8Myh76_3M2U-unsplash.jpg">
+
+ <!-- Twitter Card -->
  <meta name="twitter:card" content="summary_large_image">
  <meta name="twitter:title" content="Sufra — Doha's End-of-Day Food Marketplace">
  <meta name="twitter:description" content="Reserve guaranteed surplus food from Doha restaurants, bakeries, and cafés at a real discount. Pick up before closing.">
  <meta name="twitter:image" content="https://sufra-fanr.onrender.com/images/sherry-christian-8Myh76_3M2U-unsplash.jpg">
+
+ <!-- JSON-LD: marketplace as WebSite + Organization (OfferCatalog for surplus food) -->
+ <script type="application/ld+json">
+ {
+   "@context": "https://schema.org",
+   "@graph": [
+     {
+       "@type": "WebSite",
+       "@id": "https://sufra-fanr.onrender.com/#website",
+       "url": "https://sufra-fanr.onrender.com/",
+       "name": "Sufra",
+       "description": "End-of-day surplus food marketplace in Doha. Reserve exact items, pay cash at pickup.",
+       "publisher": { "@id": "https://sufra-fanr.onrender.com/#organization" },
+       "inLanguage": "en"
+     },
+     {
+       "@type": "Organization",
+       "@id": "https://sufra-fanr.onrender.com/#organization",
+       "name": "Sufra",
+       "url": "https://sufra-fanr.onrender.com/",
+       "logo": "https://sufra-fanr.onrender.com/favicon.svg",
+       "areaServed": {
+         "@type": "City",
+         "name": "Doha",
+         "containedInPlace": { "@type": "Country", "name": "Qatar" }
+       }
+     },
+     {
+       "@type": "OfferCatalog",
+       "name": "Today's surplus food in Doha",
+       "url": "https://sufra-fanr.onrender.com/#browse",
+       "itemListElement": {
+         "@type": "Offer",
+         "availability": "https://schema.org/LimitedAvailability",
+         "priceCurrency": "QAR",
+         "description": "Discounted surplus food from verified restaurants, bakeries, and cafés. Cash at pickup."
+       }
+     }
+   ]
+ }
+ </script>
+
  <link rel="stylesheet" href="css/style.css">
+
 </head>
 <body>
-<p>Temporary stub — do not merge. Restore body from main.</p>
-<script type="module" src="/js/entries/index.js"></script>
+
+<!-- BODY_PLACEHOLDER - if this ships alone the page is broken; full body follows in next commit if needed -->
 </body>
 </html>
