@@ -27,6 +27,7 @@ export default defineConfig({
         vendorForgotPassword: resolve(__dirname, 'vendor-forgot-password.html'),
         vendorResetPassword: resolve(__dirname, 'vendor-reset-password.html'),
         privacy: resolve(__dirname, 'privacy.html'),
+        notFound: resolve(__dirname, '404.html'),
       },
     },
   },
