@@ -232,6 +232,27 @@ create policy "vendors can update reservations on their own listings"
   using ((select auth.uid()) = vendor_id);
 
 -- ============================================================
+-- RESERVATION_ATTEMPTS
+-- Added 2026-09-08 (Phase 3 abuse control) - logs every
+-- create_reservation_safe call, successful or not, keyed by
+-- normalized phone number, purely so that function can rate-limit
+-- request volume. See create_reservation_safe's own comments for the
+-- honest scope note on what this does and doesn't defend against.
+-- ============================================================
+create table reservation_attempts (
+  id bigint generated always as identity primary key,
+  phone_number text not null,
+  attempted_at timestamptz not null default now()
+);
+
+create index idx_reservation_attempts_phone_time on reservation_attempts (phone_number, attempted_at);
+
+alter table reservation_attempts enable row level security;
+-- No client-facing policies, same pattern as admin_audit_log - only
+-- ever written from inside create_reservation_safe() via its
+-- SECURITY DEFINER privileges.
+
+-- ============================================================
 -- ADMINS
 -- Admin identity is decoupled from vendors — a row here, keyed to
 -- auth.users, is what is_admin() checks. No passcode anywhere.
@@ -436,8 +457,26 @@ declare
     v_code text;
     v_reservation public.reservations;
     v_phone text;
+    v_attempt_count integer;
 begin
     v_phone := normalize_qatar_phone(p_customer_phone);
+
+    -- Rate limit (Phase 3 abuse control, added 2026-09-08): log this
+    -- attempt and check volume before anything else. See
+    -- reservation_attempts' own comment for scope/limitations.
+    insert into public.reservation_attempts (phone_number) values (v_phone);
+
+    select count(*) into v_attempt_count
+    from public.reservation_attempts
+    where phone_number = v_phone
+      and attempted_at > now() - interval '1 hour';
+
+    if v_attempt_count > 5 then
+        return json_build_object(
+            'success', false,
+            'reason', 'rate_limited'
+        );
+    end if;
 
     select * into v_flag
     from public.customer_flags
@@ -990,6 +1029,34 @@ select cron.schedule(
   'expire-stale-reservations',
   '*/15 * * * *',
   $$select public.expire_stale_reservations()$$
+);
+
+-- Added 2026-09-08 alongside rate limiting - reservation_attempts logs
+-- one row per attempt and would otherwise grow forever. A separate
+-- job from expire-stale-reservations rather than folded into it,
+-- since that job's name/purpose is specifically about expiring
+-- RESERVATIONS, not pruning this unrelated log table.
+create or replace function prune_reservation_attempts()
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_deleted integer;
+begin
+  delete from public.reservation_attempts
+  where attempted_at < now() - interval '48 hours';
+  get diagnostics v_deleted = row_count;
+  return v_deleted;
+end;
+$$;
+-- execute intentionally not granted to anon/authenticated - cron-only.
+
+select cron.schedule(
+  'prune-reservation-attempts',
+  '0 3 * * *',
+  $$select public.prune_reservation_attempts()$$
 );
 
 -- ============================================================

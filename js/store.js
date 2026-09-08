@@ -291,6 +291,20 @@ export const Store = (() => {
         const until = new Date(data.restricted_until).toLocaleString();
         throw new Error(`This phone number is temporarily restricted from making reservations until ${until}.`);
       }
+      if(data.reason === 'rate_limited'){
+        // Sent at 'info' level, not captureException - a single
+        // occurrence is a real person mashing a button, not a bug. A
+        // BURST of these in a short window is operationally
+        // interesting though (could mean real abuse happening), so
+        // it's still worth having in Sentry to notice a pattern,
+        // just not treated as an error.
+        Sentry.captureMessage('Reservation attempt rate-limited', {
+          level: 'info',
+          tags: { flow: 'reservation_rate_limited' },
+          extra: { listingId: listing.id }
+        });
+        throw new Error('Too many reservation attempts. Please wait a while before trying again.');
+      }
       // Anything else here means create_reservation_safe returned
       // success:false for a reason this client doesn't recognize -
       // genuinely unexpected, so it IS worth flagging.
