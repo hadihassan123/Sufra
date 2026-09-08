@@ -3,6 +3,7 @@ import '../sentry.js';
 import { Store } from '../store.js';
 import { esc } from '../escape.js';
 import '../doha-clock.js';
+import { toast } from '../ui.js';
 
 const gateShell = document.getElementById('gateShell' );
 const adminMain = document.getElementById('adminMain');
@@ -133,7 +134,7 @@ adminMain.addEventListener('click', async (e) => {
       const url = await Store.getVendorDocumentUrl(viewDoc.dataset.viewDoc);
       window.open(url, '_blank');
     }catch(err){
-      alert('Could not open document: ' + err.message);
+      toast('Could not open document: ' + err.message, { type: 'error' });
     }
     viewDoc.innerHTML = originalText;
     viewDoc.disabled = false;
@@ -149,5 +150,5 @@ adminMain.addEventListener('click', async (e) => {
     if(approve){ await Store.approveVendor(approve.dataset.approve); }
     else { await Store.revokeVendor(revoke.dataset.revoke); }
     renderTables();
-  }catch(err){ alert('Action failed: ' + err.message); }
+  }catch(err){ toast('Action failed: ' + err.message, { type: 'error' }); }
 });

@@ -3,6 +3,7 @@ import { DashboardState } from '../dashboard-state.js';
 import { Fmt, ListingState } from '../utils.js';
 import { esc } from '../escape.js';
 import { Nav } from './navigation.js';
+import { toast, confirmDialog } from '../ui.js';
 (function () {
 
   const listingImageInput = document.getElementById('listingImage');
@@ -115,7 +116,7 @@ import { Nav } from './navigation.js';
       Nav.show('post');
     }catch(err){
       console.error('[edit listing] failed to load listing into form:', err);
-      alert('Could not load this listing for editing.');
+      toast('Could not load this listing for editing.', { type: 'error' });
     }
   }
 
@@ -168,7 +169,7 @@ import { Nav } from './navigation.js';
           }
         }
         if(rm){
-          if(confirm('Remove this listing?')){
+          if(await confirmDialog('Remove this listing?', { title: 'Remove listing', confirmText: 'Remove', danger: true })){
             await Store.removeListing(rm.dataset.remove);
             render();
           }
@@ -187,7 +188,7 @@ import { Nav } from './navigation.js';
       const discountedPrice = Number(document.getElementById('discountedPrice').value);
 
       if (discountedPrice >= originalPrice) {
-        alert('Discounted price must be lower than the original price.');
+        toast('Discounted price must be lower than the original price.', { type: 'error' });
         return;
       }
 
@@ -274,7 +275,7 @@ import { Nav } from './navigation.js';
         setTimeout(() => Nav.show('listings'), 900);
 
       } catch (err) {
-        alert('Could not post listing: ' + err.message);
+        toast('Could not post listing: ' + err.message, { type: 'error' });
         submitBtn.disabled = false;
       }
     });

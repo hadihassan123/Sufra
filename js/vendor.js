@@ -7,6 +7,7 @@ import { Nav } from './vendor/navigation.js';
 import { Pickup } from './vendor/pickup.js';
 import { Overview } from './vendor/overview.js';
 import './vendor/sidebar.js';
+import { toast } from './ui.js';
 
 (async () => {
   const session = await Store.getSession();
@@ -39,7 +40,7 @@ import './vendor/sidebar.js';
   }
   if(!DashboardState.vendor){
     // Signed in but no vendor profile row after retrying — genuinely missing.
-    alert('Your account is signed in but has no business profile yet. Please contact support.');
+    toast('Your account is signed in but has no business profile yet. Please contact support.', { type: 'error' });
     await Store.signOutVendor();
     window.location.href = 'vendor-login.html';
     return;

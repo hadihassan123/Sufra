@@ -1,6 +1,7 @@
 import { Store } from './store.js';
 import { Fmt, ListingState } from './utils.js';
 import { esc, escUrl } from './escape.js';
+import { toast } from './ui.js';
 (() => {
   let activeFilter = 'all';
   let searchQuery = '';
@@ -341,7 +342,7 @@ import { esc, escUrl } from './escape.js';
     let listing;
     try{
       listing = await Store.getListing(listingId);
-    }catch(err){ alert('Could not load listing: ' + err.message); return; }
+    }catch(err){ toast('Could not load listing: ' + err.message, { type: 'error' }); return; }
     if(!listing) return;
     pendingListing = listing;
     reserveQty = 1;
@@ -359,7 +360,7 @@ import { esc, escUrl } from './escape.js';
     const name = document.getElementById('custName').value.trim();
     const phone = document.getElementById('custPhone').value.trim();
     if(!Fmt.normalizeQatarPhone(phone)){
-      alert('Please enter a valid Qatar mobile number (8 digits, starting with 3, 5, 6, or 7).');
+      toast('Please enter a valid Qatar mobile number (8 digits, starting with 3, 5, 6, or 7).', { type: 'error' });
       return;
     }
     const submitBtn = reserveForm.querySelector('button[type="submit"]');
@@ -386,7 +387,7 @@ import { esc, escUrl } from './escape.js';
       applyFiltersAndRender();
       
     }catch(err){
-      alert('Could not reserve: ' + err.message);
+      toast('Could not reserve: ' + err.message, { type: 'error' });
     } finally {
       submitBtn.disabled = false;
     }
