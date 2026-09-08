@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Auth and private app surfaces — no SEO value
+Disallow: /admin.html
+Disallow: /vendor-dashboard.html
+Disallow: /vendor-login.html
+Disallow: /vendor-forgot-password.html
+Disallow: /vendor-reset-password.html
+
+Sitemap: https://sufra-fanr.onrender.com/sitemap.xml
