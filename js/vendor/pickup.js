@@ -3,6 +3,7 @@ import { DashboardState } from '../dashboard-state.js';
 import { Fmt } from '../utils.js';
 import { esc } from '../escape.js';
 import { Overview } from './overview.js';
+import { toast, confirmDialog } from '../ui.js';
 (function () {
 
   const verifyInput = document.getElementById('verifyCodeInput');
@@ -176,7 +177,8 @@ import { Overview } from './overview.js';
       }
     });
     document.getElementById('markNoShowBtn').addEventListener('click', async () => {
-        if (!confirm(`Mark ${reservation.customer_name} as a no-show?`)) {
+        const ok = await confirmDialog(`Mark ${reservation.customer_name} as a no-show?`, { title: 'Mark no-show', confirmText: 'Mark no-show', danger: true });
+        if (!ok) {
             return;
         }
         try {
@@ -191,7 +193,7 @@ import { Overview } from './overview.js';
             loadRecentActivity();
             Overview.render();
         } catch (err) {
-            alert(err.message);
+            toast(err.message, { type: 'error' });
         }
     });
   }
@@ -208,7 +210,7 @@ import { Overview } from './overview.js';
       );
     } catch(err) {
       console.error(err);
-      alert(err.message);
+      toast(err.message, { type: 'error' });
     }
   }
 
@@ -222,7 +224,7 @@ import { Overview } from './overview.js';
     try{
       reservation = await Store.getReservation(decodedText.trim());
     }catch(err){
-      alert(err.message);
+      toast(err.message, { type: 'error' });
       return;
     }
     console.log(reservation);

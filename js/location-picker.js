@@ -1,3 +1,4 @@
+import { toast } from './ui.js';
 // Shared Leaflet location picker: map + reverse geocoding + GPS button.
 // Used by vendor-signup.html and vendor.js (dashboard location card).
 // Requires Leaflet (script + CSS) to already be loaded on the page.
@@ -132,11 +133,11 @@ export const LocationPicker = (() => {
     if(gpsButton){
       gpsButton.addEventListener('click', () => {
         if(!navigator.geolocation){
-          alert("Your browser doesn't support location access.");
+          toast("Your browser doesn't support location access.", { type: 'error' });
           return;
         }
         if(!map){
-          alert('Map is unavailable right now — please enter your address manually.');
+          toast('Map is unavailable right now — please enter your address manually.', { type: 'error' });
           return;
         }
         gpsButton.disabled = true;
@@ -151,7 +152,7 @@ export const LocationPicker = (() => {
             gpsButton.textContent = original;
           },
           (err) => {
-            alert('Could not get your location: ' + err.message);
+            toast('Could not get your location: ' + err.message, { type: 'error' });
             gpsButton.disabled = false;
             gpsButton.textContent = original;
           }
