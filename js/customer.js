@@ -240,7 +240,7 @@ import { esc, escUrl } from './escape.js';
       <div class="ticket-card">
         <div class="ticket-photo">
           ${l.image_url
-            ? `<img class="ticket-image" src="${escUrl(l.image_url)}" alt="${esc(l.item_name)}" loading="lazy">`
+            ? `<img class="ticket-image" src="${escUrl(l.image_url)}" alt="${esc(l.item_name)}" loading="lazy" decoding="async">`
             : ''
           }
           <span class="ticket-photo-fallback" aria-hidden="true">${Fmt.categoryGlyph(l.category)}</span>
@@ -251,7 +251,7 @@ import { esc, escUrl } from './escape.js';
           <div class="ticket-main">
             <div class="ticket-top">
               <span class="ticket-vendor">
-                ${logoUrl ? `<img class="ticket-vendor-logo" src="${escUrl(logoUrl)}" alt="${esc(vendorName)} logo">` : ''}
+                ${logoUrl ? `<img class="ticket-vendor-logo" src="${escUrl(logoUrl)}" alt="${esc(vendorName)} logo" loading="lazy" decoding="async">` : ''}
                 <span class="ticket-vendor-name">${esc(vendorName)}</span>
                 ${isVerified ? `<span class="verified-check">✓</span>` : ''}
               </span>
