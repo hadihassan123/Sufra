@@ -1087,3 +1087,40 @@ grant select, update on reservations to authenticated;
 -- grants here but zero visible rows without a matching RLS policy, so
 -- this is inert until/unless a policy is added — worth confirming
 -- that's intentional rather than leftover from an earlier, wider policy.
+
+-- ============================================================
+-- STORAGE POLICIES
+-- Added 2026-09-09 - these existed live and were never captured here
+-- at all, a genuine gap in the original schema pull (Phase 1 #7):
+-- storage.objects policies are separate from public-schema RLS and
+-- were missed entirely. This gap directly caused a real bug -
+-- "Admins can view all documents" checked admin status with a raw
+-- `select vendors.role from vendors where ...` instead of
+-- is_admin(auth.uid()), and since vendors.role was never granted to
+-- authenticated, this broke document viewing for every vendor, not
+-- just admins - see 20260909_fix_document_viewing_permission_denied.sql
+-- for the full story. The version below already reflects that fix.
+-- ============================================================
+create policy "vendors manage their own documents"
+  on storage.objects for all
+  using (bucket_id = 'vendor-documents' and (auth.uid())::text = (storage.foldername(name))[1])
+  with check (bucket_id = 'vendor-documents' and (auth.uid())::text = (storage.foldername(name))[1]);
+
+create policy "vendors manage their own listing images"
+  on storage.objects for all
+  using (bucket_id = 'listing-images' and (auth.uid())::text = (storage.foldername(name))[1])
+  with check (bucket_id = 'listing-images' and (auth.uid())::text = (storage.foldername(name))[1]);
+
+create policy "anyone with the exact path can view a vendor document"
+  on storage.objects for select
+  using (bucket_id = 'vendor-documents');
+  -- Permissive by design - the actual protection is that a document's
+  -- storage path is only ever handed out via a short-lived signed URL
+  -- (Store.getVendorDocumentUrl(), 5-minute expiry), never guessable
+  -- or listed publicly.
+
+create policy "Admins can view all documents"
+  on storage.objects for select
+  using (bucket_id = 'vendor-documents' and is_admin(auth.uid()));
+  -- Fixed 2026-09-09 - previously checked vendors.role directly, which
+  -- authenticated was never granted SELECT on. See the migration.

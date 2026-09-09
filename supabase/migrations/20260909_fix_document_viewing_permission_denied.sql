@@ -1,0 +1,54 @@
+-- HOTFIX (already applied live 2026-09-09): document viewing was
+-- broken for every vendor, not just admins.
+--
+-- Found via a live bug report: an admin vendor (Zuhara Bakery) trying
+-- to view their OWN verification document in their OWN dashboard got
+-- "Could not open document: permission denied for table vendors".
+--
+-- Root cause: a storage policy on the vendor-documents bucket,
+-- "Admins can view all documents", checked admin status with a raw
+-- column read - `(select vendors.role from vendors where vendors.id =
+-- auth.uid()) = 'admin'` - but vendors.role was never granted SELECT
+-- to authenticated (confirmed in supabase/schema.sql's own
+-- COLUMN-LEVEL GRANTS section: "NOT granted to anon/authenticated at
+-- all: role, location_geog"). RLS policies evaluate with the CALLER's
+-- own privileges, not elevated ones, so this policy threw a permission
+-- error the instant Postgres tried to evaluate it.
+--
+-- This broke document viewing for EVERY vendor, admin or not - not
+-- just admins trying to use the admin-only path. Postgres evaluates
+-- every SELECT policy that could apply to a query (they're combined
+-- with OR), and an error during evaluation aborts the whole query
+-- rather than being treated as "this one policy said no." Since this
+-- broken policy applied to every SELECT against the vendor-documents
+-- bucket regardless of who was asking, it poisoned the entire query
+-- even when a completely different, correctly-written policy
+-- ("anyone with the exact path can view a vendor document") would
+-- otherwise have allowed the exact same request through.
+--
+-- Likely broken since whenever vendors.role's column grant was
+-- originally tightened (the phase0 vendors lockdown) - this storage
+-- policy was apparently never updated to match at the time, and
+-- nobody had tried viewing an already-uploaded document since.
+--
+-- Fix: check admin status via is_admin(auth.uid()) instead - the
+-- existing SECURITY DEFINER function built exactly for this, already
+-- used the same way by admin_list_vendors/approve_vendor/
+-- revoke_vendor. SECURITY DEFINER functions run with the function
+-- owner's privileges, not the caller's, so this sidesteps the
+-- column-grant problem entirely rather than needing to grant
+-- vendors.role more broadly (which would be a real, unnecessary
+-- widening of what a vendor's own dashboard could otherwise read
+-- about other vendors).
+--
+-- Verified before AND after fixing, not assumed: reproduced the exact
+-- reported error by simulating the broken policy's own expression
+-- directly as the authenticated role; then confirmed the fixed policy
+-- allows the same simulated query through cleanly, then confirmed
+-- against the real live policy (not a rolled-back test) that a
+-- vendor's storage query against vendor-documents now succeeds.
+
+DROP POLICY IF EXISTS "Admins can view all documents" ON storage.objects;
+CREATE POLICY "Admins can view all documents"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'vendor-documents' AND is_admin(auth.uid()));
