@@ -47,7 +47,8 @@ async function main() {
   const baseUrl = `http://localhost:4173`;
 
   const browser = await chromium.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
 
   let totalViolations = 0;
   const report = [];
