@@ -1,0 +1,38 @@
+name: Accessibility Audit
+
+# Real, automated accessibility testing - axe-core (the same engine
+# axe DevTools itself uses) driven by a real headless Chromium via
+# Playwright, run against the actual built site. See
+# scripts/check-accessibility.mjs for the full explanation of why this
+# has to live in CI rather than being checked once locally: no
+# sandbox/local dev environment used to build this had a network path
+# to download a real browser binary, which is itself the reason to
+# make this a permanent, repeatable job instead of a one-off manual
+# pass - every future change gets checked automatically.
+#
+# REPORT-ONLY for now (see VIOLATIONS_ARE_FATAL in the script) - this
+# job's first-ever run is the first real data anyone has on Sufra's
+# actual accessibility state. Failing CI immediately on whatever that
+# first scan finds would block all other work on totally unrelated
+# changes before anyone's had a chance to triage the results. Flip
+# that flag once the initial findings are fixed or explicitly accepted.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  accessibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/check-accessibility.mjs

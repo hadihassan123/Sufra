@@ -27,10 +27,12 @@
   },
   "homepage": "https://github.com/hadihassan123/Sufra#readme",
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
     "eslint": "^10.8.0",
     "eslint-plugin-html": "^8.1.4",
     "husky": "^8.0.0",
+    "playwright": "^1.63.0",
     "vite": "^8.2.2"
   },
   "dependencies": {
