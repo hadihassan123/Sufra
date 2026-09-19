@@ -5,3 +5,11 @@ Thumbs.db
 node_modules/
 dist/
 git-secrets/
+
+# AI-tool dumps that periodically end up committed at the repo root -
+# root-anchored (leading slash) specifically so this never catches a
+# legitimate file in a subdirectory, like public/robots.txt. A blanket
+# `*.txt` would have silently gitignored robots.txt the moment it was
+# added under public/ - this pattern can't make that mistake.
+/*.txt
+/repomix-*
