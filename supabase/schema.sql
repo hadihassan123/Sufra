@@ -253,6 +253,48 @@ alter table reservation_attempts enable row level security;
 -- SECURITY DEFINER privileges.
 
 -- ============================================================
+-- CUSTOMERS
+-- Added 2026-09-12 (Phase 3 customer accounts). Additive to the
+-- existing anonymous phone-only reservation flow, not a replacement -
+-- see supabase/migrations/20260912_customer_accounts_db.sql for the
+-- full design reasoning, including two real bugs the design testing
+-- caught before this shipped (a logged-in vendor/admin reserving
+-- something as a customer must not crash; reservations.customer_id
+-- must stay nullable and only get set when a real customers row
+-- exists for the caller).
+-- ============================================================
+create table customers (
+  id uuid primary key references auth.users(id) on delete cascade,
+  phone_number text,
+  created_at timestamptz not null default now()
+);
+
+alter table customers enable row level security;
+
+create policy "customers can view their own profile"
+  on customers for select
+  using (auth.uid() = id);
+
+create policy "customers can update their own profile"
+  on customers for update
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
+
+create policy "customers can insert their own profile"
+  on customers for insert
+  with check (auth.uid() = id);
+
+-- Nullable, references customers (not auth.users directly) - a
+-- reservation from someone without a customers row (anonymous, or a
+-- logged-in vendor/admin) simply has no link here, which is the
+-- correct, safe default rather than a constraint violation. Added as
+-- a separate ALTER rather than in reservations' own CREATE TABLE
+-- above, since customers doesn't exist yet at that point in this
+-- file - matches the actual applied migration order exactly.
+alter table reservations add column customer_id uuid references customers(id);
+create index idx_reservations_customer_id on reservations (customer_id);
+
+-- ============================================================
 -- ADMINS
 -- Admin identity is decoupled from vendors — a row here, keyed to
 -- auth.users, is what is_admin() checks. No passcode anywhere.
@@ -458,6 +500,7 @@ declare
     v_reservation public.reservations;
     v_phone text;
     v_attempt_count integer;
+    v_customer_id uuid;
 begin
     v_phone := normalize_qatar_phone(p_customer_phone);
 
@@ -516,15 +559,27 @@ begin
     from (select 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' as chars) c,
          generate_series(1, 6);
 
+    -- Links customer_id when the caller is a real, logged-in
+    -- customer. A raw `auth.uid()` unconditionally would throw a
+    -- foreign key violation and fail the whole reservation for anyone
+    -- authenticated but without a customers row - a vendor or admin
+    -- logged into their own account, reserving an item as a customer.
+    -- Checking existence first means that case still succeeds
+    -- normally, falling back to the same null customer_id an
+    -- anonymous reservation gets.
+    if auth.uid() is not null then
+      select id into v_customer_id from public.customers where id = auth.uid();
+    end if;
+
     insert into public.reservations(
         listing_id, vendor_id, vendor_name, item_name, price, quantity,
-        customer_name, customer_phone, pickup_code, pickup_start, pickup_end, status
+        customer_name, customer_phone, pickup_code, pickup_start, pickup_end, status, customer_id
     )
     values(
         v_listing.id, v_listing.vendor_id, coalesce(v_vendor_name, ''), v_listing.item_name,
         v_listing.discounted_price * p_quantity, p_quantity,
         p_customer_name, v_phone, v_code,
-        v_listing.pickup_start, v_listing.pickup_end, 'reserved'
+        v_listing.pickup_start, v_listing.pickup_end, 'reserved', v_customer_id
     )
     returning * into v_reservation;
 
@@ -532,6 +587,84 @@ begin
 end;
 $$;
 grant execute on function create_reservation_safe(uuid, text, text, integer) to anon, authenticated;
+
+-- Bridges a customer's pre-account reservation history: matches by
+-- customer_id (anything reserved while logged in, going forward) OR
+-- by the account's own stored phone number (so signing up doesn't
+-- orphan reservations made anonymously before the account existed).
+create or replace function get_my_reservation_history()
+returns setof reservations
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_phone text;
+begin
+  if auth.uid() is null then
+    return;
+  end if;
+
+  select phone_number into v_phone
+  from public.customers
+  where id = auth.uid();
+
+  return query
+    select * from public.reservations
+    where customer_id = auth.uid()
+       or (v_phone is not null and customer_phone = v_phone)
+    order by created_at desc;
+end;
+$$;
+grant execute on function get_my_reservation_history() to authenticated;
+
+-- Requires being logged in - an anonymous reservation (no
+-- customer_id) has no self-service cancellation path in v1, a
+-- deliberate scope line: allowing cancellation by phone number alone
+-- (matching how "Your pickups" already does lookups) would mean
+-- anyone who knows or guesses a phone number could cancel that
+-- person's reservation. Restores quantity_left on cancel - unlike
+-- collected/no_show, which correctly never restore stock since the
+-- food is gone either way, a cancellation happens before pickup, so
+-- the item is still genuinely sellable.
+create or replace function cancel_reservation(p_reservation_id uuid)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_reservation public.reservations;
+begin
+  if auth.uid() is null then
+    raise exception 'not authenticated' using errcode = '42501';
+  end if;
+
+  select * into v_reservation
+  from public.reservations
+  where id = p_reservation_id and customer_id = auth.uid()
+  for update;
+
+  if not found then
+    raise exception 'Reservation not found or not yours to cancel.';
+  end if;
+
+  if v_reservation.status <> 'reserved' then
+    raise exception 'Only pending reservations can be cancelled.';
+  end if;
+
+  update public.reservations
+  set status = 'cancelled'
+  where id = p_reservation_id;
+
+  update public.listings
+  set quantity_left = quantity_left + v_reservation.quantity
+  where id = v_reservation.listing_id;
+
+  return json_build_object('success', true);
+end;
+$$;
+grant execute on function cancel_reservation(uuid) to authenticated;
 
 create or replace function mark_collected(p_reservation_id uuid)
 returns void
