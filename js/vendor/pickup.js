@@ -214,6 +214,8 @@ import { toast, confirmDialog } from '../ui.js';
     }
   }
 
+ 
+
   async function onQrSuccess(decodedText){
     if(qrScanner){
       await qrScanner.stop();
@@ -222,7 +224,7 @@ import { toast, confirmDialog } from '../ui.js';
 
     let reservation;
     try{
-      reservation = await Store.getReservation(decodedText.trim());
+      reservation = await Store.getReservationForVerify(decodedText.trim());
     }catch(err){
       toast(err.message, { type: 'error' });
       return;
@@ -230,6 +232,8 @@ import { toast, confirmDialog } from '../ui.js';
     console.log(reservation);
     showReservation(reservation);
   }
+  
+  
 
   function init(){
     try{

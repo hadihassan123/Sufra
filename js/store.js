@@ -360,6 +360,14 @@ export const Store = (() => {
     return data;
   }
 
+  async function getReservationForVerify(id){
+    const { data, error } = await sb.rpc('get_reservation_with_flag_by_id', {
+      p_reservation_id: id
+    });
+    if(error) throw error;
+    return data;
+  }
+
   async function markCollected(id){
     const { error } = await sb.rpc('mark_collected', {
       p_reservation_id: id
@@ -417,7 +425,7 @@ export const Store = (() => {
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, onAuthStateChange, getVendorProfile,updateVendorPin,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
     getListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
-    createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected,markNoShow, getReservationsByVendor, getRecentVendorActivity,
+    createReservation, getReservationsByPhone, findReservationByCode,getReservation,getReservationForVerify, markCollected,markNoShow, getReservationsByVendor, getRecentVendorActivity,
     getAllVendors, approveVendor, revokeVendor, isAdmin
   };
 })();
