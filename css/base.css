@@ -87,6 +87,16 @@ button{ font-family:inherit; cursor:pointer; }
 .auth-only, .guest-only{ display:none; }
 body.logged-in .auth-only{ display:inline-block; }
 body:not(.logged-in) .guest-only{ display:inline-block; }
+
+/* Customer-account nav visibility. Deliberately a SEPARATE body class
+   from .logged-in: that one tracks any Supabase Auth session (which a
+   vendor or admin also has), while this tracks specifically "is a
+   customer account signed in" - i.e. the session has a customers row.
+   A logged-in vendor browsing the homepage must see neither "Sign in"
+   nor "Sign out" for customer accounts. */
+.customer-auth-only, .customer-guest-only{ display:none; }
+body.customer-signed-in .customer-auth-only{ display:inline-block; }
+body:not(.customer-signed-in):not(.logged-in) .customer-guest-only{ display:inline-block; }
 .nav-cta:hover{ background:var(--ink-deep); }
 
 /* ---------- buttons ---------- */

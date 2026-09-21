@@ -61,6 +61,61 @@ export const Store = (() => {
     return sb.auth.onAuthStateChange(callback);
   }
 
+  // ---- auth / customer identity ----
+  // Deliberately does NOT pass business_name in metadata - that's
+  // precisely what makes handle_new_customer's trigger fire (and
+  // handle_new_vendor's NOT fire), creating a customers row instead of
+  // a vendors row. See supabase/migrations/20260912_customer_accounts_db.sql.
+  async function signUpCustomer({ email, password, phone }){
+    const { data, error } = await sb.auth.signUp({
+      email, password,
+      options: {
+        data: { phone_number: phone || null }
+      }
+    });
+    if(error) throw error;
+    return { needsConfirmation: !data.session };
+  }
+
+  // Same underlying call as signInVendor - Supabase Auth doesn't
+  // distinguish account "types", that's purely which profile table has
+  // a row. Kept as its own named function so customer-facing code
+  // never reads as if it's doing something vendor-related.
+  async function signInCustomer({ email, password }){
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if(error) throw error;
+    return data;
+  }
+
+  async function getMyReservationHistory(){
+    const { data, error } = await sb.rpc('get_my_reservation_history');
+    if(error) throw error;
+    return data || [];
+  }
+
+  async function cancelReservation(reservationId){
+    const { data, error } = await sb.rpc('cancel_reservation', {
+      p_reservation_id: reservationId
+    });
+    if(error) throw error;
+    return data;
+  }
+
+  // Returns the customers row for the logged-in user, or null if the
+  // session belongs to a vendor/admin (no customers row) or nobody is
+  // logged in. Used to decide whether to show customer-account UI.
+  async function getMyCustomerProfile(){
+    const { data: sessionData } = await sb.auth.getSession();
+    if(!sessionData.session) return null;
+    const { data, error } = await sb
+      .from('customers')
+      .select('id, phone_number, created_at')
+      .eq('id', sessionData.session.user.id)
+      .maybeSingle();
+    if(error) throw error;
+    return data;
+  }
+
   async function getVendorProfile(){
     const { data, error } = await sb.rpc('get_my_vendor_profile');
     if(error) throw error;
@@ -415,6 +470,7 @@ export const Store = (() => {
   return {
     SURPLUS_WINDOWS,
     signUpVendor, signInVendor, signOutVendor, requestPasswordReset, updatePassword, getSession, onAuthStateChange, getVendorProfile,updateVendorPin,
+    signUpCustomer, signInCustomer, getMyCustomerProfile, getMyReservationHistory, cancelReservation,
     uploadVendorDocument, getVendorDocumentUrl, uploadListingImage, uploadVendorLogo, removeVendorLogo,
     getListings, getListing, getListingsByVendor, createListing,updateListing, updateListingQty, removeListing,
     createReservation, getReservationsByPhone, findReservationByCode,getReservation, markCollected,markNoShow, getReservationsByVendor, getRecentVendorActivity,

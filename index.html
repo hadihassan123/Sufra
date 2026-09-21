@@ -88,6 +88,8 @@
       <a href="#browse">Browse</a>
       <a href="vendor-dashboard.html" id="vendorDashboardLink" class="nav-cta auth-only">Dashboard</a>
       <a href="#pickups">Your pickups</a>
+      <a href="#" id="customerLoginNavLink" class="customer-guest-only">Sign in</a>
+      <a href="#" id="customerLogoutNavLink" class="customer-auth-only">Sign out</a>
       <a href="vendor-signup.html" class="nav-cta guest-only" id="vendorNavLink">List your surplus</a>
       <a href="vendor-login.html" id="vendorLoginNavLink" class="guest-only">Log in</a>
       <a href="#" id="vendorLogoutNavLink" class="auth-only">Log out</a>
@@ -203,11 +205,26 @@
         </div>
       </div>
       <div class="pickups-panel">
-        <div class="pickup-lookup">
-          <label for="lookupPhone" class="sr-only">Your phone number</label>
-          <input type="tel" id="lookupPhone" placeholder="Enter your phone number, e.g. 5512 3456">
-          <button class="btn btn-ink" id="lookupBtn">Find my pickups</button>
+        <!-- Phone lookup: the original anonymous flow, unchanged and
+             still the default. Hidden only while a customer account is
+             signed in, since the account view below is strictly better
+             for them (it includes the same reservations plus cancel). -->
+        <div id="pickupLookupPanel">
+          <div class="pickup-lookup">
+            <label for="lookupPhone" class="sr-only">Your phone number</label>
+            <input type="tel" id="lookupPhone" placeholder="Enter your phone number, e.g. 5512 3456">
+            <button class="btn btn-ink" id="lookupBtn">Find my pickups</button>
+          </div>
+          <p class="hint" style="margin-top:10px;">
+            Have an account? <a href="#" id="pickupSignInLink">Sign in</a> to see all your pickups and cancel reservations.
+          </p>
         </div>
+
+        <!-- Account view: shown instead of the lookup once signed in. -->
+        <div id="pickupAccountPanel" style="display:none;">
+          <p class="hint" id="pickupAccountHint" style="margin-bottom:12px;"></p>
+        </div>
+
         <div id="liveIndicator" style="display:none; font-size:0.78rem; color:var(--teal-deep); margin-bottom:12px; align-items:center; gap:6px;">
           <span style="width:7px; height:7px; border-radius:50%; background:var(--teal); display:inline-block; animation:pulse 1.6s infinite;"></span>
           Live — this list updates automatically while this page is open
@@ -258,6 +275,42 @@
 </div>
  
 <!-- Confirmation modal -->
+<div class="modal-overlay" id="customerAuthOverlay">
+  <div class="modal-box form-modal" id="customerAuthModal" role="dialog" aria-modal="true" aria-labelledby="customerAuthTitle">
+    <button class="close-x" data-close aria-label="Close">&times;</button>
+    <p class="hero-eyebrow" style="color:var(--teal-deep);">Customer account</p>
+    <h2 id="customerAuthTitle">Sign in</h2>
+    <p class="ticket-desc" id="customerAuthSubtitle" style="margin-bottom:20px;">
+      See all your pickups in one place and cancel reservations you can't make.
+    </p>
+
+    <form id="customerAuthForm">
+      <div class="field">
+        <label for="customerAuthEmail">Email</label>
+        <input type="email" id="customerAuthEmail" required autocomplete="email" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label for="customerAuthPassword">Password</label>
+        <input type="password" id="customerAuthPassword" required autocomplete="current-password" placeholder="Your password">
+      </div>
+      <div class="field" id="customerAuthPhoneField" style="display:none;">
+        <label for="customerAuthPhone">Phone number</label>
+        <input type="tel" id="customerAuthPhone" autocomplete="tel" placeholder="5512 3456">
+        <p class="hint">Optional — lets us link pickups you reserved before creating this account.</p>
+      </div>
+
+      <div class="form-msg" id="customerAuthMsg"></div>
+
+      <button type="submit" class="btn btn-amber btn-block" id="customerAuthSubmit">Sign in</button>
+    </form>
+
+    <p class="auth-switch" style="margin-top:16px;">
+      <span id="customerAuthSwitchText">New to Sufra?</span>
+      <a href="#" id="customerAuthSwitchLink">Create an account</a>
+    </p>
+  </div>
+</div>
+
 <div class="modal-overlay" id="confirmOverlay">
   <div class="modal-box confirm" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmModalHeading">
     <button class="close-x" data-close aria-label="Close">&times;</button>

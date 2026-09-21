@@ -4,6 +4,7 @@
 import '../sentry.js';
 import { Store } from '../store.js';
 import '../customer.js';
+import '../customer-account.js';
 
 // Was an inline <script> block directly in index.html - moved here
 // unchanged so it can use a real import (Store) instead of relying
